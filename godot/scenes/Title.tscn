@@ -1,0 +1,89 @@
+[gd_scene load_steps=3 format=3 uid="uid://titlescene"]
+
+[ext_resource type="Script" path="res://scripts/Title.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/Starfield.gd" id="2"]
+
+[node name="Title" type="Node2D"]
+script = ExtResource("1")
+
+[node name="Starfield" type="Node2D" parent="."]
+script = ExtResource("2")
+
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="LogoImage" type="TextureRect" parent="UI"]
+offset_left = 20.0
+offset_top = 140.0
+offset_right = 460.0
+offset_bottom = 380.0
+expand_mode = 1
+stretch_mode = 5
+visible = false
+
+[node name="LogoText" type="Control" parent="UI"]
+anchors_preset = 0
+offset_right = 480.0
+offset_bottom = 720.0
+
+[node name="Sunder" type="Label" parent="UI/LogoText"]
+offset_left = 20.0
+offset_top = 180.0
+offset_right = 460.0
+offset_bottom = 280.0
+theme_override_colors/font_color = Color(0.90, 0.76, 0.32, 1)
+theme_override_colors/font_outline_color = Color(0.25, 0.15, 0.02, 1)
+theme_override_constants/outline_size = 8
+theme_override_font_sizes/font_size = 88
+horizontal_alignment = 1
+vertical_alignment = 1
+text = "SUNDER"
+
+[node name="AscLine" type="Label" parent="UI/LogoText"]
+offset_left = 20.0
+offset_top = 278.0
+offset_right = 460.0
+offset_bottom = 320.0
+theme_override_colors/font_color = Color(0.60, 0.85, 1.0, 1)
+theme_override_font_sizes/font_size = 34
+horizontal_alignment = 1
+text = "A S C E N S I O N"
+
+[node name="Rule" type="Label" parent="UI/LogoText"]
+offset_left = 20.0
+offset_top = 320.0
+offset_right = 460.0
+offset_bottom = 344.0
+theme_override_colors/font_color = Color(0.55, 0.45, 0.20, 1)
+theme_override_font_sizes/font_size = 18
+horizontal_alignment = 1
+text = "☥ ─────────── ☥"
+
+[node name="Subtitle" type="Label" parent="UI"]
+offset_left = 20.0
+offset_top = 470.0
+offset_right = 460.0
+offset_bottom = 500.0
+theme_override_colors/font_color = Color(0.75, 0.72, 0.68, 1)
+theme_override_font_sizes/font_size = 17
+horizontal_alignment = 1
+text = "— THE NINE BOWS —"
+
+[node name="Prompt" type="Label" parent="UI"]
+offset_left = 20.0
+offset_top = 560.0
+offset_right = 460.0
+offset_bottom = 590.0
+theme_override_colors/font_color = Color(0.90, 0.76, 0.32, 1)
+theme_override_font_sizes/font_size = 22
+horizontal_alignment = 1
+text = "PRESS SPACE TO BEGIN"
+
+[node name="Credit" type="Label" parent="UI"]
+offset_left = 20.0
+offset_top = 670.0
+offset_right = 460.0
+offset_bottom = 696.0
+theme_override_colors/font_color = Color(0.45, 0.42, 0.40, 1)
+theme_override_font_sizes/font_size = 13
+horizontal_alignment = 1
+text = "AN ASCENSION MEDIA GROUP PRODUCTION"

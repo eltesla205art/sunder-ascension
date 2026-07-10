@@ -1,0 +1,1806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>SUNDER: Ascension — The Nine Bows</title>
+<style>
+  html,body{margin:0;padding:0;background:#07060f;height:100%;overflow:hidden;
+    font-family:'Courier New',monospace;color:#d4af37;}
+  #wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;}
+  canvas{background:#0a0918;box-shadow:0 0 40px rgba(212,175,55,.25);touch-action:none;}
+  #foot{font-size:11px;letter-spacing:1px;opacity:.7;margin-top:6px;text-align:center;}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="game" width="480" height="720"></canvas>
+  <div id="foot">WASD/ARROWS move · SPACE fire · X bomb · P pause · M music · touch: drag to fly, tap ☥ bomb, tap ⏸ pause</div>
+</div>
+<script>
+'use strict';
+const IS_BROWSER = (typeof window !== 'undefined');
+const W = 480, H = 720, TAU = Math.PI * 2;
+const D2R = Math.PI / 180;
+
+/* ============================== ONLINE CONFIG (Supabase) ==============================
+   Create a free project at supabase.com, then paste your values below and re-upload.
+   Until then the leaderboard works on-device only.                                     */
+const SUNDER_CONFIG = {
+  SUPABASE_URL: '',        // e.g. 'https://abcd1234.supabase.co'
+  SUPABASE_ANON_KEY: '',   // Settings -> API -> anon public key
+};
+
+/* ============================== BATTLE MATH (the balance law) ==============================
+   1. Player damage = (base + blue bonus) x power level  -> leveling up really matters.
+   2. Boss hull = data value x 1.3                       -> bosses demand a leveled ship.
+   3. Enemy bullets deal 1; boss bullets deal 2 from stage 5; boss contact deals 2.
+      -> regular enemies are always slightly weaker than their boss.
+   4. Stages are 1.6x longer and drop 4% more pickups    -> time to level up before the boss.
+   5. Every stage clear: +1 life, +1 bomb, +1 shield     -> resources rise with the danger.  */
+const STAGE_LEN = 1.6;
+const BOSS_HULL = 1.3;
+function bossThreshold(cfg){ return Math.round(cfg.score_to_boss * STAGE_LEN); }
+
+/* ============================== SHIP DATA ============================== */
+const SHIPS = [
+ {id:"sunborn",name:"SUNBORN THUNDER",ship_class:"The Balanced Heir",
+  personality:"Noble, steady, born to lead. Master of none's weakness, jack of every strength.",
+  tint:"#E6C252",accent:"#8CD9FF",
+  speed:320,fire_rate:0.14,max_health:3,bombs:3,style:"twin_spread",bullet_damage:1,
+  form_names:["Falcon","Rising Falcon","Solar Horus"],form_scale:[1.0,1.05,1.12]},
+ {id:"scarab",name:"SCARAB WARBRINGER",ship_class:"The Juggernaut",
+  personality:"Fierce and unmoving. Trades speed for raw devastation. Hits like the fall of a dynasty.",
+  tint:"#D94033",accent:"#FF8C33",
+  speed:250,fire_rate:0.20,max_health:4,bombs:4,style:"heavy_cannon",bullet_damage:2,
+  form_names:["Scarab","Armored Scarab","Khnum Ram"],form_scale:[1.1,1.18,1.28]},
+ {id:"ibis",name:"IBIS PHANTOM",ship_class:"The Swift",
+  personality:"Quick, clever, elusive. Death by a thousand cuts. Gone before the enemy knows it's hit.",
+  tint:"#4DD980",accent:"#BFFFD9",
+  speed:400,fire_rate:0.09,max_health:2,bombs:3,style:"rapid_stream",bullet_damage:1,
+  form_names:["Ibis","Twin Ibis","Thoth Ascendant"],form_scale:[0.92,0.96,1.0]},
+];
+
+/* ============================== STAGE DATA ============================== */
+const STAGES = [
+ {num:1,name:"The Nubians",subtitle:"Archers of the South",tint:"#D98C4D",
+  enemy_health:2,enemy_speed:110,enemy_fire_interval:1.9,enemy_move:"dive",
+  enemy_bullet_speed:210,enemy_points:100,spawn_interval:1.2,drop_chance:0.20,score_to_boss:2000,
+  boss_name:"Archer King Taharqa",boss_health:180,boss_points:4000,
+  boss_patterns:["aimed_volley"],boss_fire_rate:1.3,boss_bullet_speed:190,boss_move_speed:60},
+ {num:2,name:"The Libyans",subtitle:"Raiders of the Western Sands",tint:"#E6CC73",
+  enemy_health:3,enemy_speed:125,enemy_fire_interval:1.7,enemy_move:"weave",
+  enemy_bullet_speed:230,enemy_points:120,spawn_interval:1.1,drop_chance:0.18,score_to_boss:2600,
+  boss_name:"Desert Warlord Meshwesh",boss_health:240,boss_points:5000,
+  boss_patterns:["spread_fan","aimed_volley"],boss_fire_rate:1.15,boss_bullet_speed:210,boss_move_speed:80},
+ {num:3,name:"The Hyksos",subtitle:"The Chariot Invaders",tint:"#B3BFD9",
+  enemy_health:3,enemy_speed:175,enemy_fire_interval:1.5,enemy_move:"rush",
+  enemy_bullet_speed:250,enemy_points:140,spawn_interval:1.0,drop_chance:0.17,score_to_boss:3200,
+  boss_name:"Chariot Lord Khyan",boss_health:300,boss_points:6000,
+  boss_patterns:["horizontal_sweep","spread_fan"],boss_fire_rate:1.0,boss_bullet_speed:230,boss_move_speed:110},
+ {num:4,name:"The Sea Peoples",subtitle:"Tide of the Broken Nations",tint:"#66BFCC",
+  enemy_health:4,enemy_speed:150,enemy_fire_interval:1.4,enemy_move:"zigzag",
+  enemy_bullet_speed:260,enemy_points:160,spawn_interval:0.95,drop_chance:0.16,score_to_boss:3800,
+  boss_name:"Wave Tyrant Peleset",boss_health:360,boss_points:7000,
+  boss_patterns:["radial_burst","horizontal_sweep"],boss_fire_rate:0.9,boss_bullet_speed:240,boss_move_speed:100},
+ {num:5,name:"The Hittites",subtitle:"The Iron Empire",tint:"#994D4D",
+  enemy_health:6,enemy_speed:130,enemy_fire_interval:1.3,enemy_move:"dive",
+  enemy_bullet_speed:270,enemy_points:200,spawn_interval:0.9,drop_chance:0.15,score_to_boss:4600,
+  boss_name:"Iron Charioteer Muwatalli",boss_health:440,boss_points:8500,
+  boss_patterns:["cross_ring","aimed_volley","radial_burst"],boss_fire_rate:0.85,boss_bullet_speed:250,boss_move_speed:90},
+ {num:6,name:"The Mitanni",subtitle:"Masters of the Maryannu",tint:"#8C73BF",
+  enemy_health:6,enemy_speed:160,enemy_fire_interval:1.2,enemy_move:"circle",
+  enemy_bullet_speed:285,enemy_points:220,spawn_interval:0.85,drop_chance:0.14,score_to_boss:5400,
+  boss_name:"Maryannu Rider Tushratta",boss_health:520,boss_points:10000,
+  boss_patterns:["spiral","spread_fan","radial_burst"],boss_fire_rate:0.7,boss_bullet_speed:270,boss_move_speed:120},
+ {num:7,name:"The Assyrians",subtitle:"The Siege That Never Ends",tint:"#CC4040",
+  enemy_health:7,enemy_speed:150,enemy_fire_interval:1.0,enemy_move:"formation",
+  enemy_bullet_speed:300,enemy_points:260,spawn_interval:0.75,drop_chance:0.13,score_to_boss:6400,
+  boss_name:"Siege King Ashurbanipal",boss_health:620,boss_points:12000,
+  boss_patterns:["wall_barrage","cross_ring","spiral"],boss_fire_rate:0.6,boss_bullet_speed:285,boss_move_speed:100},
+ {num:8,name:"The Persians",subtitle:"The Immortal Host",tint:"#D9A633",
+  enemy_health:8,enemy_speed:185,enemy_fire_interval:0.9,enemy_move:"evade",
+  enemy_bullet_speed:320,enemy_points:300,spawn_interval:0.7,drop_chance:0.12,score_to_boss:7600,
+  boss_name:"Immortal Shah Cambyses",boss_health:740,boss_points:15000,
+  boss_patterns:["dual_spiral","wall_barrage","radial_burst"],boss_fire_rate:0.5,boss_bullet_speed:300,boss_move_speed:130},
+ {num:9,name:"The Nine Bows United",subtitle:"The Crystal Overlord Descends",tint:"#CC4DE6",
+  enemy_health:8,enemy_speed:175,enemy_fire_interval:0.85,enemy_move:"zigzag",
+  enemy_bullet_speed:330,enemy_points:350,spawn_interval:0.6,drop_chance:0.14,score_to_boss:9000,
+  boss_name:"THE CRYSTAL OVERLORD",boss_health:1000,boss_points:30000,
+  boss_patterns:["dual_spiral","wall_barrage","cross_ring","radial_burst","spiral"],
+  boss_fire_rate:0.4,boss_bullet_speed:320,boss_move_speed:140},
+];
+
+/* ============================== STORY DATA ============================== */
+const OPENING = [
+ "ATLANTEAN BLUEPRINT","— THE NINE BOWS —","",
+ "Before Egypt, there was ATLANTIS.",
+ "When it fell, its last engineers hid",
+ "their greatest weapon beneath the sands:",
+ "THE SUNBORN THUNDER —",
+ "a starcraft grown from a single seed of gold.","",
+ "For ten thousand years it slept.","",
+ "Now the sky burns. The Crystal —",
+ "the ancient enemy that drowned Atlantis —",
+ "has returned, and it does not come alone.",
+ "It has raised the NINE BOWS:",
+ "every foe Egypt ever faced,",
+ "reborn in crystal and fury.","",
+ "You are ELTESLA, heir of the old blood.",
+ "The Thunder answers only to you.","",
+ "Rise. Hold the line. Break all nine."];
+const BRIEFINGS = {
+ 1:{quote:'"The southern archers come first — they always tested us first."',
+    brief:"The Nubians of the crystal have risen from the First Cataract. Their arrows blot the sun. A gentle test — but the Crystal is watching how you fight."},
+ 2:{quote:'"The desert never forgot its grudge."',
+    brief:"The Libyan raiders sweep in from the western dunes, faster and in greater number. Warlord Meshwesh rides at their head, scattering fire across the sky."},
+ 3:{quote:'"They took Egypt once — with chariots of bronze. Now they ride chariots of light."',
+    brief:"The Hyksos invaders charge without pause. Chariot Lord Khyan carves the heavens in horizontal sweeps. Do not stand still."},
+ 4:{quote:'"A tide of drowned nations. They have no home — so they will take yours."',
+    brief:"The Sea Peoples surge in a broken, zigzagging swarm. Wave Tyrant Peleset commands the tides themselves, firing in rings that close like a net."},
+ 5:{quote:'"Iron does not bleed. Iron does not tire. But iron can be broken."',
+    brief:"The Hittite Empire arrives armored and unrelenting. Iron Charioteer Muwatalli weaves crosses of fire through the void. Halfway there — the Crystal grows impatient."},
+ 6:{quote:'"The horse-lords of the north. They circle before they strike."',
+    brief:"The Mitanni flankers spiral around you, hunting your blind spots. Maryannu Rider Tushratta answers with rotating spirals that never seem to end."},
+ 7:{quote:'"The siege that never ends. This is where lesser pilots fall."',
+    brief:"The Assyrian war-machine advances in dense formation, walls of fire crashing down. Siege King Ashurbanipal has broken a hundred cities. Do not become the hundred-and-first."},
+ 8:{quote:'"The Immortals. Kill one, another takes its place. But you are not fighting men."',
+    brief:"The Persian Immortal Host is fast, evasive, and endless. Immortal Shah Cambyses twists dual spirals into the dark. The gate to the Overlord lies just beyond him."},
+ 9:{quote:'"All nine, as one. And behind them — the thing that drowned the world."',
+    brief:"The Nine Bows unite in a single storm. And above them descends THE CRYSTAL OVERLORD — the enemy of Atlantis itself. Everything ends here. Break it, ELTESLA, or the sky falls forever."}};
+const BOSS_LINES = {
+ 1:'"Golden ghost. You will not pass the First Cataract."',
+ 2:'"The dunes will bury you and your machine both!"',
+ 3:'"We ruled Egypt once. We will rule its ashes again."',
+ 4:'"Drown with us, child of the old blood."',
+ 5:'"Iron against gold. Let us see which bends."',
+ 6:'"Round and round — you cannot see where death comes from."',
+ 7:'"I have broken kings. You are only a pilot."',
+ 8:'"I am one of ten thousand. You are one. Do the arithmetic."',
+ 9:'"I DROWNED ATLANTIS. I WILL DROWN WHAT LITTLE REMAINS OF IT — YOU."'};
+const CLEAR_LINES = {
+ 1:"The archers scatter. The Thunder hums, satisfied. One bow broken.",
+ 2:"The desert falls silent. Two bows broken. The Crystal shifts its gaze.",
+ 3:"The chariots shatter into light. Three bows broken. You are being remembered.",
+ 4:"The tide recedes. Four bows broken. Halfway to the drowned truth.",
+ 5:"Iron breaks after all. Five bows broken. The sky thins — you can almost see it now.",
+ 6:"The spirals unwind into nothing. Six bows broken. The Overlord stops pretending.",
+ 7:"The siege lifts. Seven bows broken. Only two stand between you and the enemy of Atlantis.",
+ 8:"The last Immortal falls. Eight bows broken. The gate opens. It is time."};
+const VICTORY_TEXT = [
+ "THE NINE BOWS ARE BROKEN.","",
+ "The Crystal Overlord shatters into a rain",
+ "of falling stars, and the sky heals gold.","",
+ "Ten thousand years of waiting — answered.",
+ "Atlantis is avenged. Egypt stands eternal.","",
+ "The Sunborn Thunder returns to the sand,",
+ "to sleep again... until the sky next burns.","",
+ "— ELTESLA, HEIR OF THE OLD BLOOD —"];
+const DEFEAT_TAG = "The Thunder goes dark. The sky keeps burning.\nBut the old blood does not stay down. Rise again.";
+// --- ACT INTERLUDES: the middle of the story, shown between acts ---
+const INTERLUDES = {
+  4: "— ACT II: THE DROWNED TRUTH —\n\nThree bows broken, and the sky tears open. Below the waves you glimpse it at last: the drowned spires of Atlantis, still glowing after ten thousand years. The Crystal did not merely sink a city — it stole a heart, and the Thunder is the only key that still fits. From here on, the Nine Bows fight not to test you... but to stop you from remembering.",
+  7: "— ACT III: THE GATE OF STARS —\n\nSix bows broken. The desert night goes silent, and every crystal shard turns toward you at once. The Overlord speaks for the first time — not in words, but in a pressure behind your eyes: TURN BACK, HEIR. Ahead lie the siege that never ends, the host that never dies, and the gate of stars where Atlantis fell. Fuel your ship on their fear. It is nearly finished.",
+};
+
+/* ============================== SPRITES (original SVG art) ============================== */
+const SVGS = {
+player:`<svg width="64" height="72" viewBox="0 0 64 72" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F4D77B"/><stop offset="0.5" stop-color="#D4AF37"/><stop offset="1" stop-color="#8A6D1E"/></linearGradient><linearGradient id="darkgold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#B8860B"/><stop offset="1" stop-color="#5A4409"/></linearGradient><radialGradient id="core" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#8FE3FF"/><stop offset="0.6" stop-color="#2FA8D8"/><stop offset="1" stop-color="#0B3A54"/></radialGradient></defs><path d="M32 30 L4 40 L2 52 L18 46 L14 58 L26 50 Z" fill="url(#darkgold)" stroke="#3a2c05" stroke-width="1"/><path d="M32 30 L60 40 L62 52 L46 46 L50 58 L38 50 Z" fill="url(#darkgold)" stroke="#3a2c05" stroke-width="1"/><path d="M32 32 L10 40 L20 44 Z" fill="url(#gold)"/><path d="M32 32 L54 40 L44 44 Z" fill="url(#gold)"/><path d="M32 4 L40 26 L38 60 L32 68 L26 60 L24 26 Z" fill="url(#gold)" stroke="#3a2c05" stroke-width="1.5"/><circle cx="32" cy="34" r="7" fill="url(#core)"/><path d="M29 60 L32 70 L35 60 Z" fill="#8FE3FF" opacity="0.85"/></svg>`,
+enemy:`<svg width="48" height="48" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="ecore" cx="0.5" cy="0.4" r="0.6"><stop offset="0" stop-color="#6B2B8A"/><stop offset="1" stop-color="#1A0B24"/></radialGradient><linearGradient id="eshell" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4A3410"/><stop offset="1" stop-color="#1c1305"/></linearGradient></defs><path d="M24 6 C10 6 6 20 8 34 C10 44 38 44 40 34 C42 20 38 6 24 6 Z" fill="url(#eshell)" stroke="#6b4f14" stroke-width="1.5"/><line x1="24" y1="10" x2="24" y2="42" stroke="#0d0803" stroke-width="2"/><ellipse cx="24" cy="22" rx="8" ry="9" fill="url(#ecore)"/><ellipse cx="24" cy="20" rx="3" ry="3.5" fill="#C77DFF"/><path d="M8 30 L2 26 M8 34 L2 36 M40 30 L46 26 M40 34 L46 36" stroke="#6b4f14" stroke-width="2" fill="none"/><path d="M24 6 C16 6 12 14 12 20" stroke="#D4AF37" stroke-width="1.5" fill="none" opacity="0.7"/><path d="M24 6 C32 6 36 14 36 20" stroke="#D4AF37" stroke-width="1.5" fill="none" opacity="0.7"/></svg>`,
+boss:`<svg width="180" height="140" viewBox="0 0 180 140" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="bgold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F4D77B"/><stop offset="0.5" stop-color="#D4AF37"/><stop offset="1" stop-color="#7A5C15"/></linearGradient><linearGradient id="bdark" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4A3410"/><stop offset="1" stop-color="#1c1305"/></linearGradient><radialGradient id="beye" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#FF5E5E"/><stop offset="0.6" stop-color="#B01818"/><stop offset="1" stop-color="#3A0808"/></radialGradient></defs><path d="M90 60 L6 44 L2 70 L40 62 L20 84 L60 72 Z" fill="url(#bdark)" stroke="#6b4f14" stroke-width="1.5"/><path d="M90 60 L174 44 L178 70 L140 62 L160 84 L120 72 Z" fill="url(#bdark)" stroke="#6b4f14" stroke-width="1.5"/><path d="M90 6 L60 24 L58 60 L90 52 L122 60 L120 24 Z" fill="url(#bgold)" stroke="#3a2c05" stroke-width="2"/><line x1="70" y1="26" x2="66" y2="56" stroke="#2a2004" stroke-width="2"/><line x1="80" y1="24" x2="78" y2="54" stroke="#2a2004" stroke-width="2"/><line x1="100" y1="24" x2="102" y2="54" stroke="#2a2004" stroke-width="2"/><line x1="110" y1="26" x2="114" y2="56" stroke="#2a2004" stroke-width="2"/><path d="M68 40 L112 40 L108 88 L90 100 L72 88 Z" fill="url(#bgold)" stroke="#3a2c05" stroke-width="1.5"/><ellipse cx="80" cy="60" rx="7" ry="6" fill="url(#beye)"/><ellipse cx="100" cy="60" rx="7" ry="6" fill="url(#beye)"/><path d="M84 70 L96 70 L90 82 Z" fill="#2a2004"/><path d="M78 88 L102 88 L98 110 L90 118 L82 110 Z" fill="url(#bdark)" stroke="#6b4f14" stroke-width="1.5"/><circle cx="90" cy="100" r="6" fill="url(#beye)"/></svg>`,
+boss1:`<svg width="180" height="140" viewBox="0 0 180 140" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E09A5C"/><stop offset="1" stop-color="#7A4318"/></linearGradient><radialGradient id="e" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#FFD27A"/><stop offset="1" stop-color="#7A3A08"/></radialGradient></defs><path d="M90 62 C50 30 18 34 4 66 C18 78 40 80 62 74 Z" fill="url(#g)" stroke="#3A2208" stroke-width="2"/><path d="M90 62 C130 30 162 34 176 66 C162 78 140 80 118 74 Z" fill="url(#g)" stroke="#3A2208" stroke-width="2"/><circle cx="30" cy="58" r="4" fill="#3A2208"/><circle cx="48" cy="66" r="4" fill="#3A2208"/><circle cx="150" cy="58" r="4" fill="#3A2208"/><circle cx="132" cy="66" r="4" fill="#3A2208"/><path d="M90 10 L74 26 L76 60 L90 54 L104 60 L106 26 Z" fill="#C87137" stroke="#3A2208" stroke-width="2"/><path d="M90 2 L84 14 L96 14 Z" fill="#F4D77B"/><path d="M72 42 L108 42 L104 88 L90 100 L76 88 Z" fill="#A9591F" stroke="#3A2208" stroke-width="2"/><ellipse cx="82" cy="58" rx="6" ry="5" fill="url(#e)"/><ellipse cx="98" cy="58" rx="6" ry="5" fill="url(#e)"/><path d="M60 96 L90 122 L120 96 L90 106 Z" fill="#F4D77B" stroke="#7A4318" stroke-width="1.5"/><line x1="66" y1="100" x2="114" y2="100" stroke="#3A2208" stroke-width="2"/><path d="M90 100 L86 116 L94 116 Z" fill="#C87137"/></svg>`,
+boss2:`<svg width="180" height="140" viewBox="0 0 180 140" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F0DC96"/><stop offset="1" stop-color="#8A6F2A"/></linearGradient><radialGradient id="e" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#FFF3B8"/><stop offset="1" stop-color="#6E5210"/></radialGradient></defs><path d="M88 64 C64 40 30 36 4 52 C10 74 40 86 70 80 Z" fill="url(#g)" stroke="#4A3A10" stroke-width="2"/><path d="M92 64 C116 40 150 36 176 52 C170 74 140 86 110 80 Z" fill="url(#g)" stroke="#4A3A10" stroke-width="2"/><path d="M14 54 C30 60 46 62 62 60" stroke="#8A6F2A" stroke-width="2" fill="none"/><path d="M166 54 C150 60 134 62 118 60" stroke="#8A6F2A" stroke-width="2" fill="none"/><path d="M80 4 C74 20 76 34 82 44 L88 40 Z" fill="#E6CC73" stroke="#4A3A10" stroke-width="1.5"/><path d="M100 4 C106 20 104 34 98 44 L92 40 Z" fill="#E6CC73" stroke="#4A3A10" stroke-width="1.5"/><path d="M74 36 L106 36 L102 86 L90 98 L78 86 Z" fill="#CBB05B" stroke="#4A3A10" stroke-width="2"/><ellipse cx="83" cy="54" rx="6" ry="5" fill="url(#e)"/><ellipse cx="97" cy="54" rx="6" ry="5" fill="url(#e)"/><path d="M70 70 L60 92 L74 84 Z" fill="#8A6F2A"/><path d="M110 70 L120 92 L106 84 Z" fill="#8A6F2A"/><path d="M78 96 L90 126 L102 96 L90 104 Z" fill="#F0DC96" stroke="#8A6F2A" stroke-width="1.5"/></svg>`,
+boss3:`<svg width="180" height="140" viewBox="0 0 180 140" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C9D3E8"/><stop offset="1" stop-color="#5A6880"/></linearGradient><radialGradient id="e" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#9FD8FF"/><stop offset="1" stop-color="#1E3050"/></radialGradient></defs><circle cx="34" cy="64" r="30" fill="none" stroke="#8B99B8" stroke-width="6"/><circle cx="34" cy="64" r="6" fill="#B3BFD9"/><line x1="34" y1="38" x2="34" y2="90" stroke="#8B99B8" stroke-width="4"/><line x1="8" y1="64" x2="60" y2="64" stroke="#8B99B8" stroke-width="4"/><circle cx="146" cy="64" r="30" fill="none" stroke="#8B99B8" stroke-width="6"/><circle cx="146" cy="64" r="6" fill="#B3BFD9"/><line x1="146" y1="38" x2="146" y2="90" stroke="#8B99B8" stroke-width="4"/><line x1="120" y1="64" x2="172" y2="64" stroke="#8B99B8" stroke-width="4"/><path d="M58 60 L122 60 L116 44 L64 44 Z" fill="#B3BFD9" stroke="#2E3A52" stroke-width="2"/><path d="M74 6 L66 26 L74 22 Z" fill="#8B99B8" stroke="#2E3A52" stroke-width="1.5"/><path d="M106 6 L114 26 L106 22 Z" fill="#8B99B8" stroke="#2E3A52" stroke-width="1.5"/><path d="M72 20 L108 20 L104 84 L90 96 L76 84 Z" fill="#98A6C4" stroke="#2E3A52" stroke-width="2"/><ellipse cx="82" cy="46" rx="6" ry="5" fill="url(#e)"/><ellipse cx="98" cy="46" rx="6" ry="5" fill="url(#e)"/><path d="M80 62 L100 62 L96 74 L84 74 Z" fill="#2E3A52"/><path d="M84 92 L90 118 L96 92 Z" fill="#C9D3E8" stroke="#5A6880" stroke-width="1.5"/></svg>`,
+boss4:`<svg width="180" height="140" viewBox="0 0 180 140" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8FDCE8"/><stop offset="1" stop-color="#1E5966"/></linearGradient><radialGradient id="e" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#C9F6FF"/><stop offset="1" stop-color="#0F3B45"/></radialGradient></defs><path d="M88 66 C70 46 52 46 40 58 C28 46 12 48 4 62 C16 70 26 70 34 66 C44 78 60 80 74 74 Z" fill="url(#g)" stroke="#0F3B45" stroke-width="2"/><path d="M92 66 C110 46 128 46 140 58 C152 46 168 48 176 62 C164 70 154 70 146 66 C136 78 120 80 106 74 Z" fill="url(#g)" stroke="#0F3B45" stroke-width="2"/><g stroke="#2E7E8C" stroke-width="3"><line x1="74" y1="6" x2="74" y2="26"/><line x1="82" y1="2" x2="82" y2="26"/><line x1="90" y1="0" x2="90" y2="26"/><line x1="98" y1="2" x2="98" y2="26"/><line x1="106" y1="6" x2="106" y2="26"/></g><path d="M70 24 L110 24 L106 30 L74 30 Z" fill="#66BFCC" stroke="#0F3B45" stroke-width="1.5"/><path d="M74 30 L106 30 L102 84 L90 96 L78 84 Z" fill="#4FA3B0" stroke="#0F3B45" stroke-width="2"/><ellipse cx="83" cy="50" rx="6" ry="5" fill="url(#e)"/><ellipse cx="97" cy="50" rx="6" ry="5" fill="url(#e)"/><path d="M90 92 L82 112 L90 108 L98 112 Z" fill="#8FDCE8" stroke="#1E5966" stroke-width="1.5"/><path d="M76 104 L64 122 M104 104 L116 122" stroke="#2E7E8C" stroke-width="3" fill="none"/></svg>`,
+boss5:`<svg width="180" height="140" viewBox="0 0 180 140" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9A9AA6"/><stop offset="1" stop-color="#3C3C46"/></linearGradient><radialGradient id="e" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#FF8A8A"/><stop offset="1" stop-color="#4A0E0E"/></radialGradient></defs><path d="M84 60 L44 40 L8 46 L14 66 L46 62 L20 82 L52 78 L74 68 Z" fill="url(#g)" stroke="#1E1E24" stroke-width="2"/><path d="M96 60 L136 40 L172 46 L166 66 L134 62 L160 82 L128 78 L106 68 Z" fill="url(#g)" stroke="#1E1E24" stroke-width="2"/><circle cx="30" cy="55" r="3" fill="#1E1E24"/><circle cx="42" cy="72" r="3" fill="#1E1E24"/><circle cx="150" cy="55" r="3" fill="#1E1E24"/><circle cx="138" cy="72" r="3" fill="#1E1E24"/><path d="M78 8 L70 24 L78 22 M102 8 L110 24 L102 22" fill="#994D4D" stroke="#1E1E24" stroke-width="1.5"/><path d="M72 20 L108 20 L106 88 L90 100 L74 88 Z" fill="#7A5252" stroke="#1E1E24" stroke-width="2"/><rect x="86" y="34" width="8" height="24" fill="#1E1E24"/><rect x="78" y="42" width="24" height="8" fill="#1E1E24"/><ellipse cx="82" cy="66" rx="6" ry="5" fill="url(#e)"/><ellipse cx="98" cy="66" rx="6" ry="5" fill="url(#e)"/><path d="M82 96 L90 120 L98 96 Z" fill="#9A9AA6" stroke="#3C3C46" stroke-width="1.5"/></svg>`,
+boss6:`<svg width="180" height="140" viewBox="0 0 180 140" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#B39BE0"/><stop offset="1" stop-color="#4A3670"/></linearGradient><radialGradient id="e" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#E8D9FF"/><stop offset="1" stop-color="#2A1F45"/></radialGradient></defs><path d="M84 58 C64 42 44 40 28 48 C20 40 10 40 4 48 C10 58 18 60 26 56 C36 70 60 76 78 68 Z" fill="url(#g)" stroke="#241840" stroke-width="2"/><path d="M12 44 C8 38 10 32 16 30 C14 36 16 40 20 42 Z" fill="#8C73BF" stroke="#241840" stroke-width="1.5"/><path d="M96 58 C116 42 136 40 152 48 C160 40 170 40 176 48 C170 58 162 60 154 56 C144 70 120 76 102 68 Z" fill="url(#g)" stroke="#241840" stroke-width="2"/><path d="M168 44 C172 38 170 32 164 30 C166 36 164 40 160 42 Z" fill="#8C73BF" stroke="#241840" stroke-width="1.5"/><circle cx="90" cy="16" r="10" fill="#F4D77B" stroke="#241840" stroke-width="2"/><path d="M74 20 C80 12 100 12 106 20" stroke="#8C73BF" stroke-width="3" fill="none"/><path d="M74 28 L106 28 L102 84 L90 96 L78 84 Z" fill="#7A62A8" stroke="#241840" stroke-width="2"/><ellipse cx="83" cy="50" rx="6" ry="5" fill="url(#e)"/><ellipse cx="97" cy="50" rx="6" ry="5" fill="url(#e)"/><path d="M84 64 C88 70 92 70 96 64" stroke="#241840" stroke-width="2" fill="none"/><path d="M82 92 L90 118 L98 92 Z" fill="#B39BE0" stroke="#4A3670" stroke-width="1.5"/></svg>`,
+boss7:`<svg width="180" height="140" viewBox="0 0 180 140" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E06A6A"/><stop offset="1" stop-color="#661414"/></linearGradient><radialGradient id="e" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#FFD9A0"/><stop offset="1" stop-color="#5A2606"/></radialGradient></defs><path d="M80 68 L80 56 L64 56 L64 44 L48 44 L48 32 L8 32 L8 44 L24 44 L24 56 L40 56 L40 68 L56 68 L56 80 L80 80 Z" fill="url(#g)" stroke="#3F0E0E" stroke-width="2"/><path d="M100 68 L100 56 L116 56 L116 44 L132 44 L132 32 L172 32 L172 44 L156 44 L156 56 L140 56 L140 68 L124 68 L124 80 L100 80 Z" fill="url(#g)" stroke="#3F0E0E" stroke-width="2"/><rect x="76" y="6" width="28" height="12" fill="#CC4040" stroke="#3F0E0E" stroke-width="2"/><rect x="80" y="0" width="6" height="8" fill="#CC4040"/><rect x="94" y="0" width="6" height="8" fill="#CC4040"/><path d="M72 18 L108 18 L104 78 L90 88 L76 78 Z" fill="#A63333" stroke="#3F0E0E" stroke-width="2"/><ellipse cx="82" cy="38" rx="6" ry="5" fill="url(#e)"/><ellipse cx="98" cy="38" rx="6" ry="5" fill="url(#e)"/><rect x="78" y="52" width="24" height="22" fill="#7A2020" stroke="#3F0E0E" stroke-width="1.5"/><g stroke="#3F0E0E" stroke-width="1.5"><line x1="78" y1="58" x2="102" y2="58"/><line x1="78" y1="64" x2="102" y2="64"/><line x1="78" y1="70" x2="102" y2="70"/><line x1="84" y1="52" x2="84" y2="74"/><line x1="90" y1="52" x2="90" y2="74"/><line x1="96" y1="52" x2="96" y2="74"/></g><path d="M82 86 L90 116 L98 86 Z" fill="#E06A6A" stroke="#661414" stroke-width="1.5"/></svg>`,
+boss8:`<svg width="180" height="140" viewBox="0 0 180 140" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F2CE7B"/><stop offset="1" stop-color="#8A6414"/></linearGradient><radialGradient id="e" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#FFF0C0"/><stop offset="1" stop-color="#5C430F"/></radialGradient></defs><g stroke="#5C430F" stroke-width="2" fill="#D9A633"><path d="M78 62 L10 34 L18 56 L74 72 Z"/><path d="M78 66 L4 56 L16 74 L74 76 Z"/><path d="M80 72 L14 84 L30 94 L78 82 Z"/><path d="M102 62 L170 34 L162 56 L106 72 Z"/><path d="M102 66 L176 56 L164 74 L106 76 Z"/><path d="M100 72 L166 84 L150 94 L102 82 Z"/></g><path d="M78 14 C82 6 98 6 102 14 L98 22 L82 22 Z" fill="url(#g)" stroke="#5C430F" stroke-width="2"/><circle cx="90" cy="8" r="5" fill="#FFF0C0" stroke="#5C430F" stroke-width="1.5"/><path d="M76 22 L104 22 L102 84 L90 96 L78 84 Z" fill="#C4922B" stroke="#5C430F" stroke-width="2"/><ellipse cx="83" cy="44" rx="6" ry="5" fill="url(#e)"/><ellipse cx="97" cy="44" rx="6" ry="5" fill="url(#e)"/><path d="M80 60 L100 60 L90 70 Z" fill="#5C430F"/><path d="M80 92 L90 122 L100 92 L90 100 Z" fill="#F2CE7B" stroke="#8A6414" stroke-width="1.5"/></svg>`,
+boss9:`<svg width="180" height="140" viewBox="0 0 180 140" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E58AF5"/><stop offset="1" stop-color="#5C1478"/></linearGradient><radialGradient id="c" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#FFFFFF"/><stop offset="0.4" stop-color="#FF9DF5"/><stop offset="1" stop-color="#6A1A88"/></radialGradient></defs><path d="M86 62 L54 30 L44 54 L20 36 L22 66 L2 60 L20 84 L48 80 L70 88 Z" fill="url(#g)" stroke="#33083F" stroke-width="2"/><path d="M94 62 L126 30 L136 54 L160 36 L158 66 L178 60 L160 84 L132 80 L110 88 Z" fill="url(#g)" stroke="#33083F" stroke-width="2"/><path d="M90 0 L78 22 L90 16 L102 22 Z" fill="#FF9DF5" stroke="#33083F" stroke-width="1.5"/><path d="M70 24 L110 24 L104 86 L90 104 L76 86 Z" fill="#9C3BBF" stroke="#33083F" stroke-width="2"/><circle cx="90" cy="54" r="16" fill="url(#c)" stroke="#33083F" stroke-width="2"/><path d="M90 42 L94 54 L90 66 L86 54 Z" fill="#FFFFFF" opacity="0.85"/><ellipse cx="76" cy="36" rx="4" ry="4" fill="#FF5E5E"/><ellipse cx="104" cy="36" rx="4" ry="4" fill="#FF5E5E"/><path d="M62 96 L54 118 L70 108 Z" fill="#E58AF5" stroke="#5C1478" stroke-width="1.5"/><path d="M118 96 L126 118 L110 108 Z" fill="#E58AF5" stroke="#5C1478" stroke-width="1.5"/><path d="M84 100 L90 126 L96 100 Z" fill="#FF9DF5" stroke="#5C1478" stroke-width="1.5"/></svg>`,
+player_bullet:`<svg width="10" height="24" viewBox="0 0 10 24" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="pb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF6C9"/><stop offset="0.5" stop-color="#FFD54A"/><stop offset="1" stop-color="#FF9E3D"/></linearGradient></defs><ellipse cx="5" cy="12" rx="4" ry="11" fill="url(#pb)"/><ellipse cx="5" cy="9" rx="1.6" ry="4" fill="#FFFDF2"/></svg>`,
+enemy_bullet:`<svg width="12" height="12" viewBox="0 0 12 12" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="eb" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#E7B6FF"/><stop offset="0.6" stop-color="#9B30D6"/><stop offset="1" stop-color="#3A0B54"/></radialGradient></defs><circle cx="6" cy="6" r="5.5" fill="url(#eb)"/><circle cx="6" cy="5" r="1.8" fill="#F5E0FF"/></svg>`,
+powerup_red:`<svg width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="pr" cx="0.5" cy="0.4" r="0.6"><stop offset="0" stop-color="#FFC9C9"/><stop offset="0.6" stop-color="#E23B3B"/><stop offset="1" stop-color="#5A0E0E"/></radialGradient></defs><path d="M14 2 L26 14 L14 26 L2 14 Z" fill="url(#pr)" stroke="#D4AF37" stroke-width="1.5"/><text x="14" y="19" font-size="13" font-family="serif" fill="#FFF6C9" text-anchor="middle" font-weight="bold">S</text></svg>`,
+powerup_blue:`<svg width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="pu" cx="0.5" cy="0.4" r="0.6"><stop offset="0" stop-color="#C9E4FF"/><stop offset="0.6" stop-color="#2F7FD8"/><stop offset="1" stop-color="#0B2B54"/></radialGradient></defs><path d="M14 2 L26 14 L14 26 L2 14 Z" fill="url(#pu)" stroke="#D4AF37" stroke-width="1.5"/><text x="14" y="19" font-size="13" font-family="serif" fill="#EFF8FF" text-anchor="middle" font-weight="bold">L</text></svg>`,
+powerup_power:`<svg width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="pp" cx="0.5" cy="0.4" r="0.6"><stop offset="0" stop-color="#FFF6C9"/><stop offset="0.6" stop-color="#D4AF37"/><stop offset="1" stop-color="#5A4409"/></radialGradient></defs><path d="M14 2 L17 11 L26 11 L19 17 L22 26 L14 20 L6 26 L9 17 L2 11 L11 11 Z" fill="url(#pp)" stroke="#3a2c05" stroke-width="1"/></svg>`,
+powerup_life:`<svg width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="pl" cx="0.5" cy="0.4" r="0.6"><stop offset="0" stop-color="#FFD6E0"/><stop offset="0.6" stop-color="#E23B6B"/><stop offset="1" stop-color="#5A0E24"/></radialGradient></defs><path d="M14 2 L26 14 L14 26 L2 14 Z" fill="url(#pl)" stroke="#D4AF37" stroke-width="1.5"/><circle cx="14" cy="9" r="3" fill="none" stroke="#FFF6C9" stroke-width="2"/><line x1="14" y1="12" x2="14" y2="21" stroke="#FFF6C9" stroke-width="2"/><line x1="10" y1="16" x2="18" y2="16" stroke="#FFF6C9" stroke-width="2"/></svg>`,
+powerup_shield:`<svg width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="ps" cx="0.5" cy="0.4" r="0.6"><stop offset="0" stop-color="#D9F4FF"/><stop offset="0.6" stop-color="#3BA7E2"/><stop offset="1" stop-color="#0E2C5A"/></radialGradient></defs><path d="M14 2 L26 14 L14 26 L2 14 Z" fill="url(#ps)" stroke="#8FE3FF" stroke-width="1.5"/><circle cx="14" cy="14" r="6.5" fill="none" stroke="#EFFBFF" stroke-width="2"/><circle cx="14" cy="14" r="2.4" fill="#EFFBFF"/></svg>`,
+powerup_bomb:`<svg width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="pbm" cx="0.5" cy="0.4" r="0.6"><stop offset="0" stop-color="#FFE9B8"/><stop offset="0.6" stop-color="#D4832B"/><stop offset="1" stop-color="#5A330E"/></radialGradient></defs><path d="M14 2 L26 14 L14 26 L2 14 Z" fill="url(#pbm)" stroke="#D4AF37" stroke-width="1.5"/><circle cx="14" cy="16" r="5.5" fill="#2A1A05" stroke="#FFF6C9" stroke-width="1.5"/><path d="M14 10 C14 7 17 7 18 5" stroke="#FFF6C9" stroke-width="2" fill="none"/><circle cx="18.6" cy="4.4" r="1.6" fill="#FFD54A"/></svg>`,
+};
+const IMGS = {};
+if (IS_BROWSER) {
+  for (const k in SVGS) {
+    const im = new Image();
+    im.src = 'data:image/svg+xml;utf8,' + encodeURIComponent(SVGS[k]);
+    IMGS[k] = im;
+  }
+}
+const TINT_CACHE = {};
+function tintedSprite(key, tint, alpha) {
+  const a = alpha === undefined ? 0.45 : alpha;
+  const ck = key + '|' + tint + '|' + a;
+  if (TINT_CACHE[ck]) return TINT_CACHE[ck];
+  const im = IMGS[key];
+  if (!im || !im.complete || !im.naturalWidth) return im;
+  const c = document.createElement('canvas');
+  c.width = im.naturalWidth; c.height = im.naturalHeight;
+  const x = c.getContext('2d');
+  x.drawImage(im, 0, 0);
+  x.globalCompositeOperation = 'source-atop';
+  x.globalAlpha = a;
+  x.fillStyle = tint;
+  x.fillRect(0, 0, c.width, c.height);
+  TINT_CACHE[ck] = c;
+  return c;
+}
+
+/* ============================== INPUT ============================== */
+const input = { left:false, right:false, up:false, down:false, fire:false, bomb:false,
+                muteToggle:false, pauseToggle:false, lead:false, touchActive:false, touchDX:0, touchDY:0 };
+let prevFire=false, prevBomb=false, prevLeft=false, prevRight=false, prevMute=false, prevPause=false;
+let prevUp=false, prevDown=false, prevLead=false;
+let firePressed=false, bombPressed=false, leftPressed=false, rightPressed=false, pausePressed=false;
+let upPressed=false, downPressed=false, leadPressed=false;
+const touchPulse = [];   // one-shot touch inputs: consumed after exactly one frame
+
+/* ============================== GAME STATE ============================== */
+const G = {};
+function makePlayer(shipIdx) {
+  const s = SHIPS[shipIdx] || SHIPS[0];
+  return { ship: s, x: W/2, y: H-90,
+           hp: s.max_health, maxHp: s.max_health,
+           bombs: s.bombs, speed: s.speed, fireRate: s.fire_rate,
+           style: s.style, baseDmg: s.bullet_damage,
+           weapon: 'red', power: 1, shield: 1,
+           fireCd: 0, inv: false, invT: 0, r: 9, formFlash: 0 };  // r 9: hurtbox smaller than sprite (fair-arcade rule)
+}
+function resetGame(toTitle) {
+  G.state = toTitle === false ? 'OPENING' : 'TITLE';
+  G.shipIndex = G.shipIndex || 0;
+  G.stageIndex = 0;
+  G.cfg = STAGES[0];
+  G.stageScore = 0;
+  G.totalScore = 0;
+  G.spawnTimer = 0;
+  G.bossActive = false;
+  G.introT = 0;
+  G.time = 0;
+  G.banner = '';
+  G.bannerVisible = false;
+  G.enemies = [];
+  G.pBullets = [];
+  G.eBullets = [];
+  G.powerups = [];
+  G.particles = [];
+  G.boss = null;
+  G.shake = 0;
+  G.paused = false;
+  G.mode = 'story';
+  G.modeSel = G.modeSel || 0;        // 0 = story, 1 = swarm (remembered)
+  G.swarmT = 0;
+  G.nextStage = 0;
+  G.initials = [0, 0, 0];
+  G.slot = 0;
+  G.pendingScore = null;
+  G.globalScores = G.globalScores || null;
+  G.toast = '';        // form-change toast
+  G.toastT = 0;
+  G.player = makePlayer(G.shipIndex);
+  G.playerAlive = true;
+  G.playerVisible = false;
+  if (G.state === 'OPENING'){
+    G.banner = OPENING.join('\n') + '\n\n[ Press SPACE / tap to begin ]\n[ ESC / tap lower-left — change ship ]';
+    G.bannerVisible = true;
+  }
+  music('main');
+}
+
+/* ============================== STARFIELD (3-layer parallax, Cosmic Strike update) ============================== */
+const stars = [];
+(function initStars(){
+  const layers = [
+    { n: 42, spMin: 18,  spMax: 55,  szMin: 0.6, szMax: 1.3, a: 0.35 },  // far
+    { n: 34, spMin: 70,  spMax: 130, szMin: 1.0, szMax: 2.2, a: 0.65 },  // mid
+    { n: 20, spMin: 150, spMax: 250, szMin: 1.8, szMax: 3.2, a: 1.0  },  // near
+  ];
+  for (const L of layers)
+    for (let i = 0; i < L.n; i++) stars.push({
+      x: Math.random()*W, y: Math.random()*H,
+      speed: L.spMin + Math.random()*(L.spMax - L.spMin),
+      size: L.szMin + Math.random()*(L.szMax - L.szMin),
+      alpha: L.a, gold: Math.random() < 0.3 });
+})();
+function updateStars(dt){
+  for (const s of stars){ s.y += s.speed*dt; if (s.y > H){ s.y = 0; s.x = Math.random()*W; } }
+}
+
+/* ============================== AUDIO: SFX + MUSIC ============================== */
+let AC = null, sfxOn = true, lastShotSfx = 0, musicMuted = false;
+function ac(){ if (!IS_BROWSER) return null;
+  if (!AC){ try { AC = new (window.AudioContext||window.webkitAudioContext)(); } catch(e){ sfxOn=false; } }
+  return AC; }
+function sfx(kind){
+  if (!IS_BROWSER || !sfxOn) return;
+  const a = ac(); if (!a) return;
+  if (a.state === 'suspended') a.resume();
+  const t = a.currentTime;
+  if (kind === 'shoot'){ if (t - lastShotSfx < 0.09) return; lastShotSfx = t; }
+  const o = a.createOscillator(), g = a.createGain();
+  o.connect(g); g.connect(a.destination);
+  switch(kind){
+    case 'shoot':   o.type='square';   o.frequency.setValueAtTime(880,t); o.frequency.exponentialRampToValueAtTime(440,t+0.07); g.gain.setValueAtTime(0.025,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.08); o.start(t); o.stop(t+0.09); break;
+    case 'boom':    o.type='sawtooth'; o.frequency.setValueAtTime(220,t); o.frequency.exponentialRampToValueAtTime(40,t+0.3);  g.gain.setValueAtTime(0.11,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.32); o.start(t); o.stop(t+0.33); break;
+    case 'bigboom': o.type='sawtooth'; o.frequency.setValueAtTime(160,t); o.frequency.exponentialRampToValueAtTime(28,t+0.8);  g.gain.setValueAtTime(0.2,t);  g.gain.exponentialRampToValueAtTime(0.001,t+0.85); o.start(t); o.stop(t+0.86); break;
+    case 'hit':     o.type='triangle'; o.frequency.setValueAtTime(200,t); o.frequency.exponentialRampToValueAtTime(90,t+0.15); g.gain.setValueAtTime(0.1,t);  g.gain.exponentialRampToValueAtTime(0.001,t+0.16); o.start(t); o.stop(t+0.17); break;
+    case 'power':   o.type='sine';     o.frequency.setValueAtTime(520,t); o.frequency.exponentialRampToValueAtTime(1040,t+0.18); g.gain.setValueAtTime(0.07,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.2); o.start(t); o.stop(t+0.21); break;
+    case 'life':    o.type='sine';     o.frequency.setValueAtTime(660,t); o.frequency.exponentialRampToValueAtTime(990,t+0.25); g.gain.setValueAtTime(0.08,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.28); o.start(t); o.stop(t+0.29); break;
+    case 'bomb':    o.type='sawtooth'; o.frequency.setValueAtTime(300,t); o.frequency.exponentialRampToValueAtTime(30,t+0.5);  g.gain.setValueAtTime(0.17,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.55); o.start(t); o.stop(t+0.56); break;
+    case 'select':  o.type='square';   o.frequency.setValueAtTime(440,t); o.frequency.setValueAtTime(660,t+0.06); g.gain.setValueAtTime(0.05,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.14); o.start(t); o.stop(t+0.15); break;
+  }
+}
+/* Procedural chiptune music: main (heroic loop), boss (tense loop), victory (sting). */
+const NOTE = n => 440 * Math.pow(2, (n-69)/12);  // MIDI -> Hz
+const MUSIC_PATTERNS = {
+  main: { bpm: 104, loop: true,
+    bass:  [45,45,52,45, 48,48,52,45, 45,45,52,45, 50,50,52,55],       // A2-ish heroic
+    lead:  [69,0,72,76, 0,74,72,0, 69,0,72,76, 79,0,77,74] },
+  boss: { bpm: 148, loop: true,
+    bass:  [41,41,41,47, 41,41,41,46, 41,41,41,47, 41,44,46,47],
+    lead:  [0,65,0,68, 0,65,71,0, 0,65,0,68, 72,0,71,68] },
+  victory: { bpm: 120, loop: false,
+    bass:  [45,52,57,57],
+    lead:  [69,73,76,81] },
+};
+const Music = { current: null, timer: null, step: 0, nextT: 0 };
+function music(kind){
+  if (!IS_BROWSER || musicMuted) { Music.current = kind; return; }
+  if (Music.current === kind && Music.timer) return;
+  Music.current = kind;
+  const a = ac(); if (!a) return;
+  stopMusicTimer();
+  const pat = MUSIC_PATTERNS[kind];
+  if (!pat) return;
+  Music.step = 0;
+  Music.nextT = a.currentTime + 0.08;
+  const stepDur = 60 / pat.bpm / 2;   // 8th notes
+  Music.timer = setInterval(() => {
+    const now = a.currentTime;
+    while (Music.nextT < now + 0.12){
+      const i = Music.step % pat.bass.length;
+      scheduleNote(a, pat.bass[i], Music.nextT, stepDur*0.9, 'triangle', 0.05);
+      if (pat.lead[i]) scheduleNote(a, pat.lead[i], Music.nextT, stepDur*0.8, 'square', 0.028);
+      Music.step++;
+      Music.nextT += stepDur;
+      if (!pat.loop && Music.step >= pat.bass.length){ stopMusicTimer(); return; }
+    }
+  }, 40);
+}
+function scheduleNote(a, midi, t, dur, type, vol){
+  if (!midi) return;
+  const o = a.createOscillator(), g = a.createGain();
+  o.type = type; o.frequency.value = NOTE(midi);
+  o.connect(g); g.connect(a.destination);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.linearRampToValueAtTime(vol, t + 0.02);
+  g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  o.start(t); o.stop(t + dur + 0.02);
+}
+function stopMusicTimer(){ if (Music.timer){ clearInterval(Music.timer); Music.timer = null; } }
+function toggleMute(){
+  musicMuted = !musicMuted;
+  if (musicMuted) stopMusicTimer();
+  else { const cur = Music.current; Music.current = null; music(cur || 'main'); }
+}
+
+/* ============================== PARTICLES ============================== */
+function explode(x, y, color, n, big){
+  for (let i = 0; i < n; i++){
+    const a = Math.random()*TAU, sp = (big?60:30) + Math.random()*(big?260:150);
+    G.particles.push({ x, y, vx: Math.cos(a)*sp, vy: Math.sin(a)*sp,
+      life: 0.35 + Math.random()*(big?0.7:0.35), t: 0, size: 1.5+Math.random()*(big?4:2.5), color });
+  }
+}
+function updateParticles(dt){
+  for (let i = G.particles.length-1; i >= 0; i--){
+    const p = G.particles[i];
+    p.t += dt; p.x += p.vx*dt; p.y += p.vy*dt; p.vx *= 0.98; p.vy *= 0.98;
+    if (p.t >= p.life) G.particles.splice(i,1);
+  }
+}
+
+/* ============================== STAGE FLOW ============================== */
+function launchCampaign(){
+  G.player = makePlayer(G.shipIndex);
+  G.playerAlive = true;
+  G.totalScore = 0;
+  G.mode = 'story';
+  G.nextStage = 0;
+  G.swarmT = 0;
+  G.state = 'OPENING';
+  G.banner = OPENING.join('\n') + '\n\n[ Press SPACE / tap to begin ]\n[ ESC / tap lower-left — change ship ]';
+  G.bannerVisible = true;
+  music('main');
+}
+function beginStage(idx){
+  G.stageIndex = idx;
+  G.cfg = STAGES[Math.min(idx, STAGES.length-1)];
+  G.stageScore = 0;
+  G.bossActive = false;
+  G.boss = null;
+  G.enemies.length = 0;
+  G.eBullets.length = 0;
+  G.pBullets.length = 0;
+  G.playerVisible = true;
+  const b = BRIEFINGS[G.cfg.num] || {quote:'',brief:''};
+  G.banner = 'STAGE ' + G.cfg.num + ' / 9\n' + G.cfg.name.toUpperCase() +
+             '\n' + G.cfg.subtitle + '\n\n' + b.quote + '\n\n' + b.brief +
+             '\n\n[ Press SPACE / tap to engage ]';
+  G.bannerVisible = true;
+  G.state = 'BRIEFING';
+  music('main');
+}
+function startPlaying(){
+  G.state = 'PLAYING';
+  G.bannerVisible = false;
+  G.spawnTimer = 0.6;
+  G.waveTimer = 4.0;     // scripted scout formation (wave-manager timeline)
+  G.bomberTimer = 9.0;   // heavy bomber waves
+}
+function startBossIntro(){
+  G.bossActive = true;
+  G.state = 'BOSS_INTRO';
+  G.introT = 2.4;
+  for (const e of G.enemies) explode(e.x, e.y, G.cfg.tint, 10);
+  G.enemies.length = 0;
+  G.banner = G.cfg.boss_name + '\n\n' + (BOSS_LINES[G.cfg.num] || '');
+  G.bannerVisible = true;
+  music('boss');
+}
+function spawnBossNow(){
+  if (G.state !== 'BOSS_INTRO') return;
+  G.bannerVisible = false;
+  const hull = Math.round(G.cfg.boss_health * BOSS_HULL / 10) * 10;   // BATTLE MATH #2
+  G.boss = {
+    x: W/2, y: -90, hp: hull, maxHp: hull,
+    points: G.cfg.boss_points, patterns: G.cfg.boss_patterns,
+    fireRate: G.cfg.boss_fire_rate, bulletSpeed: G.cfg.boss_bullet_speed,
+    moveSpeed: G.cfg.boss_move_speed,
+    phase: 1, time: 0, fireTimer: 0, spiralAngle: 0,
+    patternIdx: 0, patternSwitch: 3.5, entering: true, targetY: 130, dir: 1,
+    flash: 0, r: 58 };
+  G.state = 'PLAYING';
+}
+function onBossDefeated(){
+  const b = G.boss;
+  G.totalScore += b.points;
+  explode(b.x, b.y, '#FFD54A', 80, true);
+  explode(b.x, b.y, G.cfg.tint, 60, true);
+  G.shake = 0.6;
+  sfx('bigboom');
+  G.boss = null;
+  G.bossActive = false;
+  G.eBullets.length = 0;
+  if (G.stageIndex + 1 >= STAGES.length){
+    G.state = 'VICTORY';
+    G.banner = VICTORY_TEXT.join('\n') + '\n\nFINAL SCORE: ' + G.totalScore +
+               '\n\n[ SPACE / tap — record your score ]';
+    G.bannerVisible = true;
+    music('victory');
+  } else {
+    // BATTLE MATH #5: resources rise with the danger — +1 life, +1 bomb, +1 shield
+    if (G.playerAlive){
+      G.player.hp = Math.min(G.player.hp + 1, G.player.maxHp + 2);
+      G.player.bombs = Math.min(G.player.bombs + 1, 9);
+      G.player.shield = Math.min(G.player.shield + 1, 3);
+    }
+    G.state = 'STAGE_CLEAR';
+    const nextNum = G.cfg.num + 1;
+    const act = INTERLUDES[nextNum] ? '\n\n' + INTERLUDES[nextNum] : '';
+    G.banner = 'STAGE ' + G.cfg.num + ' CLEARED\n' + G.cfg.name.toUpperCase() + ' FALL\n\n' +
+               (CLEAR_LINES[G.cfg.num] || '') + act +
+               '\n\n+1 LIFE  ·  +1 BOMB  ·  +1 SHIELD\n\nSCORE: ' + G.totalScore +
+               '\n\n[ Press SPACE / tap — star map ]';
+    G.bannerVisible = true;
+    music('main');
+  }
+}
+function onPlayerDied(){
+  if (G.state === 'VICTORY') return;
+  explode(G.player.x, G.player.y, '#FFD54A', 50, true);
+  G.shake = 0.5;
+  sfx('bigboom');
+  G.playerAlive = false;
+  G.playerVisible = false;
+  G.state = 'DEFEAT';
+  G.banner = 'ASCENSION DENIED\n\nStage ' + G.cfg.num + ' — ' + G.cfg.name + '\n\n' +
+             DEFEAT_TAG + '\n\nSCORE: ' + G.totalScore +
+             '\n\n[ SPACE / tap — retry ]\n[ ESC / tap bottom — change ship ]\n[ L / tap top — record score ]';
+  G.bannerVisible = true;
+}
+
+/* ============================== SPAWNING ============================== */
+function spawnEnemyAt(x, kind){
+  const c = G.cfg;
+  const bomber = kind === 'bomber';
+  const scout = kind === 'scout';
+  G.enemies.push({
+    x, y: -45, baseX: x, kind: kind || 'normal',
+    hp: bomber ? Math.ceil(c.enemy_health * 2.2) : (scout ? Math.max(1, Math.ceil(c.enemy_health * 0.75)) : c.enemy_health),
+    speed: bomber ? c.enemy_speed * 0.55 : (scout ? c.enemy_speed * 1.15 : c.enemy_speed),
+    points: bomber ? Math.round(c.enemy_points * 2.5) : c.enemy_points,
+    fireInterval: bomber ? c.enemy_fire_interval * 1.35 : c.enemy_fire_interval,
+    bulletSpeed: c.enemy_bullet_speed,
+    move: bomber ? 'dive' : c.enemy_move,
+    dropChance: bomber ? Math.min(1, c.drop_chance + 0.16) : Math.min(1, c.drop_chance + 0.04),  // BATTLE MATH #4
+    time: 0, fireTimer: c.enemy_fire_interval * (0.4 + Math.random()*0.6),
+    phaseOff: Math.random()*TAU, evadeDir: 1, flash: 0,
+    r: bomber ? 27 : 20, scale: bomber ? 1.45 : (scout ? 0.9 : 1) });
+}
+function spawnEnemy(){
+  spawnEnemyAt(45 + Math.random()*(W-90), 'normal');
+}
+function spawnScoutWave(){
+  // Cosmic Strike wave-manager: scripted formation at 20% / 50% / 80% width
+  for (const ratio of [0.2, 0.5, 0.8]) spawnEnemyAt(W * ratio, 'scout');
+}
+function spawnBomberWave(){
+  const count = G.cfg.num >= 4 ? 2 : 1;
+  const slots = count === 2 ? [0.3, 0.7] : [0.35 + Math.random()*0.3];
+  for (const ratio of slots) spawnEnemyAt(W * ratio, 'bomber');
+}
+function spawnPowerup(x, y, kind){
+  G.powerups.push({ x, y, kind, fallSpeed: 90, r: 15 });
+}
+function enemyKilled(e){
+  G.stageScore += e.points;
+  G.totalScore += e.points;
+  explode(e.x, e.y, G.cfg.tint, e.kind === 'bomber' ? 26 : 14, e.kind === 'bomber');
+  G.shake = Math.max(G.shake, e.kind === 'bomber' ? 0.18 : 0.07);   // kill juice
+  sfx('boom');
+  if (Math.random() < e.dropChance){
+    const roll = Math.random();
+    const kind = roll < 0.28 ? 'red' : (roll < 0.52 ? 'blue' : (roll < 0.68 ? 'power' :
+                 (roll < 0.80 ? 'bomb' : (roll < 0.92 ? 'shield' : 'life'))));
+    spawnPowerup(e.x, e.y, kind);
+  }
+}
+
+/* ============================== PLAYER ============================== */
+function spawnPlayerBullet(x, y, vx, vy, dmg, sc){
+  // BATTLE MATH #1: damage scales with power level
+  G.pBullets.push({ x, y, vx, vy,
+    dmg: (dmg + (G.player.weapon === 'blue' ? 1 : 0)) * G.player.power,
+    color: G.player.weapon, r: 6 * (sc || 1), scale: sc || 1 });
+}
+function shootStyle(p){
+  if (p.style === 'twin_spread'){
+    const angles = p.power === 1 ? [-6,6] : (p.power === 2 ? [-10,0,10] : [-16,-5,5,16]);
+    for (const a of angles){
+      const rad = (a - 90) * D2R;
+      spawnPlayerBullet(p.x, p.y-30, Math.cos(rad)*640, Math.sin(rad)*640, p.baseDmg, 1);
+    }
+  } else if (p.style === 'heavy_cannon'){
+    const offs = p.power === 1 ? [0] : (p.power === 2 ? [-14,14] : [-18,0,18]);
+    for (const o of offs)
+      spawnPlayerBullet(p.x+o, p.y-30, 0, -560, p.baseDmg+1, 1.6);
+  } else { // rapid_stream
+    const offs = p.power === 1 ? [0] : (p.power === 2 ? [-8,8] : [-12,0,12]);
+    for (const o of offs)
+      spawnPlayerBullet(p.x+o, p.y-30, 0, -780, p.baseDmg, 0.8);
+  }
+}
+function useBomb(){
+  const p = G.player;
+  if (p.bombs <= 0) return;
+  p.bombs--;
+  G.eBullets.length = 0;
+  for (let i = G.enemies.length-1; i >= 0; i--){
+    const e = G.enemies[i];
+    e.hp -= 8;
+    if (e.hp <= 0){ enemyKilled(e); G.enemies.splice(i,1); }
+    else e.flash = 0.12;
+  }
+  if (G.boss && !G.boss.entering) bossTakeDamage(10);
+  G.shake = 0.4;
+  explode(p.x, p.y-100, '#8FE3FF', 60, true);
+  sfx('bomb');
+}
+function collectPowerup(kind){
+  const p = G.player;
+  const before = p.power;
+  if (kind === 'red' || kind === 'blue'){
+    if (p.weapon === kind) p.power = Math.min(p.power+1, 3);
+    else p.weapon = kind;                     // switching keeps power (Sunder rules)
+    sfx('power');
+  } else if (kind === 'power'){
+    p.power = Math.min(p.power+1, 3);
+    sfx('power');
+  } else if (kind === 'life'){
+    p.hp = Math.min(p.hp + 1, p.maxHp + 2);   // overheal cap +2
+    sfx('life');
+  } else if (kind === 'shield'){
+    p.shield = Math.min(p.shield + 1, 3);
+    sfx('life');
+  } else if (kind === 'bomb'){
+    p.bombs = Math.min(p.bombs + 1, 9);
+    sfx('power');
+  }
+  if (p.power !== before){
+    p.formFlash = 0.4;
+    const fname = p.ship.form_names[Math.min(p.power-1, p.ship.form_names.length-1)];
+    G.toast = 'FORM: ' + fname.toUpperCase();
+    G.toastT = 2.2;
+    explode(p.x, p.y, p.ship.accent, 24);
+  }
+}
+function playerTakeDamage(amount){
+  const p = G.player;
+  if (p.inv) return;
+  const dmg = amount || 1;
+  if (p.shield > 0){
+    // shield absorbs the ENTIRE hit: no hull loss, no power loss
+    p.shield -= 1;
+    p.inv = true; p.invT = 0.8;
+    explode(p.x, p.y, '#8FE3FF', 18);
+    sfx('hit');
+    G.shake = Math.max(G.shake, 0.15);
+    return;
+  }
+  p.hp -= dmg;
+  if (p.power > 1){
+    p.power -= 1;   // form de-evolves
+    const fname = p.ship.form_names[Math.min(p.power-1, p.ship.form_names.length-1)];
+    G.toast = 'FORM: ' + fname.toUpperCase();
+    G.toastT = 1.6;
+  }
+  sfx('hit');
+  G.shake = Math.max(G.shake, 0.25);
+  if (p.hp <= 0){ onPlayerDied(); }
+  else { p.inv = true; p.invT = 1.15; explode(p.x, p.y, '#FFD54A', 20); }
+}
+function updatePlayer(dt){
+  const p = G.player;
+  if (!G.playerAlive) return;
+  let dx = (input.right?1:0) - (input.left?1:0);
+  let dy = (input.down?1:0) - (input.up?1:0);
+  if (input.touchActive){
+    p.x += input.touchDX; p.y += input.touchDY;
+    input.touchDX = 0; input.touchDY = 0;
+  } else {
+    const len = Math.hypot(dx, dy);
+    if (len > 1){ dx /= len; dy /= len; }
+    p.x += dx * p.speed * dt;
+    p.y += dy * p.speed * dt;
+  }
+  p.x = Math.max(24, Math.min(W-24, p.x));
+  p.y = Math.max(24, Math.min(H-24, p.y));
+
+  if (p.inv){ p.invT -= dt; if (p.invT <= 0) p.inv = false; }
+  if (p.formFlash > 0) p.formFlash -= dt;
+
+  // engine trail (Cosmic Strike juice): gold->ember thruster particles
+  if (G.playerVisible && Math.random() < 0.85)
+    G.particles.push({
+      x: p.x + (Math.random()-0.5)*7, y: p.y + 30,
+      vx: (Math.random()-0.5)*35, vy: 130 + Math.random()*90,
+      life: 0.25 + Math.random()*0.18, t: 0,
+      size: 1.4 + Math.random()*2.1,
+      color: Math.random() < 0.55 ? '#FFD54A' : '#FF5E2E' });
+
+  p.fireCd -= dt;
+  const wantFire = input.fire || input.touchActive;
+  if (wantFire && p.fireCd <= 0 && (G.state === 'PLAYING' || G.state === 'BOSS_INTRO')){
+    shootStyle(p);
+    p.fireCd = p.fireRate * (p.weapon === 'blue' ? 0.85 : 1.0);
+    sfx('shoot');
+  }
+  if (bombPressed && (G.state === 'PLAYING' || G.state === 'BOSS_INTRO')) useBomb();
+}
+
+/* ============================== ENEMIES ============================== */
+function updateEnemies(dt){
+  for (let i = G.enemies.length-1; i >= 0; i--){
+    const e = G.enemies[i];
+    const prevTime = e.time;
+    e.time += dt;
+    if (e.flash > 0) e.flash -= dt;
+    switch (e.move){
+      case 'dive':   e.y += e.speed*dt; break;
+      case 'weave':  e.y += e.speed*dt; e.x = e.baseX + Math.sin(e.time*2 + e.phaseOff)*90; break;
+      case 'rush':   e.y += e.speed*1.4*dt; break;
+      case 'zigzag': e.y += e.speed*dt; e.x += Math.sin(e.time*6 + e.phaseOff)*140*dt; break;
+      case 'circle': e.y += e.speed*0.7*dt; e.x = e.baseX + Math.cos(e.time*2.5 + e.phaseOff)*110; break;
+      case 'formation': e.y += e.speed*dt; e.x = e.baseX + Math.sin(e.time*1.2)*40; break;
+      case 'evade':
+        e.y += e.speed*dt;
+        if (Math.floor(e.time/0.8) !== Math.floor(prevTime/0.8)) e.evadeDir *= -1;
+        e.x += e.evadeDir * e.speed * 0.8 * dt;
+        e.x = Math.max(30, Math.min(W-30, e.x));
+        break;
+    }
+    e.fireTimer -= dt;
+    if (e.fireTimer <= 0){
+      e.fireTimer = e.fireInterval;
+      let dirX = 0, dirY = 1;
+      if (G.playerAlive){
+        const ddx = G.player.x - e.x, ddy = G.player.y - e.y;
+        const L = Math.hypot(ddx, ddy) || 1;
+        dirX = ddx/L; dirY = ddy/L;
+      }
+      if (e.kind === 'bomber'){
+        // heavy bomber: 3-way aimed spread (still weaker than a boss: dmg 1)
+        const base = Math.atan2(dirY, dirX);
+        for (const off of [-18, 0, 18]){
+          const a = base + off*D2R;
+          G.eBullets.push({ x: e.x, y: e.y+26, vx: Math.cos(a)*e.bulletSpeed, vy: Math.sin(a)*e.bulletSpeed, r: 6, dmg: 1 });
+        }
+      } else {
+        G.eBullets.push({ x: e.x, y: e.y+22, vx: dirX*e.bulletSpeed, vy: dirY*e.bulletSpeed, r: 6, dmg: 1 });
+        if (e.move === 'formation' || e.move === 'rush'){
+          const a = Math.atan2(dirY, dirX) + 12*D2R;
+          G.eBullets.push({ x: e.x, y: e.y+22, vx: Math.cos(a)*e.bulletSpeed, vy: Math.sin(a)*e.bulletSpeed, r: 6, dmg: 1 });
+        }
+      }
+    }
+    if (e.y > H+50 || e.x < -60 || e.x > W+60) G.enemies.splice(i,1);
+  }
+}
+
+/* ============================== BOSS ============================== */
+function bossSpawnBullet(x, y, vx, vy){
+  // BATTLE MATH #3: boss shots outclass enemy shots in the late campaign
+  G.eBullets.push({ x, y, vx, vy, r: 6, dmg: (G.mode !== 'swarm' && G.cfg.num >= 5) ? 2 : 1 });
+}
+function bossFirePattern(b){
+  const spawn = (vx, vy) => bossSpawnBullet(b.x, b.y+20, vx, vy);
+  const pat = b.patterns.length ? b.patterns[b.patternIdx % b.patterns.length] : 'radial_burst';
+  const s = b.bulletSpeed;
+  switch (pat){
+    case 'aimed_volley': {
+      if (!G.playerAlive) break;
+      const base = Math.atan2(G.player.y - b.y, G.player.x - b.x);
+      for (let i = -1; i <= 1; i++)
+        spawn(Math.cos(base + 14*i*D2R)*s, Math.sin(base + 14*i*D2R)*s);
+      break; }
+    case 'spread_fan': {
+      const count = 5 + b.phase*2;
+      for (let i = 0; i < count; i++){
+        const t = i/(count-1) - 0.5;
+        const a = 90*D2R + 70*D2R*t;
+        spawn(Math.cos(a)*s, Math.sin(a)*s);
+      }
+      break; }
+    case 'horizontal_sweep': {
+      const side = (b.time % 2) < 1 ? 1 : -1;
+      for (let i = 0; i < 6; i++) spawn(side*s, 40 + i*25);
+      break; }
+    case 'radial_burst': {
+      const count = 14 + b.phase*3;
+      for (let i = 0; i < count; i++){
+        const a = TAU*i/count;
+        spawn(Math.cos(a)*s*0.85, Math.sin(a)*s*0.85);
+      }
+      break; }
+    case 'cross_ring': {
+      for (let i = 0; i < 12; i++){
+        const a = TAU*i/12;
+        spawn(Math.cos(a)*s*0.85, Math.sin(a)*s*0.85);
+      }
+      for (const deg of [0,90,180,270]){
+        const a = deg*D2R + b.time;
+        spawn(Math.cos(a)*s, Math.sin(a)*s);
+      }
+      break; }
+    case 'spiral': {
+      b.spiralAngle += 0.4;
+      for (let i = 0; i < 3; i++){
+        const a = b.spiralAngle + TAU*i/3;
+        spawn(Math.cos(a)*s, Math.sin(a)*s);
+      }
+      break; }
+    case 'wall_barrage': {
+      const gap = Math.floor(Math.random()*6);
+      for (let i = 0; i < 8; i++){
+        if (i === gap || i === gap+1) continue;
+        bossSpawnBullet(60 + i*50, b.y+20, 0, s);
+      }
+      break; }
+    case 'dual_spiral': {
+      b.spiralAngle += 0.5;
+      for (let i = 0; i < 2; i++){
+        const a = (i === 0 ? b.spiralAngle : -b.spiralAngle) + Math.PI*i;
+        spawn(Math.cos(a)*s, Math.sin(a)*s);
+      }
+      break; }
+    default: {
+      for (let i = 0; i < 14; i++){
+        const a = TAU*i/14;
+        spawn(Math.cos(a)*s*0.85, Math.sin(a)*s*0.85);
+      }
+    }
+  }
+  b.fireTimer = b.fireRate * (1 - b.phase*0.12);
+}
+function bossTakeDamage(dmg){
+  const b = G.boss;
+  if (!b || b.entering) return;
+  b.hp -= dmg;
+  b.flash = 0.1;
+  if (b.hp <= 0) onBossDefeated();
+}
+function updateBoss(dt){
+  const b = G.boss;
+  if (!b) return;
+  b.time += dt;
+  if (b.flash > 0) b.flash -= dt;
+  if (b.entering){
+    b.y += 80*dt;
+    if (b.y >= b.targetY){ b.y = b.targetY; b.entering = false; }
+    return;
+  }
+  const pct = b.hp / b.maxHp;
+  b.phase = pct <= 0.33 ? 3 : (pct <= 0.66 ? 2 : 1);
+  const sp = b.moveSpeed + b.phase*25;
+  // phase 3: rapid-dash strafing (Cosmic Strike boss PHASE_TWO behavior)
+  const dashMult = b.phase === 3 ? 1 + Math.abs(Math.cos(b.time*5)) * 1.2 : 1;
+  b.x += b.dir * sp * dashMult * dt;
+  if (b.x < 100){ b.x = 100; b.dir = 1; }
+  else if (b.x > W-100){ b.x = W-100; b.dir = -1; }
+
+  b.patternSwitch -= dt;
+  if (b.patternSwitch <= 0){
+    b.patternIdx = (b.patternIdx + 1) % Math.max(b.patterns.length, 1);
+    b.patternSwitch = 3.5;
+  }
+  b.fireTimer -= dt;
+  if (b.fireTimer <= 0) bossFirePattern(b);
+}
+
+/* ============================== BULLETS / POWERUPS / COLLISIONS ============================== */
+function updateBullets(dt){
+  for (let i = G.pBullets.length-1; i >= 0; i--){
+    const p = G.pBullets[i];
+    p.x += p.vx*dt; p.y += p.vy*dt;
+    if (p.y < -30 || p.y > H+30 || p.x < -30 || p.x > W+30){ G.pBullets.splice(i,1); continue; }
+    let hit = false;
+    for (let j = G.enemies.length-1; j >= 0; j--){
+      const e = G.enemies[j];
+      if (Math.hypot(p.x-e.x, p.y-e.y) < p.r + e.r){
+        e.hp -= p.dmg; e.flash = 0.12; hit = true;
+        if (e.hp <= 0){ enemyKilled(e); G.enemies.splice(j,1); }
+        break;
+      }
+    }
+    if (!hit && G.boss && !G.boss.entering){
+      const b = G.boss;
+      if (Math.hypot(p.x-b.x, p.y-b.y) < p.r + b.r){
+        bossTakeDamage(p.dmg); hit = true;
+      }
+    }
+    if (hit) G.pBullets.splice(i,1);
+  }
+  for (let i = G.eBullets.length-1; i >= 0; i--){
+    const b = G.eBullets[i];
+    b.x += b.vx*dt; b.y += b.vy*dt;
+    if (b.y > H+30 || b.y < -30 || b.x < -30 || b.x > W+30){ G.eBullets.splice(i,1); continue; }
+    if (G.playerAlive && !G.player.inv &&
+        Math.hypot(b.x-G.player.x, b.y-G.player.y) < b.r + G.player.r){
+      G.eBullets.splice(i,1);
+      playerTakeDamage(b.dmg || 1);
+    }
+  }
+}
+function updatePowerups(dt){
+  for (let i = G.powerups.length-1; i >= 0; i--){
+    const u = G.powerups[i];
+    u.y += u.fallSpeed*dt;
+    u.x += Math.sin(u.y*0.04)*0.6;
+    if (u.y > H+40){ G.powerups.splice(i,1); continue; }
+    if (G.playerAlive && Math.hypot(u.x-G.player.x, u.y-G.player.y) < u.r + G.player.r + 8){
+      collectPowerup(u.kind);
+      G.powerups.splice(i,1);
+    }
+  }
+}
+function checkPlayerEnemyCollisions(){
+  if (!G.playerAlive || G.player.inv) return;
+  for (const e of G.enemies){
+    if (Math.hypot(e.x-G.player.x, e.y-G.player.y) < e.r + G.player.r){
+      playerTakeDamage(1);
+      return;
+    }
+  }
+  if (G.boss && !G.boss.entering &&
+      Math.hypot(G.boss.x-G.player.x, G.boss.y-G.player.y) < G.boss.r + G.player.r){
+    playerTakeDamage(2);   // ramming a boss hurts twice as much as an enemy
+  }
+}
+
+/* ============================== MAIN UPDATE ============================== */
+function updateWorld(dt){
+  updatePlayer(dt);
+  updateEnemies(dt);
+  updateBoss(dt);
+  updateBullets(dt);
+  updatePowerups(dt);
+  checkPlayerEnemyCollisions();
+  updateParticles(dt);
+}
+function update(dt){
+  firePressed = input.fire && !prevFire;
+  bombPressed = input.bomb && !prevBomb;
+  leftPressed = input.left && !prevLeft;
+  rightPressed = input.right && !prevRight;
+  const mutePressed = input.muteToggle && !prevMute;
+  pausePressed = input.pauseToggle && !prevPause;
+  upPressed = input.up && !prevUp;
+  downPressed = input.down && !prevDown;
+  leadPressed = input.lead && !prevLead;
+  prevFire = input.fire; prevBomb = input.bomb;
+  prevLeft = input.left; prevRight = input.right; prevMute = input.muteToggle;
+  prevPause = input.pauseToggle;
+  prevUp = input.up; prevDown = input.down; prevLead = input.lead;
+  while (touchPulse.length){ const k = touchPulse.pop(); input[k] = false; prevFire = (k === 'fire') ? false : prevFire;
+    if (k === 'lead') prevLead = false; if (k === 'bomb') prevBomb = false;
+    if (k === 'left') prevLeft = false; if (k === 'right') prevRight = false;
+    if (k === 'up') prevUp = false; if (k === 'down') prevDown = false; }
+  if (mutePressed) toggleMute();
+
+  // pause system (playtest correction: pause button)
+  const inCombat = G.state === 'PLAYING' || G.state === 'BOSS_INTRO';
+  if (pausePressed && inCombat) G.paused = !G.paused;
+  if (G.paused){
+    if (!inCombat) G.paused = false;           // never stick outside combat
+    else if (firePressed) G.paused = false;    // fresh SPACE press also resumes
+    else return;                               // frozen frame: nothing moves
+  }
+
+  G.time += dt;
+  updateStars(dt);
+  if (G.shake > 0) G.shake = Math.max(0, G.shake - dt);
+  if (G.toastT > 0) G.toastT -= dt;
+
+  switch (G.state){
+    case 'TITLE':
+      if (firePressed){ G.state = 'SHIP_SELECT'; sfx('select'); music('main'); }
+      if (leadPressed){ fetchScoresRemote(); G.state = 'LEADERBOARD'; }
+      break;
+    case 'SHIP_SELECT':
+      if (leftPressed){ G.shipIndex = (G.shipIndex - 1 + SHIPS.length) % SHIPS.length; sfx('select'); }
+      if (rightPressed){ G.shipIndex = (G.shipIndex + 1) % SHIPS.length; sfx('select'); }
+      if (upPressed || downPressed){ G.modeSel = 1 - G.modeSel; sfx('select'); }
+      if (firePressed){ if (G.modeSel === 1) startSwarm(); else launchCampaign(); }
+      break;
+    case 'OPENING':
+      if (firePressed){ G.nextStage = 0; G.state = 'MAP'; }   // story mode travels the star map
+      break;
+    case 'MAP':
+      if (firePressed) beginStage(G.nextStage);
+      break;
+    case 'BRIEFING':
+      if (firePressed) startPlaying();
+      break;
+    case 'STAGE_CLEAR':
+      if (firePressed){ G.nextStage = G.stageIndex + 1; G.state = 'MAP'; }
+      break;
+    case 'VICTORY':
+      if (firePressed){ startEnterScore(); }
+      updateParticles(dt);
+      break;
+    case 'DEFEAT':
+      if (firePressed){ if (G.mode === 'swarm') startSwarm(); else launchCampaign(); }
+      if (leadPressed){ startEnterScore(); }
+      updateParticles(dt);
+      break;
+    case 'ENTER_SCORE':
+      if (leftPressed){ G.slot = (G.slot + 2) % 3; sfx('select'); }
+      if (rightPressed){ G.slot = (G.slot + 1) % 3; sfx('select'); }
+      if (upPressed){ G.initials[G.slot] = (G.initials[G.slot] + 1) % LB_CHARS.length; sfx('select'); }
+      if (downPressed){ G.initials[G.slot] = (G.initials[G.slot] + LB_CHARS.length - 1) % LB_CHARS.length; sfx('select'); }
+      if (firePressed){
+        if (G.slot < 2){ G.slot++; sfx('select'); }
+        else { commitScore(); sfx('power'); }
+      }
+      break;
+    case 'LEADERBOARD':
+      if (firePressed){ goToTitle(); }
+      break;
+    case 'BOSS_INTRO':
+      updateWorld(dt);
+      G.introT -= dt;
+      if (G.introT <= 0) spawnBossNow();
+      break;
+    case 'PLAYING':
+      updateWorld(dt);
+      if (G.state !== 'PLAYING') break;
+      if (G.mode === 'swarm'){
+        updateSwarm(dt);
+      } else if (!G.bossActive){
+        if (G.stageScore >= bossThreshold(G.cfg)) startBossIntro();   // BATTLE MATH #4: 1.6x longer stages
+        else {
+          G.spawnTimer -= dt;
+          if (G.spawnTimer <= 0){ spawnEnemy(); G.spawnTimer = G.cfg.spawn_interval; }
+          G.waveTimer -= dt;
+          if (G.waveTimer <= 0){ spawnScoutWave(); G.waveTimer = 6.5 + Math.random()*2; }
+          G.bomberTimer -= dt;
+          if (G.bomberTimer <= 0){ spawnBomberWave(); G.bomberTimer = 10 + Math.random()*3; }
+        }
+      }
+      break;
+  }
+}
+function resetRun(){
+  G.stageIndex = 0;
+  G.cfg = STAGES[0];
+  G.paused = false;
+  G.stageScore = 0; G.totalScore = 0;
+  G.enemies.length = 0; G.eBullets.length = 0; G.pBullets.length = 0;
+  G.powerups.length = 0; G.particles.length = 0;
+  G.boss = null; G.bossActive = false;
+  G.bannerVisible = false;
+  G.playerVisible = false;
+  G.playerAlive = true;
+  music('main');
+}
+function goToTitle(){
+  resetRun();
+  G.state = 'TITLE';
+}
+function goToHangar(){
+  // back to ship select (playtest correction: pick a different starship)
+  resetRun();
+  G.state = 'SHIP_SELECT';
+  sfx('select');
+}
+
+/* ============================== SWARM MODE ============================== */
+function startSwarm(){
+  G.mode = 'swarm';
+  G.player = makePlayer(G.shipIndex);
+  G.playerAlive = true; G.playerVisible = true;
+  G.totalScore = 0; G.stageScore = 0;
+  G.swarmT = 0;
+  G.cfg = STAGES[0];
+  G.enemies.length = 0; G.eBullets.length = 0; G.pBullets.length = 0; G.powerups.length = 0;
+  G.boss = null; G.bossActive = false;
+  G.spawnTimer = 0.8; G.waveTimer = 5; G.bomberTimer = 11;
+  G.banner = 'SWARM PROTOCOL\n\nNo bosses. No mercy. The Nine Bows send\neverything they have, faster and faster.\n\nSurvive. Score. Ascend the leaderboard.\n\n[ Press SPACE / tap to engage ]';
+  G.bannerVisible = true;
+  G.state = 'BRIEFING';
+  music('boss');
+}
+function updateSwarm(dt){
+  G.swarmT += dt;
+  const vi = Math.min(8, Math.floor(G.swarmT / 35));   // climb one faction every 35s
+  if (STAGES[vi] !== G.cfg) G.cfg = STAGES[vi];
+  const speedup = Math.pow(0.985, G.swarmT);
+  G.spawnTimer -= dt;
+  if (G.spawnTimer <= 0){ spawnEnemy(); G.spawnTimer = Math.max(0.25, G.cfg.spawn_interval * speedup); }
+  G.waveTimer -= dt;
+  if (G.waveTimer <= 0){ spawnScoutWave(); G.waveTimer = Math.max(3, (6.5 + Math.random()*2) * speedup); }
+  G.bomberTimer -= dt;
+  if (G.bomberTimer <= 0){ spawnBomberWave(); G.bomberTimer = Math.max(5, (10 + Math.random()*3) * speedup); }
+}
+
+/* ============================== LEADERBOARD (local now, Supabase when configured) ============================== */
+const LB_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+const MAP_NODES = [
+  { x: 90,  y: 600 }, { x: 220, y: 570 }, { x: 350, y: 540 },
+  { x: 390, y: 450 }, { x: 260, y: 410 }, { x: 120, y: 370 },
+  { x: 150, y: 270 }, { x: 290, y: 240 }, { x: 240, y: 130 },
+];
+function loadScores(){
+  if (!IS_BROWSER) return G._testScores || [];
+  try { return JSON.parse(localStorage.getItem('sunder_scores') || '[]'); } catch(e){ return []; }
+}
+function saveScoreLocal(entry){
+  const list = loadScores();
+  list.push(entry);
+  list.sort(function(a,b){ return b.score - a.score; });
+  const top = list.slice(0, 50);
+  if (!IS_BROWSER){ G._testScores = top; return top; }
+  try { localStorage.setItem('sunder_scores', JSON.stringify(top)); } catch(e){}
+  return top;
+}
+function sbConfigured(){ return !!(SUNDER_CONFIG.SUPABASE_URL && SUNDER_CONFIG.SUPABASE_ANON_KEY); }
+function sbHeaders(){
+  return { 'apikey': SUNDER_CONFIG.SUPABASE_ANON_KEY,
+           'Authorization': 'Bearer ' + SUNDER_CONFIG.SUPABASE_ANON_KEY,
+           'Content-Type': 'application/json' };
+}
+function submitScoreRemote(entry){
+  if (!IS_BROWSER || !sbConfigured()) return;
+  fetch(SUNDER_CONFIG.SUPABASE_URL + '/rest/v1/leaderboard', {
+    method: 'POST',
+    headers: Object.assign(sbHeaders(), { 'Prefer': 'return=minimal' }),
+    body: JSON.stringify(entry)
+  }).catch(function(){});
+}
+function fetchScoresRemote(){
+  if (!IS_BROWSER || !sbConfigured()){ G.globalScores = null; return; }
+  fetch(SUNDER_CONFIG.SUPABASE_URL + '/rest/v1/leaderboard?select=initials,score,stage,mode&order=score.desc&limit=10',
+        { headers: sbHeaders() })
+    .then(function(r){ return r.json(); })
+    .then(function(rows){ if (Array.isArray(rows)) G.globalScores = rows; })
+    .catch(function(){ G.globalScores = null; });
+}
+function startEnterScore(){
+  G.pendingScore = {
+    score: G.totalScore,
+    stage: G.mode === 'swarm' ? Math.min(9, Math.floor(G.swarmT / 35) + 1) : G.cfg.num,
+    mode: G.mode
+  };
+  G.initials = [0, 0, 0];
+  G.slot = 0;
+  G.state = 'ENTER_SCORE';
+}
+function commitScore(){
+  const entry = {
+    initials: G.initials.map(function(i){ return LB_CHARS[i]; }).join(''),
+    score: G.pendingScore.score,
+    stage: G.pendingScore.stage,
+    mode: G.pendingScore.mode
+  };
+  saveScoreLocal(entry);
+  submitScoreRemote(entry);
+  fetchScoresRemote();
+  G.state = 'LEADERBOARD';
+}
+
+/* ============================== RENDER ============================== */
+let canvas = null, ctx = null;
+function drawSprite(key, x, y, tint, flash, alpha, scale){
+  const base = tint ? tintedSprite(key, tint) : IMGS[key];
+  if (!base) return;
+  const w = base.width || base.naturalWidth, h = base.height || base.naturalHeight;
+  if (!w) return;
+  const sc = scale || 1;
+  ctx.save();
+  if (alpha !== undefined) ctx.globalAlpha = alpha;
+  ctx.translate(x, y);
+  ctx.scale(sc, sc);
+  ctx.drawImage(base, -w/2, -h/2);
+  if (flash && flash > 0){
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = Math.min(flash*8, 0.9);
+    ctx.drawImage(base, -w/2, -h/2);
+  }
+  ctx.restore();
+}
+function wrapLine(text, maxW){
+  if (ctx.measureText(text).width <= maxW) return [text];
+  const words = text.split(' ');
+  const out = []; let cur = '';
+  for (const w2 of words){
+    const test = cur ? cur + ' ' + w2 : w2;
+    if (ctx.measureText(test).width > maxW && cur){ out.push(cur); cur = w2; }
+    else cur = test;
+  }
+  if (cur) out.push(cur);
+  return out;
+}
+function drawBanner(){
+  ctx.save();
+  ctx.fillStyle = 'rgba(5,4,12,0.82)';
+  ctx.fillRect(0, 0, W, H);
+  ctx.textAlign = 'center';
+  const rawLines = G.banner.split('\n');
+  const lines = [];
+  ctx.font = '15px "Courier New", monospace';
+  for (const rl of rawLines){
+    if (rl === '') lines.push('');
+    else for (const seg of wrapLine(rl, W-56)) lines.push(seg);
+  }
+  const lh = 21;
+  let y = Math.max(46, H/2 - lines.length*lh/2);
+  for (let i = 0; i < lines.length; i++){
+    const line = lines[i];
+    const isTitle = (i < 3 && (G.state === 'OPENING' || G.state === 'VICTORY')) ||
+                    (i < 2 && (G.state === 'BRIEFING' || G.state === 'STAGE_CLEAR' ||
+                               G.state === 'DEFEAT' || G.state === 'BOSS_INTRO'));
+    ctx.font = isTitle ? 'bold 19px "Courier New", monospace' : '15px "Courier New", monospace';
+    ctx.fillStyle = isTitle ? '#F4D77B' : '#C9B368';
+    if (line.startsWith('[')) ctx.fillStyle = '#8FE3FF';
+    ctx.fillText(line, W/2, y);
+    y += lh;
+  }
+  ctx.restore();
+}
+function drawTitle(){
+  ctx.save();
+  ctx.textAlign = 'center';
+  // logo
+  ctx.font = 'bold 64px "Courier New", monospace';
+  ctx.fillStyle = '#F4D77B';
+  ctx.shadowColor = '#D4AF37'; ctx.shadowBlur = 24;
+  ctx.fillText('SUNDER', W/2, 250);
+  ctx.shadowBlur = 0;
+  ctx.font = 'bold 26px "Courier New", monospace';
+  ctx.fillStyle = '#8FE3FF';
+  ctx.fillText('A S C E N S I O N', W/2, 296);
+  ctx.font = '18px "Courier New", monospace';
+  ctx.fillStyle = '#D4AF37';
+  ctx.fillText('☥ ─────────── ☥', W/2, 330);
+  ctx.font = '15px "Courier New", monospace';
+  ctx.fillStyle = '#C9B368';
+  ctx.fillText('— THE NINE BOWS —', W/2, 358);
+  ctx.font = '12px "Courier New", monospace';
+  ctx.fillStyle = 'rgba(140,217,255,0.75)';
+  ctx.fillText('v2.0 — COSMIC STRIKE UPDATE', W/2, 384);
+  // pulsing prompt
+  ctx.globalAlpha = 0.4 + 0.6*Math.abs(Math.sin(G.time*2.2));
+  ctx.font = 'bold 17px "Courier New", monospace';
+  ctx.fillStyle = '#FFF6C9';
+  ctx.fillText('PRESS SPACE TO BEGIN', W/2, 470);
+  ctx.globalAlpha = 1;
+  ctx.font = '13px "Courier New", monospace';
+  ctx.fillStyle = '#8FE3FF';
+  ctx.fillText('L / tap here — 🏆 LEADERBOARD', W/2, 520);
+  ctx.font = '11px "Courier New", monospace';
+  ctx.fillStyle = 'rgba(201,179,104,0.6)';
+  ctx.fillText('AN ASCENSION MEDIA GROUP PRODUCTION', W/2, H-40);
+  ctx.restore();
+}
+function statBar(pct){
+  const filled = Math.round(Math.max(0, Math.min(1, pct)) * 10);
+  return '█'.repeat(filled) + '░'.repeat(10 - filled);
+}
+function drawShipSelect(){
+  const s = SHIPS[G.shipIndex];
+  ctx.save();
+  ctx.textAlign = 'center';
+  ctx.font = 'bold 20px "Courier New", monospace';
+  ctx.fillStyle = '#C9B368';
+  ctx.fillText('CHOOSE YOUR STARCRAFT', W/2, 70);
+  // preview
+  drawSprite('player', W/2, 210, s.tint, 0, 1, 2.2);
+  // pulsing accent ring
+  ctx.globalAlpha = 0.25 + 0.2*Math.sin(G.time*3);
+  ctx.strokeStyle = s.accent; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(W/2, 210, 105 + Math.sin(G.time*3)*6, 0, TAU); ctx.stroke();
+  ctx.globalAlpha = 1;
+  // name / class
+  ctx.font = 'bold 24px "Courier New", monospace';
+  ctx.fillStyle = s.tint;
+  ctx.fillText(s.name, W/2, 350);
+  ctx.font = '15px "Courier New", monospace';
+  ctx.fillStyle = '#C9B368';
+  ctx.fillText('— ' + s.ship_class + ' —', W/2, 376);
+  // stats
+  ctx.textAlign = 'left';
+  ctx.font = '15px "Courier New", monospace';
+  ctx.fillStyle = '#D4AF37';
+  const sx = 110;
+  ctx.fillText('HULL   ' + '♥'.repeat(s.max_health), sx, 420);
+  ctx.fillText('SPEED  ' + statBar((s.speed-250)/(400-250)), sx, 444);
+  ctx.fillText('FIRE   ' + statBar((0.20 - s.fire_rate + 0.09 - 0.09)/(0.20-0.09)), sx, 468);
+  ctx.fillText('POWER  ' + statBar((s.bullet_damage-1)/(2-1)), sx, 492);
+  ctx.fillText('BOMBS  ' + s.bombs, sx, 516);
+  // personality
+  ctx.textAlign = 'center';
+  ctx.font = 'italic 13px "Courier New", monospace';
+  ctx.fillStyle = '#9C8A50';
+  let py = 532;
+  for (const seg of wrapLine(s.personality, W-100).slice(0, 2)){ ctx.fillText(seg, W/2, py); py += 17; }
+  // explicit browse buttons — stray taps no longer launch the game
+  ctx.font = 'bold 28px "Courier New", monospace';
+  for (const pair of [[selLeftBtn, '◀'], [selRightBtn, '▶']]){
+    const btn = pair[0];
+    ctx.globalAlpha = 0.92;
+    ctx.fillStyle = '#12101f';
+    ctx.beginPath(); ctx.arc(btn.x, btn.y, btn.r, 0, TAU); ctx.fill();
+    ctx.strokeStyle = '#8FE3FF'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = '#8FE3FF';
+    ctx.fillText(pair[1], btn.x, btn.y + 10);
+  }
+  ctx.globalAlpha = 1;
+  ctx.font = '13px "Courier New", monospace';
+  ctx.fillStyle = '#C9B368';
+  ctx.fillText((G.shipIndex+1) + ' / ' + SHIPS.length, W/2, 398);
+  // MODE toggle: STORY vs SWARM
+  ctx.font = 'bold 14px "Courier New", monospace';
+  for (const trio of [[storyBtn, 'STORY', 0], [swarmBtn, 'SWARM', 1]]){
+    const b2 = trio[0], on = G.modeSel === trio[2];
+    ctx.fillStyle = on ? 'rgba(143,227,255,0.28)' : 'rgba(18,16,31,0.9)';
+    ctx.fillRect(b2.x, b2.y, b2.w, b2.h);
+    ctx.strokeStyle = on ? '#8FE3FF' : 'rgba(143,227,255,0.35)';
+    ctx.lineWidth = on ? 2.5 : 1.5;
+    ctx.strokeRect(b2.x, b2.y, b2.w, b2.h);
+    ctx.fillStyle = on ? '#EFFBFF' : '#7d94a8';
+    ctx.fillText(trio[1], b2.x + b2.w/2, b2.y + 25);
+  }
+  // LAUNCH button (the ONLY tap that starts the game)
+  const lp = 0.8 + 0.2*Math.sin(G.time*3);
+  ctx.fillStyle = 'rgba(212,175,55,' + (0.9*lp).toFixed(3) + ')';
+  ctx.fillRect(launchBtn.x, launchBtn.y, launchBtn.w, launchBtn.h);
+  ctx.strokeStyle = '#F4D77B'; ctx.lineWidth = 2;
+  ctx.strokeRect(launchBtn.x, launchBtn.y, launchBtn.w, launchBtn.h);
+  ctx.fillStyle = '#1a1305';
+  ctx.font = 'bold 20px "Courier New", monospace';
+  ctx.fillText('▶  LAUNCH', W/2, launchBtn.y + 32);
+  ctx.font = '12px "Courier New", monospace';
+  ctx.fillStyle = '#C9B368';
+  ctx.fillText('← → browse · ↑ ↓ / tap = mode · SPACE / tap LAUNCH', W/2, 696);
+  ctx.restore();
+}
+function drawMap(){
+  ctx.save();
+  ctx.textAlign = 'center';
+  ctx.font = 'bold 20px "Courier New", monospace';
+  ctx.fillStyle = '#F4D77B';
+  ctx.fillText('THE NINE BOWS — STAR MAP', W/2, 54);
+  // path lines
+  ctx.strokeStyle = 'rgba(212,175,55,0.35)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(MAP_NODES[0].x, MAP_NODES[0].y);
+  for (let i = 1; i < MAP_NODES.length; i++) ctx.lineTo(MAP_NODES[i].x, MAP_NODES[i].y);
+  ctx.stroke();
+  // nodes
+  for (let i = 0; i < MAP_NODES.length; i++){
+    const n = MAP_NODES[i], done = i < G.nextStage, cur = i === G.nextStage;
+    ctx.beginPath(); ctx.arc(n.x, n.y, cur ? 20 : 15, 0, TAU);
+    ctx.fillStyle = done ? '#D4AF37' : (cur ? '#12314a' : '#141220');
+    ctx.fill();
+    ctx.lineWidth = cur ? 3 : 1.5;
+    ctx.strokeStyle = done ? '#F4D77B' : (cur ? '#8FE3FF' : 'rgba(156,138,80,0.5)');
+    ctx.stroke();
+    if (cur){
+      ctx.globalAlpha = 0.4 + 0.3*Math.sin(G.time*4);
+      ctx.beginPath(); ctx.arc(n.x, n.y, 28 + Math.sin(G.time*4)*3, 0, TAU);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+    ctx.fillStyle = done ? '#1a1305' : (cur ? '#EFFBFF' : '#6b5f3a');
+    ctx.font = 'bold 14px "Courier New", monospace';
+    ctx.fillText(String(i+1), n.x, n.y + 5);
+  }
+  // current target card
+  const tgt = STAGES[G.nextStage];
+  ctx.font = 'bold 16px "Courier New", monospace';
+  ctx.fillStyle = '#8FE3FF';
+  ctx.fillText('NEXT: STAGE ' + tgt.num + ' — ' + tgt.name.toUpperCase(), W/2, 88);
+  ctx.font = '13px "Courier New", monospace';
+  ctx.fillStyle = '#C9B368';
+  ctx.fillText(tgt.subtitle, W/2, 110);
+  ctx.fillText(G.nextStage + ' / 9 bows broken', W/2, H - 60);
+  ctx.font = 'bold 15px "Courier New", monospace';
+  ctx.fillStyle = '#F4D77B';
+  ctx.globalAlpha = 0.6 + 0.4*Math.sin(G.time*2.5);
+  ctx.fillText('[ SPACE / tap the marked node to engage ]', W/2, H - 32);
+  ctx.restore();
+}
+function drawEnterScore(){
+  ctx.save();
+  ctx.textAlign = 'center';
+  ctx.font = 'bold 24px "Courier New", monospace';
+  ctx.fillStyle = '#F4D77B';
+  ctx.fillText(G.pendingScore && G.pendingScore.mode === 'swarm' ? 'SWARM OVER' : 'CAMPAIGN RECORD', W/2, 130);
+  ctx.font = '16px "Courier New", monospace';
+  ctx.fillStyle = '#C9B368';
+  ctx.fillText('SCORE  ' + (G.pendingScore ? G.pendingScore.score : 0), W/2, 180);
+  ctx.fillText('STAGE  ' + (G.pendingScore ? G.pendingScore.stage : 1) + ' / 9', W/2, 206);
+  ctx.font = 'bold 17px "Courier New", monospace';
+  ctx.fillStyle = '#8FE3FF';
+  ctx.fillText('ENTER YOUR INITIALS', W/2, 270);
+  for (let i = 0; i < 3; i++){
+    const x = W/2 + (i-1)*80, y = 340;
+    const active = i === G.slot;
+    ctx.fillStyle = active ? 'rgba(143,227,255,0.2)' : 'rgba(18,16,31,0.9)';
+    ctx.fillRect(x-30, y-42, 60, 66);
+    ctx.strokeStyle = active ? '#8FE3FF' : 'rgba(156,138,80,0.5)';
+    ctx.lineWidth = active ? 3 : 1.5;
+    ctx.strokeRect(x-30, y-42, 60, 66);
+    ctx.fillStyle = active ? '#EFFBFF' : '#C9B368';
+    ctx.font = 'bold 44px "Courier New", monospace';
+    ctx.fillText(LB_CHARS[G.initials[i]], x, y + 12);
+    if (active){
+      ctx.fillStyle = '#8FE3FF';
+      ctx.font = 'bold 16px "Courier New", monospace';
+      const bob = Math.sin(G.time*5)*2;
+      ctx.fillText('▲', x, y - 52 + bob);
+      ctx.fillText('▼', x, y + 44 - bob);
+    }
+  }
+  ctx.font = '13px "Courier New", monospace';
+  ctx.fillStyle = '#C9B368';
+  ctx.fillText('↑ ↓ letter · ← → slot · SPACE next / save', W/2, 430);
+  ctx.fillText('touch: tap top/bottom of a letter · tap SAVE', W/2, 452);
+  // SAVE button
+  ctx.fillStyle = 'rgba(212,175,55,0.85)';
+  ctx.fillRect(W/2-90, 490, 180, 46);
+  ctx.strokeStyle = '#F4D77B'; ctx.lineWidth = 2;
+  ctx.strokeRect(W/2-90, 490, 180, 46);
+  ctx.fillStyle = '#1a1305';
+  ctx.font = 'bold 18px "Courier New", monospace';
+  ctx.fillText('SAVE SCORE', W/2, 520);
+  ctx.restore();
+}
+function drawLeaderboard(){
+  ctx.save();
+  ctx.textAlign = 'center';
+  ctx.font = 'bold 22px "Courier New", monospace';
+  ctx.fillStyle = '#F4D77B';
+  ctx.fillText('🏆 HALL OF THE NINE BOWS', W/2, 70);
+  const global = G.globalScores;
+  ctx.font = '12px "Courier New", monospace';
+  ctx.fillStyle = global ? '#5ECC7A' : '#9C8A50';
+  ctx.fillText(global ? 'GLOBAL LEADERBOARD' : 'THIS DEVICE ONLY — go online for the global board', W/2, 96);
+  const rows = (global && global.length ? global : loadScores()).slice(0, 10);
+  ctx.font = 'bold 15px "Courier New", monospace';
+  ctx.fillStyle = '#8FE3FF';
+  ctx.textAlign = 'left';
+  ctx.fillText('#', 46, 140);
+  ctx.fillText('NAME', 86, 140);
+  ctx.fillText('SCORE', 176, 140);
+  ctx.fillText('STAGE', 300, 140);
+  ctx.fillText('MODE', 385, 140);
+  ctx.font = '15px "Courier New", monospace';
+  if (rows.length === 0){
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#9C8A50';
+    ctx.fillText('No records yet. Be the first.', W/2, 220);
+  }
+  for (let i = 0; i < rows.length; i++){
+    const r = rows[i], y = 176 + i * 34;
+    ctx.fillStyle = i === 0 ? '#F4D77B' : (i < 3 ? '#E6CC73' : '#C9B368');
+    ctx.fillText(String(i+1).padStart(2, ' '), 40, y);
+    ctx.fillText(r.initials || '???', 86, y);
+    ctx.fillText(String(r.score).padStart(7, ' '), 168, y);
+    ctx.fillText('  ' + (r.stage || 1) + '/9', 296, y);
+    ctx.fillText(r.mode === 'swarm' ? 'SWRM' : 'STRY', 381, y);
+  }
+  ctx.textAlign = 'center';
+  ctx.font = 'bold 14px "Courier New", monospace';
+  ctx.fillStyle = '#F4D77B';
+  ctx.globalAlpha = 0.6 + 0.4*Math.sin(G.time*2.5);
+  ctx.fillText('[ SPACE / tap — title ]', W/2, H - 40);
+  ctx.restore();
+}
+function drawHUD(){
+  ctx.save();
+  ctx.font = 'bold 14px "Courier New", monospace';
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#D4AF37';
+  ctx.fillText('SCORE ' + String(G.totalScore).padStart(7,'0'), 10, 22);
+  if (G.mode === 'swarm'){
+    const mm = Math.floor(G.swarmT/60), ss = Math.floor(G.swarmT%60);
+    ctx.fillText('SWARM ' + mm + ':' + String(ss).padStart(2,'0') + '  ' + G.cfg.name, 10, 40);
+  } else {
+    ctx.fillText('STAGE ' + G.cfg.num + '/9  ' + G.cfg.name, 10, 40);
+  }
+  // hull bar (GameHUD-style) under the stage line
+  if (G.playerAlive && (G.state === 'PLAYING' || G.state === 'BOSS_INTRO')){
+    const p = G.player, bw2 = 110, cap = p.maxHp + 2;
+    ctx.fillStyle = 'rgba(255,255,255,0.13)';
+    ctx.fillRect(10, 48, bw2, 6);
+    ctx.fillStyle = p.hp > p.maxHp ? '#8FE3FF' : (p.hp <= 1 ? '#E85555' : '#5ECC7A');
+    ctx.fillRect(10, 48, bw2 * Math.max(0, Math.min(p.hp, cap)) / cap, 6);
+    ctx.strokeStyle = 'rgba(212,175,55,0.6)';
+    ctx.strokeRect(9.5, 47.5, bw2 + 1, 7);
+  }
+  if (G.playerAlive){
+    const p = G.player;
+    ctx.fillStyle = '#E85555';
+    ctx.fillText('ANKH ' + '♥'.repeat(Math.max(p.hp,0)), 10, H-30);
+    ctx.fillStyle = '#8FE3FF';
+    ctx.fillText('BOMB ' + p.bombs + '   SHLD ' + '◈'.repeat(Math.max(p.shield,0)), 10, H-12);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = p.weapon === 'red' ? '#FF9E5E' : '#7EC8FF';
+    ctx.fillText(p.weapon.toUpperCase() + ' Lv' + p.power, W-10, H-30);
+    ctx.fillStyle = p.ship.tint;
+    ctx.fillText(p.ship.form_names[Math.min(p.power-1, 2)].toUpperCase(), W-10, H-12);
+  }
+  // form-change toast
+  if (G.toastT > 0 && (G.state === 'PLAYING' || G.state === 'BOSS_INTRO')){
+    ctx.textAlign = 'center';
+    ctx.globalAlpha = Math.min(1, G.toastT);
+    ctx.font = 'bold 17px "Courier New", monospace';
+    ctx.fillStyle = G.player.ship.accent;
+    ctx.fillText(G.toast, W/2, H-80);
+    ctx.globalAlpha = 1;
+  }
+  // boss bar
+  if (G.boss){
+    const bw = W-120, x0 = 60, y0 = 54;
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#F4D77B';
+    ctx.font = 'bold 13px "Courier New", monospace';
+    ctx.fillText(G.cfg.boss_name, W/2, y0-6);
+    ctx.fillStyle = 'rgba(255,255,255,0.15)';
+    ctx.fillRect(x0, y0, bw, 8);
+    ctx.fillStyle = '#CC3355';
+    ctx.fillRect(x0, y0, bw * Math.max(G.boss.hp,0)/G.boss.maxHp, 8);
+    ctx.strokeStyle = '#D4AF37';
+    ctx.strokeRect(x0-0.5, y0-0.5, bw+1, 9);
+  }
+  // mute indicator
+  if (musicMuted){
+    ctx.textAlign = 'right';
+    ctx.font = '11px "Courier New", monospace';
+    ctx.fillStyle = 'rgba(201,179,104,0.5)';
+    ctx.fillText('MUSIC OFF (M)', W-10, 22);
+  }
+  ctx.restore();
+}
+const bombBtn = { x: W-46, y: H-96, r: 30 };
+const pauseBtn = { x: W-28, y: 84, r: 20 };
+// ship-select tap targets (explicit buttons — stray taps must NOT launch)
+const selLeftBtn = { x: 52, y: 210, r: 40 };
+const selRightBtn = { x: W-52, y: 210, r: 40 };
+const launchBtn = { x: W/2 - 110, y: 616, w: 220, h: 48 };
+const storyBtn = { x: W/2 - 112, y: 566, w: 108, h: 38 };
+const swarmBtn = { x: W/2 + 4,  y: 566, w: 108, h: 38 };
+function draw(){
+  ctx.save();
+  if (G.shake > 0)
+    ctx.translate((Math.random()-0.5)*G.shake*18, (Math.random()-0.5)*G.shake*18);
+  ctx.fillStyle = '#0a0918';
+  ctx.fillRect(-20, -20, W+40, H+40);
+  for (const s of stars){
+    ctx.globalAlpha = s.alpha;
+    ctx.fillStyle = s.gold ? '#D4AF37' : '#99BFE6';
+    ctx.beginPath(); ctx.arc(s.x, s.y, s.size, 0, TAU); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  if (G.state === 'TITLE'){ drawTitle(); ctx.restore(); return; }
+  if (G.state === 'SHIP_SELECT'){ drawShipSelect(); ctx.restore(); return; }
+  if (G.state === 'MAP'){ drawMap(); ctx.restore(); return; }
+  if (G.state === 'ENTER_SCORE'){ drawEnterScore(); ctx.restore(); return; }
+  if (G.state === 'LEADERBOARD'){ drawLeaderboard(); ctx.restore(); return; }
+
+  // powerups
+  for (const u of G.powerups){
+    const sc = 1 + Math.sin(u.y*0.1)*0.12;
+    const im = IMGS['powerup_' + u.kind];
+    if (im && im.complete && im.naturalWidth){
+      ctx.save();
+      ctx.translate(u.x, u.y); ctx.scale(sc, sc);
+      ctx.drawImage(im, -14, -14);
+      ctx.restore();
+    }
+  }
+  // enemies (bombers render larger, scouts slightly smaller)
+  for (const e of G.enemies) drawSprite('enemy', e.x, e.y, G.cfg.tint, e.flash, undefined, e.scale || 1);
+  // boss — unique story-matched flagship per stage (Taharqa thru the Crystal Overlord)
+  if (G.boss){
+    const bkey = IMGS['boss' + G.cfg.num] ? 'boss' + G.cfg.num : 'boss';
+    drawSprite(bkey, G.boss.x, G.boss.y, null, G.boss.flash, undefined, G.cfg.num === 9 ? 1.18 : 1);
+  }
+  // player bullets
+  for (const p of G.pBullets){
+    const im = IMGS.player_bullet;
+    if (im && im.complete && im.naturalWidth){
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(Math.atan2(p.vy, p.vx) + Math.PI/2);
+      ctx.scale(p.scale, p.scale);
+      if (p.color === 'blue') ctx.filter = 'hue-rotate(160deg) saturate(1.4)';
+      ctx.drawImage(im, -5, -12);
+      ctx.restore();
+    }
+  }
+  // enemy bullets
+  const eb = IMGS.enemy_bullet;
+  for (const b of G.eBullets){
+    if (eb && eb.complete && eb.naturalWidth) ctx.drawImage(eb, b.x-6, b.y-6);
+    else { ctx.fillStyle = '#9B30D6'; ctx.beginPath(); ctx.arc(b.x, b.y, 5.5, 0, TAU); ctx.fill(); }
+  }
+  // player (ship tint + form scale + accent lerp flash)
+  if (G.playerVisible && G.playerAlive){
+    const p = G.player;
+    const blink = p.inv && (Math.floor(p.invT/0.07) % 2 === 0);
+    const sc = p.ship.form_scale[Math.min(p.power-1, p.ship.form_scale.length-1)] *
+               (p.formFlash > 0 ? 1 + p.formFlash*0.6 : 1);
+    const tint = p.formFlash > 0 ? p.ship.accent : p.ship.tint;
+    drawSprite('player', p.x, p.y, tint, 0, blink ? 0.25 : 1, sc);
+    if (p.shield > 0){
+      ctx.save();
+      ctx.globalAlpha = 0.22 + 0.1*Math.sin(G.time*5) + p.shield*0.06;
+      ctx.strokeStyle = '#8FE3FF';
+      ctx.lineWidth = 2 + p.shield;
+      ctx.beginPath(); ctx.arc(p.x, p.y, 40, 0, TAU); ctx.stroke();
+      ctx.restore();
+    }
+  }
+  // particles
+  for (const pt of G.particles){
+    ctx.globalAlpha = Math.max(0, 1 - pt.t/pt.life);
+    ctx.fillStyle = pt.color;
+    ctx.beginPath(); ctx.arc(pt.x, pt.y, pt.size, 0, TAU); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  ctx.restore();
+
+  drawHUD();
+  if (G.bannerVisible) drawBanner();
+
+  if (IS_BROWSER && hasTouch && G.playerAlive && !G.paused &&
+      (G.state === 'PLAYING' || G.state === 'BOSS_INTRO')){
+    ctx.save();
+    ctx.globalAlpha = 0.55;
+    ctx.fillStyle = '#122';
+    ctx.beginPath(); ctx.arc(bombBtn.x, bombBtn.y, bombBtn.r, 0, TAU); ctx.fill();
+    ctx.strokeStyle = '#8FE3FF'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = '#8FE3FF';
+    ctx.font = 'bold 22px serif'; ctx.textAlign = 'center';
+    ctx.fillText('☥', bombBtn.x, bombBtn.y+8);
+    // pause button
+    ctx.fillStyle = '#122';
+    ctx.beginPath(); ctx.arc(pauseBtn.x, pauseBtn.y, pauseBtn.r, 0, TAU); ctx.fill();
+    ctx.strokeStyle = '#D4AF37'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = '#F4D77B';
+    ctx.fillRect(pauseBtn.x-6, pauseBtn.y-7, 4, 14);
+    ctx.fillRect(pauseBtn.x+2, pauseBtn.y-7, 4, 14);
+    ctx.restore();
+  }
+  // pause overlay
+  if (G.paused){
+    ctx.save();
+    ctx.fillStyle = 'rgba(5,4,12,0.74)';
+    ctx.fillRect(0, 0, W, H);
+    ctx.textAlign = 'center';
+    ctx.font = 'bold 36px "Courier New", monospace';
+    ctx.fillStyle = '#F4D77B';
+    ctx.fillText('PAUSED', W/2, H/2 - 34);
+    ctx.font = '15px "Courier New", monospace';
+    ctx.fillStyle = '#8FE3FF';
+    ctx.fillText('P / SPACE / tap — resume', W/2, H/2 + 10);
+    ctx.fillStyle = '#C9B368';
+    ctx.fillText('ESC — quit to ship select', W/2, H/2 + 38);
+    ctx.restore();
+  }
+}
+
+/* ============================== BOOT (browser only) ============================== */
+let hasTouch = false;
+if (IS_BROWSER){
+  canvas = document.getElementById('game');
+  ctx = canvas.getContext('2d');
+  hasTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+
+  function fit(){
+    const scale = Math.min(window.innerWidth/W, (window.innerHeight-30)/H);
+    canvas.style.width = Math.floor(W*scale) + 'px';
+    canvas.style.height = Math.floor(H*scale) + 'px';
+  }
+  window.addEventListener('resize', fit); fit();
+
+  const KEYMAP = {
+    'ArrowLeft':'left','KeyA':'left','ArrowRight':'right','KeyD':'right',
+    'ArrowUp':'up','KeyW':'up','ArrowDown':'down','KeyS':'down',
+    'Space':'fire','KeyX':'bomb','KeyM':'muteToggle','KeyP':'pauseToggle','KeyL':'lead'
+  };
+  window.addEventListener('keydown', e => {
+    if (e.code === 'Escape'){
+      if (G.paused){ goToHangar(); }
+      else if (G.state === 'DEFEAT') goToHangar();                          // change ship after defeat
+      else if (G.state === 'OPENING') goToHangar();                         // change ship before the run starts
+      else if (G.state === 'BRIEFING' && G.stageIndex === 0) goToHangar();  // still allowed before stage 1
+      else if (G.state === 'VICTORY' || G.state === 'SHIP_SELECT') goToTitle();
+      e.preventDefault(); return;
+    }
+    const k = KEYMAP[e.code];
+    if (k){ input[k] = true; e.preventDefault(); ac(); }
+  });
+  window.addEventListener('keyup', e => {
+    const k = KEYMAP[e.code];
+    if (k){ input[k] = false; e.preventDefault(); }
+  });
+  // auto-pause when the tab/window loses focus mid-combat
+  window.addEventListener('blur', () => {
+    if (G.state === 'PLAYING' || G.state === 'BOSS_INTRO') G.paused = true;
+  });
+
+  let lastTouch = null;
+  function canvasPos(t){
+    const r = canvas.getBoundingClientRect();
+    return { x: (t.clientX - r.left) * W / r.width, y: (t.clientY - r.top) * H / r.height };
+  }
+  function pulse(key){
+    input[key] = true;
+    touchPulse.push(key);   // released by the engine after exactly one frame
+  }
+  canvas.addEventListener('touchstart', e => {
+    e.preventDefault(); ac();
+    const p = canvasPos(e.changedTouches[0]);
+    if (G.state === 'SHIP_SELECT'){
+      // explicit buttons only — tapping anywhere else does nothing
+      if (Math.hypot(p.x-selLeftBtn.x, p.y-selLeftBtn.y) < selLeftBtn.r + 12) pulse('left');
+      else if (Math.hypot(p.x-selRightBtn.x, p.y-selRightBtn.y) < selRightBtn.r + 12) pulse('right');
+      else if (p.x >= storyBtn.x && p.x <= storyBtn.x + storyBtn.w && p.y >= storyBtn.y - 6 && p.y <= storyBtn.y + storyBtn.h + 6){
+        if (G.modeSel !== 0){ G.modeSel = 0; sfx('select'); }
+      }
+      else if (p.x >= swarmBtn.x && p.x <= swarmBtn.x + swarmBtn.w && p.y >= swarmBtn.y - 6 && p.y <= swarmBtn.y + swarmBtn.h + 6){
+        if (G.modeSel !== 1){ G.modeSel = 1; sfx('select'); }
+      }
+      else if (p.x >= launchBtn.x - 10 && p.x <= launchBtn.x + launchBtn.w + 10 &&
+               p.y >= launchBtn.y - 10 && p.y <= launchBtn.y + launchBtn.h + 10) pulse('fire');
+      return;
+    }
+    if (G.state === 'MAP'){
+      const n = MAP_NODES[G.nextStage];
+      if (Math.hypot(p.x-n.x, p.y-n.y) < 34 || p.y > H - 60) pulse('fire');   // marked node or bottom bar
+      return;
+    }
+    if (G.state === 'ENTER_SCORE'){
+      for (let i = 0; i < 3; i++){
+        const x = W/2 + (i-1)*80;
+        if (p.x > x-34 && p.x < x+34 && p.y > 250 && p.y < 400){
+          G.slot = i;
+          G.initials[i] = p.y < 340
+            ? (G.initials[i] + 1) % LB_CHARS.length
+            : (G.initials[i] + LB_CHARS.length - 1) % LB_CHARS.length;
+          sfx('select');
+          return;
+        }
+      }
+      if (p.x > W/2-100 && p.x < W/2+100 && p.y > 480 && p.y < 546){ commitScore(); sfx('power'); }
+      return;
+    }
+    if (G.state === 'LEADERBOARD'){ pulse('fire'); return; }
+    if (G.state === 'TITLE' && p.y > 490 && p.y < 545){ pulse('lead'); return; }
+    if (G.state === 'PLAYING' || G.state === 'BOSS_INTRO'){
+      if (G.paused){ G.paused = false; return; }                       // tap anywhere resumes
+      if (Math.hypot(p.x-pauseBtn.x, p.y-pauseBtn.y) < pauseBtn.r + 10){
+        G.paused = true; return;                                       // tap ⏸ pauses
+      }
+      if (Math.hypot(p.x-bombBtn.x, p.y-bombBtn.y) < bombBtn.r + 12){
+        pulse('bomb');
+        return;
+      }
+      input.touchActive = true;
+      lastTouch = p;
+    } else if (G.state === 'DEFEAT' && p.y < 100){
+      startEnterScore();                                               // tap top = record score
+    } else if (G.state === 'DEFEAT' && p.y > H - 100){
+      goToHangar();                                                    // tap bottom = change ship
+    } else if (G.state === 'OPENING' && p.y > H - 100 && p.x < W/2){
+      goToHangar();                                                    // tap lower-left = change ship
+    } else {
+      pulse('fire');
+    }
+  }, {passive:false});
+  canvas.addEventListener('touchmove', e => {
+    e.preventDefault();
+    if (!input.touchActive || !lastTouch) return;
+    const p = canvasPos(e.changedTouches[0]);
+    input.touchDX += (p.x - lastTouch.x) * 1.25;
+    input.touchDY += (p.y - lastTouch.y) * 1.25;
+    lastTouch = p;
+  }, {passive:false});
+  const endTouch = e => { e.preventDefault(); input.touchActive = false; lastTouch = null; };
+  canvas.addEventListener('touchend', endTouch, {passive:false});
+  canvas.addEventListener('touchcancel', endTouch, {passive:false});
+
+  resetGame();
+  window.__G = G;   // read-only debug handles for live verification
+  window.__input = input;
+  try {
+    if (new URLSearchParams(location.search).get('mode') === 'swarm') G.modeSel = 1;
+  } catch(e){}
+  fetchScoresRemote();
+  let last = performance.now();
+  function loop(now){
+    let dt = (now - last)/1000;
+    last = now;
+    if (dt > 0.05) dt = 0.05;
+    update(dt);
+    draw();
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+} else {
+  resetGame();
+}
+
+/* test hook (headless) */
+if (!IS_BROWSER && typeof module !== 'undefined' && module.exports){
+  module.exports = { G, input, update, resetGame, beginStage, startPlaying, launchCampaign,
+    bossTakeDamage, playerTakeDamage, spawnEnemy, spawnEnemyAt, spawnScoutWave, spawnBomberWave,
+    useBomb, collectPowerup, goToTitle, goToHangar, startSwarm, startEnterScore, commitScore,
+    loadScores, bossThreshold, SUNDER_CONFIG, INTERLUDES, LB_CHARS, SVGS, SHIPS, STAGES, W, H };
+}
+</script>
+</body>
+</html>

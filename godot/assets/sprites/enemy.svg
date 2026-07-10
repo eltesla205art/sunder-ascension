@@ -1,0 +1,29 @@
+<svg width="48" height="48" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="ecore" cx="0.5" cy="0.4" r="0.6">
+      <stop offset="0" stop-color="#6B2B8A"/>
+      <stop offset="1" stop-color="#1A0B24"/>
+    </radialGradient>
+    <linearGradient id="eshell" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4A3410"/>
+      <stop offset="1" stop-color="#1c1305"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Scarab shell -->
+  <path d="M24 6 C10 6 6 20 8 34 C10 44 38 44 40 34 C42 20 38 6 24 6 Z" fill="url(#eshell)" stroke="#6b4f14" stroke-width="1.5"/>
+
+  <!-- Wing split -->
+  <line x1="24" y1="10" x2="24" y2="42" stroke="#0d0803" stroke-width="2"/>
+
+  <!-- Glowing eye core -->
+  <ellipse cx="24" cy="22" rx="8" ry="9" fill="url(#ecore)"/>
+  <ellipse cx="24" cy="20" rx="3" ry="3.5" fill="#C77DFF"/>
+
+  <!-- Mandible legs -->
+  <path d="M8 30 L2 26 M8 34 L2 36 M40 30 L46 26 M40 34 L46 36" stroke="#6b4f14" stroke-width="2" fill="none"/>
+
+  <!-- Gold trim -->
+  <path d="M24 6 C16 6 12 14 12 20" stroke="#D4AF37" stroke-width="1.5" fill="none" opacity="0.7"/>
+  <path d="M24 6 C32 6 36 14 36 20" stroke="#D4AF37" stroke-width="1.5" fill="none" opacity="0.7"/>
+</svg>

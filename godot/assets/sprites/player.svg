@@ -1,0 +1,44 @@
+<svg width="64" height="72" viewBox="0 0 64 72" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#F4D77B"/>
+      <stop offset="0.5" stop-color="#D4AF37"/>
+      <stop offset="1" stop-color="#8A6D1E"/>
+    </linearGradient>
+    <linearGradient id="darkgold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#B8860B"/>
+      <stop offset="1" stop-color="#5A4409"/>
+    </linearGradient>
+    <radialGradient id="core" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#8FE3FF"/>
+      <stop offset="0.6" stop-color="#2FA8D8"/>
+      <stop offset="1" stop-color="#0B3A54"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Falcon wings (Horus motif) -->
+  <path d="M32 30 L4 40 L2 52 L18 46 L14 58 L26 50 Z" fill="url(#darkgold)" stroke="#3a2c05" stroke-width="1"/>
+  <path d="M32 30 L60 40 L62 52 L46 46 L50 58 L38 50 Z" fill="url(#darkgold)" stroke="#3a2c05" stroke-width="1"/>
+
+  <!-- Wing gold edges -->
+  <path d="M32 32 L10 40 L20 44 Z" fill="url(#gold)"/>
+  <path d="M32 32 L54 40 L44 44 Z" fill="url(#gold)"/>
+
+  <!-- Central fuselage - obelisk shape -->
+  <path d="M32 4 L40 26 L38 60 L32 68 L26 60 L24 26 Z" fill="url(#gold)" stroke="#3a2c05" stroke-width="1.5"/>
+
+  <!-- Nose tip -->
+  <path d="M32 4 L36 20 L28 20 Z" fill="#F9E9A8"/>
+
+  <!-- Egyptian ankh-eye energy core -->
+  <ellipse cx="32" cy="38" rx="6" ry="8" fill="url(#core)"/>
+  <ellipse cx="32" cy="38" rx="2.5" ry="4" fill="#DFFCFF"/>
+
+  <!-- Hieroglyphic hull lines -->
+  <line x1="32" y1="24" x2="32" y2="30" stroke="#2a2004" stroke-width="1.5"/>
+  <path d="M27 52 L37 52" stroke="#2a2004" stroke-width="1.5"/>
+  <path d="M28 56 L36 56" stroke="#2a2004" stroke-width="1.5"/>
+
+  <!-- Engine glow -->
+  <path d="M28 66 L32 72 L36 66 Z" fill="#FF9E3D" opacity="0.9"/>
+</svg>

@@ -1,0 +1,15 @@
+[remap]
+importer="texture"
+type="CompressedTexture2D"
+uid="uid://svg_player"
+path="res://.godot/imported/player.svg-generated.ctex"
+metadata={
+"vram_texture": false
+}
+[deps]
+source_file="res://assets/sprites/player.svg"
+dest_files=["res://.godot/imported/player.svg-generated.ctex"]
+[params]
+compress/mode=0
+mipmaps/generate=false
+svg/scale=1.0

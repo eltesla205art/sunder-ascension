@@ -1,0 +1,15 @@
+[remap]
+importer="texture"
+type="CompressedTexture2D"
+uid="uid://svg_enemy_bullet"
+path="res://.godot/imported/enemy_bullet.svg-generated.ctex"
+metadata={
+"vram_texture": false
+}
+[deps]
+source_file="res://assets/sprites/enemy_bullet.svg"
+dest_files=["res://.godot/imported/enemy_bullet.svg-generated.ctex"]
+[params]
+compress/mode=0
+mipmaps/generate=false
+svg/scale=1.0

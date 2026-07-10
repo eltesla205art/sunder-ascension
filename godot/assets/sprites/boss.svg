@@ -1,0 +1,41 @@
+<svg width="180" height="140" viewBox="0 0 180 140" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#F4D77B"/><stop offset="0.5" stop-color="#D4AF37"/><stop offset="1" stop-color="#7A5C15"/>
+    </linearGradient>
+    <linearGradient id="bdark" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4A3410"/><stop offset="1" stop-color="#1c1305"/>
+    </linearGradient>
+    <radialGradient id="beye" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#FF5E5E"/><stop offset="0.6" stop-color="#B01818"/><stop offset="1" stop-color="#3A0808"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Wing spans -->
+  <path d="M90 60 L6 44 L2 70 L40 62 L20 84 L60 72 Z" fill="url(#bdark)" stroke="#6b4f14" stroke-width="1.5"/>
+  <path d="M90 60 L174 44 L178 70 L140 62 L160 84 L120 72 Z" fill="url(#bdark)" stroke="#6b4f14" stroke-width="1.5"/>
+
+  <!-- Nemes headdress -->
+  <path d="M90 6 L60 24 L58 60 L90 52 L122 60 L120 24 Z" fill="url(#bgold)" stroke="#3a2c05" stroke-width="2"/>
+  <!-- Headdress stripes -->
+  <line x1="70" y1="26" x2="66" y2="56" stroke="#2a2004" stroke-width="2"/>
+  <line x1="80" y1="24" x2="78" y2="54" stroke="#2a2004" stroke-width="2"/>
+  <line x1="100" y1="24" x2="102" y2="54" stroke="#2a2004" stroke-width="2"/>
+  <line x1="110" y1="26" x2="114" y2="56" stroke="#2a2004" stroke-width="2"/>
+
+  <!-- Face -->
+  <path d="M68 40 L112 40 L108 88 L90 100 L72 88 Z" fill="url(#bgold)" stroke="#3a2c05" stroke-width="1.5"/>
+
+  <!-- Eyes glowing -->
+  <ellipse cx="80" cy="60" rx="7" ry="6" fill="url(#beye)"/>
+  <ellipse cx="100" cy="60" rx="7" ry="6" fill="url(#beye)"/>
+  <circle cx="80" cy="59" r="2" fill="#FFE0E0"/>
+  <circle cx="100" cy="59" r="2" fill="#FFE0E0"/>
+
+  <!-- Pharaoh beard / core cannon -->
+  <path d="M84 92 L96 92 L94 120 L90 128 L86 120 Z" fill="url(#bdark)" stroke="#6b4f14" stroke-width="1.5"/>
+  <ellipse cx="90" cy="104" rx="4" ry="6" fill="#8FE3FF"/>
+
+  <!-- Cobra uraeus on brow -->
+  <path d="M90 40 Q88 30 92 28 Q96 30 90 40" fill="#E23B3B" stroke="#D4AF37" stroke-width="1"/>
+</svg>

@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SUNDER: Ascension — Playtest</title>
+<meta name="description" content="Play the SUNDER: Ascension playtest build on phone or computer. Nine stages, three starcraft, one Crystal Overlord.">
+<style>
+  :root {
+    --gold: #D4AF37; --gold-bright: #F4D77B; --gold-dim: #9C8A50;
+    --cyan: #8FE3FF; --ink: #07060f; --panel: #12101f; --panel2: #1a1730;
+    --red: #E85555; --green: #5ECC7A; --magenta: #CC4DE6;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--ink); color: #e8ddb8;
+    font-family: 'Courier New', Courier, monospace;
+    line-height: 1.6; overflow-x: hidden;
+  }
+  .stars { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+  main { position: relative; z-index: 1; max-width: 760px; margin: 0 auto; padding: 0 20px 60px; }
+
+  header { text-align: center; padding: 64px 0 40px; }
+  .badge {
+    display: inline-block; border: 1px solid var(--cyan); color: var(--cyan);
+    font-size: 12px; letter-spacing: 3px; padding: 6px 14px; border-radius: 3px;
+    margin-bottom: 26px; animation: pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100% { opacity: 0.55; } 50% { opacity: 1; } }
+  h1 {
+    font-size: clamp(52px, 13vw, 88px); letter-spacing: 6px;
+    color: var(--gold-bright); text-shadow: 0 0 34px rgba(212,175,55,0.55);
+    line-height: 1.05;
+  }
+  .sub { font-size: clamp(17px, 4.4vw, 26px); letter-spacing: 10px; color: var(--cyan); margin-top: 6px; }
+  .ankh { color: var(--gold); margin: 16px 0 4px; font-size: 17px; letter-spacing: 2px; }
+  .tagline { color: var(--gold-dim); font-size: 14px; }
+
+  .playwrap { text-align: center; margin: 36px 0 10px; }
+  .play {
+    display: inline-block; text-decoration: none;
+    background: linear-gradient(180deg, #F4D77B, #D4AF37 55%, #8A6D1E);
+    color: #1a1305; font-weight: bold; font-size: 21px; letter-spacing: 3px;
+    padding: 18px 54px; border-radius: 6px; border: 1px solid #F4D77B;
+    box-shadow: 0 0 30px rgba(212,175,55,0.45);
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+  }
+  .play:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 0 46px rgba(212,175,55,0.7); }
+  .play:active { transform: translateY(1px); }
+  .playnote { color: var(--gold-dim); font-size: 12.5px; margin-top: 14px; letter-spacing: 1px; }
+
+  section { margin-top: 46px; }
+  h2 {
+    color: var(--gold); font-size: 17px; letter-spacing: 3px;
+    border-bottom: 1px solid rgba(212,175,55,0.3); padding-bottom: 8px; margin-bottom: 16px;
+  }
+  p.about { font-size: 14.5px; color: #cfc39a; }
+  p.about b { color: var(--gold-bright); }
+
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 560px) { .cards { grid-template-columns: 1fr; } }
+  .card {
+    background: var(--panel); border: 1px solid rgba(212,175,55,0.22);
+    border-radius: 8px; padding: 18px;
+  }
+  .card h3 { color: var(--cyan); font-size: 14px; letter-spacing: 2px; margin-bottom: 10px; }
+  .card ul { list-style: none; font-size: 13.5px; }
+  .card li { margin: 7px 0; color: #cfc39a; }
+  .key {
+    display: inline-block; background: var(--panel2); border: 1px solid rgba(143,227,255,0.35);
+    color: var(--cyan); border-radius: 4px; padding: 1px 8px; font-size: 12.5px; margin-right: 6px;
+  }
+  .ships { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  @media (max-width: 640px) { .ships { grid-template-columns: 1fr; } }
+  .ship { background: var(--panel); border-radius: 8px; padding: 16px; border-top: 3px solid; }
+  .ship.sun { border-color: #E6C252; } .ship.sca { border-color: #D94033; } .ship.ibi { border-color: #4DD980; }
+  .ship h3 { font-size: 13.5px; letter-spacing: 1.5px; margin-bottom: 6px; }
+  .ship.sun h3 { color: #E6C252; } .ship.sca h3 { color: #FF8C6E; } .ship.ibi h3 { color: #4DD980; }
+  .ship p { font-size: 12.5px; color: var(--gold-dim); }
+
+  .checklist { list-style: none; font-size: 14px; }
+  .checklist li { margin: 10px 0; padding-left: 28px; position: relative; color: #cfc39a; }
+  .checklist li::before { content: "☥"; position: absolute; left: 2px; color: var(--gold); }
+
+  .fbrow { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 14px; }
+  .btn {
+    display: inline-block; text-decoration: none; cursor: pointer;
+    background: var(--panel2); color: var(--cyan); border: 1px solid rgba(143,227,255,0.45);
+    font-family: inherit; font-size: 13.5px; letter-spacing: 1.5px; padding: 12px 20px; border-radius: 6px;
+    transition: background 0.15s ease;
+  }
+  .btn:hover { background: #232045; }
+  footer {
+    text-align: center; margin-top: 64px; padding-top: 24px;
+    border-top: 1px solid rgba(212,175,55,0.2);
+    color: rgba(156,138,80,0.75); font-size: 11.5px; letter-spacing: 1.5px;
+  }
+  footer .warn { color: rgba(232,85,85,0.8); margin-top: 8px; }
+</style>
+</head>
+<body>
+<canvas class="stars" id="stars"></canvas>
+<main>
+  <header>
+    <div class="badge">PLAYTEST BUILD v2.0 — NOT THE OFFICIAL RELEASE</div>
+    <h1>SUNDER</h1>
+    <div class="sub">A S C E N S I O N</div>
+    <div class="ankh">☥ ─────────── ☥</div>
+    <div class="tagline">— THE NINE BOWS —</div>
+  </header>
+
+  <section id="signup" style="display:none">
+    <h2>JOIN THE PLAYTEST</h2>
+    <p class="about">Enter your email once to unlock the game on this device. Used only for playtest updates and data collection — no spam.</p>
+    <div class="fbrow">
+      <input id="email" type="email" placeholder="your@email.com" style="flex:1;min-width:200px;background:#12101f;border:1px solid rgba(143,227,255,0.45);color:#e8ddb8;font-family:inherit;font-size:14px;padding:12px 14px;border-radius:6px;">
+      <button class="btn" id="joinbtn" type="button">☥ UNLOCK THE GAME</button>
+    </div>
+    <p id="signupmsg" class="about" style="margin-top:10px;color:#E85555;"></p>
+  </section>
+
+  <div class="playwrap" id="playzone" style="display:none">
+    <a class="play" href="game.html" target="_blank" rel="noopener">▶ STORY MODE</a>
+    <div style="height:12px"></div>
+    <a class="play" style="background:linear-gradient(180deg,#8FE3FF,#3BA7E2 55%,#0E2C5A);border-color:#8FE3FF;color:#04121f" href="game.html?mode=swarm" target="_blank" rel="noopener">◈ SWARM MODE</a>
+    <div class="playnote">Free · No install · Works on phone &amp; computer · P / ⏸ to pause</div>
+  </div>
+
+  <section>
+    <h2>THE MISSION</h2>
+    <p class="about">
+      Before Egypt, there was Atlantis. Now the Crystal that drowned it has returned and raised
+      the <b>Nine Bows</b> — every enemy Egypt ever faced, reborn in crystal and fury.
+      Pick one of three starcraft and fight through <b>9 escalating stages</b>, each with its own
+      faction and boss, to face <b>THE CRYSTAL OVERLORD</b>. Collect power-ups, evolve your ship's
+      form, and break all nine.
+    </p>
+  </section>
+
+  <section>
+    <h2>CHOOSE YOUR STARCRAFT</h2>
+    <div class="ships">
+      <div class="ship sun"><h3>SUNBORN THUNDER</h3><p>The Balanced Heir. Twin spread cannons, steady hull. Best first pick.</p></div>
+      <div class="ship sca"><h3>SCARAB WARBRINGER</h3><p>The Juggernaut. Slow and tanky, hits like the fall of a dynasty.</p></div>
+      <div class="ship ibi"><h3>IBIS PHANTOM</h3><p>The Swift. Fragile, fast, rapid-fire. For pilots who never stop moving.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>CONTROLS</h2>
+    <div class="cards">
+      <div class="card">
+        <h3>🖥 COMPUTER</h3>
+        <ul>
+          <li><span class="key">WASD</span><span class="key">←↑↓→</span> move</li>
+          <li><span class="key">SPACE</span> fire / confirm</li>
+          <li><span class="key">X</span> bomb (clears bullets, hurts bosses)</li>
+          <li><span class="key">M</span> music on/off</li>
+          <li><span class="key">ESC</span> back to title</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>📱 PHONE / TABLET</h3>
+        <ul>
+          <li>Drag anywhere to fly — your ship autofires</li>
+          <li>Tap the ☥ button to bomb</li>
+          <li>Tap left / right side on ship select to browse</li>
+          <li>Tap to advance story screens</li>
+          <li>Tip: turn your sound on 🔊</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>WHAT TO TEST (HELP ME OUT!)</h2>
+    <ul class="checklist">
+      <li>Does it run smoothly on your device? (phone model / laptop + browser)</li>
+      <li>Try all 3 ships — does any feel too weak or too strong?</li>
+      <li>How far did you get before your first game over? Too easy? Too hard?</li>
+      <li>Do the touch controls feel good on your phone?</li>
+      <li>Anything confusing, broken, or weird-looking? Screenshot it!</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>🏆 GLOBAL LEADERBOARD</h2>
+    <div id="lbpanel" class="card" style="font-size:13.5px">
+      <div id="lbrows" style="color:#cfc39a">Leaderboard goes global once the online backend is connected.
+      Until then, your top scores live inside the game — press L on the title screen.</div>
+    </div>
+  </section>
+
+  <section>
+    <h2>COMMENTS &amp; FEEDBACK</h2>
+    <p class="about">Leave a comment for the developer — device, how far you got, what to improve.</p>
+    <div class="fbrow" style="margin-bottom:10px">
+      <input id="cname" maxlength="3" placeholder="AAA" style="width:70px;text-transform:uppercase;background:#12101f;border:1px solid rgba(143,227,255,0.45);color:#8FE3FF;font-family:inherit;font-size:14px;padding:12px;border-radius:6px;text-align:center;">
+      <input id="ctext" maxlength="280" placeholder="Your feedback..." style="flex:1;min-width:180px;background:#12101f;border:1px solid rgba(143,227,255,0.45);color:#e8ddb8;font-family:inherit;font-size:14px;padding:12px 14px;border-radius:6px;">
+      <button class="btn" id="cpost" type="button">➤ POST</button>
+    </div>
+    <div id="clist"></div>
+    <div class="fbrow" style="margin-top:14px">
+      <a class="btn" href="mailto:kombineminds@gmail.com?subject=SUNDER%20Playtest%20Feedback&body=Device%20%2B%20browser%3A%0AHow%20far%20I%20got%3A%0AFavorite%20ship%3A%0AOne%20thing%20to%20improve%3A%0ABugs%20I%20found%3A">✉ EMAIL INSTEAD</a>
+      <button class="btn" id="copybtn" type="button">⧉ COPY THIS PAGE LINK</button>
+    </div>
+  </section>
+
+  <footer>
+    AN ASCENSION MEDIA GROUP PRODUCTION<br>
+    SUNDER: ASCENSION — THE NINE BOWS
+    <div class="warn">PLAYTEST BUILD — CONTENT AND BALANCE SUBJECT TO CHANGE BEFORE OFFICIAL LAUNCH</div>
+  </footer>
+</main>
+<script>
+/* ===== ONLINE CONFIG: paste your Supabase project values here (free at supabase.com) ===== */
+var SUNDER_CONFIG = {
+  SUPABASE_URL: '',        // e.g. 'https://abcd1234.supabase.co'
+  SUPABASE_ANON_KEY: ''    // Settings -> API -> anon public key
+};
+(function(){
+  function sbOn(){ return !!(SUNDER_CONFIG.SUPABASE_URL && SUNDER_CONFIG.SUPABASE_ANON_KEY); }
+  function sbHeaders(extra){
+    var h = { 'apikey': SUNDER_CONFIG.SUPABASE_ANON_KEY,
+              'Authorization': 'Bearer ' + SUNDER_CONFIG.SUPABASE_ANON_KEY,
+              'Content-Type': 'application/json' };
+    if (extra) for (var k in extra) h[k] = extra[k];
+    return h;
+  }
+  /* ---- one-time signup gate (per device) ---- */
+  var signed = false;
+  try { signed = localStorage.getItem('sunder_signup') === '1'; } catch(e){}
+  document.getElementById(signed ? 'playzone' : 'signup').style.display = '';
+  document.getElementById('joinbtn').addEventListener('click', function(){
+    var email = (document.getElementById('email').value || '').trim();
+    var msg = document.getElementById('signupmsg');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)){ msg.textContent = 'Please enter a valid email.'; return; }
+    try { localStorage.setItem('sunder_signup', '1'); localStorage.setItem('sunder_email', email); } catch(e){}
+    if (sbOn()){
+      fetch(SUNDER_CONFIG.SUPABASE_URL + '/rest/v1/signups', {
+        method: 'POST', headers: sbHeaders({ 'Prefer': 'return=minimal' }),
+        body: JSON.stringify({ email: email })
+      }).catch(function(){});
+    }
+    document.getElementById('signup').style.display = 'none';
+    document.getElementById('playzone').style.display = '';
+  });
+  /* ---- comments ---- */
+  function esc(s){ var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+  function renderComments(rows){
+    var out = '';
+    for (var i = 0; i < rows.length; i++){
+      var r = rows[i];
+      out += '<div class="card" style="margin-bottom:8px;font-size:13px"><b style="color:#8FE3FF">' +
+             esc((r.name || '???').toUpperCase().slice(0,3)) + '</b> — ' + esc(r.text || '') + '</div>';
+    }
+    document.getElementById('clist').innerHTML = out || '<p class="about">No comments yet — be the first.</p>';
+  }
+  function localComments(){
+    try { return JSON.parse(localStorage.getItem('sunder_comments') || '[]'); } catch(e){ return []; }
+  }
+  function refreshComments(){
+    if (sbOn()){
+      fetch(SUNDER_CONFIG.SUPABASE_URL + '/rest/v1/comments?select=name,text&order=created_at.desc&limit=12',
+            { headers: sbHeaders() })
+        .then(function(r){ return r.json(); })
+        .then(function(rows){ if (Array.isArray(rows)) renderComments(rows); else renderComments(localComments()); })
+        .catch(function(){ renderComments(localComments()); });
+    } else renderComments(localComments());
+  }
+  document.getElementById('cpost').addEventListener('click', function(){
+    var name = (document.getElementById('cname').value || '???').trim().slice(0,3);
+    var text = (document.getElementById('ctext').value || '').trim();
+    if (!text) return;
+    var list = localComments(); list.unshift({ name: name, text: text }); list = list.slice(0, 12);
+    try { localStorage.setItem('sunder_comments', JSON.stringify(list)); } catch(e){}
+    if (sbOn()){
+      fetch(SUNDER_CONFIG.SUPABASE_URL + '/rest/v1/comments', {
+        method: 'POST', headers: sbHeaders({ 'Prefer': 'return=minimal' }),
+        body: JSON.stringify({ name: name, text: text })
+      }).then(refreshComments).catch(function(){});
+    }
+    document.getElementById('ctext').value = '';
+    renderComments(sbOn() ? list : localComments());
+  });
+  refreshComments();
+  /* ---- global leaderboard panel ---- */
+  if (sbOn()){
+    fetch(SUNDER_CONFIG.SUPABASE_URL + '/rest/v1/leaderboard?select=initials,score,stage,mode&order=score.desc&limit=10',
+          { headers: sbHeaders() })
+      .then(function(r){ return r.json(); })
+      .then(function(rows){
+        if (!Array.isArray(rows) || !rows.length) return;
+        var out = '<table style="width:100%;border-collapse:collapse">';
+        out += '<tr style="color:#8FE3FF"><td>#</td><td>NAME</td><td>SCORE</td><td>STAGE</td><td>MODE</td></tr>';
+        for (var i = 0; i < rows.length; i++){
+          var r = rows[i];
+          out += '<tr style="color:' + (i === 0 ? '#F4D77B' : '#cfc39a') + '"><td>' + (i+1) + '</td><td>' +
+                 esc(r.initials || '???') + '</td><td>' + r.score + '</td><td>' + (r.stage || 1) + '/9</td><td>' +
+                 (r.mode === 'swarm' ? 'SWRM' : 'STRY') + '</td></tr>';
+        }
+        document.getElementById('lbrows').innerHTML = out + '</table>';
+      }).catch(function(){});
+  }
+  var btn = document.getElementById('copybtn');
+  btn.addEventListener('click', function(){
+    var url = location.href;
+    function done(){ btn.textContent = '✓ LINK COPIED — SHARE IT!'; setTimeout(function(){ btn.textContent = '⧉ COPY THIS PAGE LINK'; }, 2200); }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(done);
+    else { var t = document.createElement('textarea'); t.value = url; document.body.appendChild(t); t.select(); document.execCommand('copy'); document.body.removeChild(t); done(); }
+  });
+  var c = document.getElementById('stars'), x = c.getContext('2d');
+  var stars = [];
+  function size(){ c.width = innerWidth; c.height = innerHeight; }
+  addEventListener('resize', size); size();
+  for (var i = 0; i < 110; i++) stars.push({
+    x: Math.random(), y: Math.random(),
+    s: 0.4 + Math.random() * 1.8, v: 8 + Math.random() * 40,
+    g: Math.random() < 0.3
+  });
+  var last = performance.now();
+  function tick(now){
+    var dt = Math.min((now - last) / 1000, 0.05); last = now;
+    x.clearRect(0, 0, c.width, c.height);
+    for (var i = 0; i < stars.length; i++){
+      var st = stars[i];
+      st.y += st.v * dt / c.height;
+      if (st.y > 1) { st.y = 0; st.x = Math.random(); }
+      x.globalAlpha = 0.25 + st.s / 3;
+      x.fillStyle = st.g ? '#D4AF37' : '#99BFE6';
+      x.beginPath(); x.arc(st.x * c.width, st.y * c.height, st.s, 0, 6.2832); x.fill();
+    }
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>

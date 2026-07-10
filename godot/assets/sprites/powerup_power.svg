@@ -1,0 +1,6 @@
+<svg width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
+  <defs><radialGradient id="pp" cx="0.5" cy="0.4" r="0.6">
+    <stop offset="0" stop-color="#FFF6C9"/><stop offset="0.6" stop-color="#D4AF37"/><stop offset="1" stop-color="#5A4409"/>
+  </radialGradient></defs>
+  <path d="M14 2 L17 11 L26 11 L19 17 L22 26 L14 20 L6 26 L9 17 L2 11 L11 11 Z" fill="url(#pp)" stroke="#3a2c05" stroke-width="1"/>
+</svg>

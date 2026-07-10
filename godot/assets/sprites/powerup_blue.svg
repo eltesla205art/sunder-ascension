@@ -1,0 +1,7 @@
+<svg width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
+  <defs><radialGradient id="pb2" cx="0.5" cy="0.4" r="0.6">
+    <stop offset="0" stop-color="#C9F0FF"/><stop offset="0.6" stop-color="#2FA8D8"/><stop offset="1" stop-color="#0B3A54"/>
+  </radialGradient></defs>
+  <path d="M14 2 L26 14 L14 26 L2 14 Z" fill="url(#pb2)" stroke="#D4AF37" stroke-width="1.5"/>
+  <text x="14" y="19" font-size="13" font-family="serif" fill="#FFF6C9" text-anchor="middle" font-weight="bold">L</text>
+</svg>
