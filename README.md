@@ -16,6 +16,7 @@ all in one dependency-free HTML file that runs on phones and computers.
 | `godot/` | The original Godot 4 project the game was ported from |
 | `docs/` | Storyline and design notes |
 | `supabase.sql` | One-shot setup for the online leaderboard / signups / comments |
+| `skills/sunder-ascension-dev/` | Claude Agent Skill — dev/test/balance/deploy workflow for this project |
 
 ## Battle math (the balance law)
 
@@ -42,6 +43,17 @@ All stage numbers live in the `STAGES` array in `web/game.html`; the law constan
 - **Own domain (cPanel):** upload `web/index.html` and `web/game.html` to `public_html`
   (permissions 644).
 - **Test locally:** just double-click `web/game.html`.
+
+## Claude Agent Skill
+
+`skills/sunder-ascension-dev/SKILL.md` packages the full dev workflow for this
+project (battle-math law, testing harness, Higgsfield deploy steps, domain
+packaging) as a Claude Agent Skill, so Claude picks up the right context
+automatically when asked to update, balance, test, or redeploy SUNDER.
+
+To install: zip the `skills/sunder-ascension-dev/` folder into
+`sunder-ascension-dev.skill` (a zip with a `.skill` extension) and add it via
+Claude's skill settings, or point Claude at this repo path directly.
 
 ## Publishing this repo to GitHub
 

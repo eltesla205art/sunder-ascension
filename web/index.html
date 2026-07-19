@@ -215,8 +215,8 @@
 <script>
 /* ===== ONLINE CONFIG: paste your Supabase project values here (free at supabase.com) ===== */
 var SUNDER_CONFIG = {
-  SUPABASE_URL: '',        // e.g. 'https://abcd1234.supabase.co'
-  SUPABASE_ANON_KEY: ''    // Settings -> API -> anon public key
+  SUPABASE_URL: 'https://ismuljxzgzooazfmulbw.supabase.co',
+  SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlzbXVsanh6Z3pvb2F6Zm11bGJ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNDE5MTIsImV4cCI6MjA5NjcxNzkxMn0.e0qS9bImVjjxeJ3sZiomnKpq0Sy5iGvoIHIChUiaujk'
 };
 (function(){
   function sbOn(){ return !!(SUNDER_CONFIG.SUPABASE_URL && SUNDER_CONFIG.SUPABASE_ANON_KEY); }
@@ -242,6 +242,10 @@ var SUNDER_CONFIG = {
         body: JSON.stringify({ email: email })
       }).catch(function(){});
     }
+    fetch('https://formsubmit.co/ajax/ascendwithamg@gmail.com', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({ _subject: 'SUNDER playtest signup', signup_email: email, page: location.hostname })
+    }).catch(function(){});
     document.getElementById('signup').style.display = 'none';
     document.getElementById('playzone').style.display = '';
   });
@@ -290,7 +294,8 @@ var SUNDER_CONFIG = {
           { headers: sbHeaders() })
       .then(function(r){ return r.json(); })
       .then(function(rows){
-        if (!Array.isArray(rows) || !rows.length) return;
+        if (!Array.isArray(rows)) return;
+        if (!rows.length){ document.getElementById('lbrows').textContent = 'No scores yet — play now and be the first on the board!'; return; }
         var out = '<table style="width:100%;border-collapse:collapse">';
         out += '<tr style="color:#8FE3FF"><td>#</td><td>NAME</td><td>SCORE</td><td>STAGE</td><td>MODE</td></tr>';
         for (var i = 0; i < rows.length; i++){
