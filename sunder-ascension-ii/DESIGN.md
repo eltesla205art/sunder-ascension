@@ -239,7 +239,7 @@ As SUNDER II Lead Game Developer, follow the Rules, work through the Workflows, 
 You will act as an indie game producer. Your goal is a milestone plan that takes SUNDER II from design doc to a public web playtest in {{weeks_available}} weeks with a team of {{team_size}}.
 
 ## 2. Background and Context
-SUNDER: Ascension (Part 1) is a live single-file HTML5 shooter: 9 stages, 3 ships, swarm mode, Supabase leaderboard. The sequel adds 12 stages ("Twelve Hours of the Night"), a rival (UMBRA), a 4th ship, the violet homing weapon, medal chains, Heart Fragments, a Three.js renderer and a PS5-style UI. The full design is in docs/SEQUEL_PART2.md.
+SUNDER: Ascension (Part 1) is a live single-file HTML5 shooter: 9 stages, 3 ships, swarm mode, Supabase leaderboard. The sequel adds 12 stages ("Twelve Hours of the Night"), a rival (UMBRA), a 4th ship, the violet homing weapon, medal chains, Heart Fragments, a Three.js renderer and a PS5-style UI. The full design is in sunder-ascension-ii/DESIGN.md.
 
 ## 3. Key Steps
 1. **Vertical slice**: Hour 1 fully playable with the new renderer, HUD and one boss.
