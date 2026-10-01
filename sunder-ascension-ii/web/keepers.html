@@ -30,7 +30,7 @@ header .act{font:500 11px/1 var(--head);letter-spacing:.24em;color:var(--muted)}
 #info dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin-top:16px;font:500 11px/1.5 var(--head);letter-spacing:.12em}
 #info dt{color:var(--muted)} #info dd{color:var(--text)}
 #cards{position:fixed;left:50%;bottom:max(20px,env(safe-area-inset-bottom));transform:translateX(-50%);display:flex;gap:12px}
-#cards button{all:unset;cursor:pointer;width:104px;padding:8px 8px 10px;border-radius:12px;border:var(--hair);background:var(--glass);
+#cards button{all:unset;cursor:pointer;width:88px;padding:8px 8px 10px;border-radius:12px;border:var(--hair);background:var(--glass);
   text-align:center;transition:transform .25s cubic-bezier(.2,.8,.2,1),box-shadow .25s,border-color .25s;backdrop-filter:blur(8px)}
 #cards button img{display:block;width:100%;aspect-ratio:1;object-fit:contain;filter:drop-shadow(0 4px 10px rgba(0,0,0,.6))}
 #cards button span{display:block;margin-top:6px;font:500 10px/1.3 var(--head);letter-spacing:.16em;color:var(--muted)}
@@ -103,8 +103,20 @@ const KEEPERS = [
     quote: '"Burn, and be weighed by the fire."',
     brief: 'Four winged fire-cobras circle the burning lake, spinning their flame in spirals. Break them before the lake takes the sky.',
     health: 410, patterns: 'Spiral · Radial burst', arena: 'The Lake of Fire', accent: 0xff5a1f },
+  { id: 'umbra_coiled', act: 3, hour: 'HOUR 7 · THE COILED ONE', name: 'UMBRA', epithet: 'The Shadow Heir, Coiled',
+    quote: '"You still don\'t know what I am, do you, Heir?"',
+    brief: "UMBRA returns wound in Apep's crystal coil — faster, colder, and from here on its fire cuts twice as deep.",
+    health: 470, patterns: 'Spiral · Spread fan · Cross ring', arena: "Beneath Apep's coils", accent: 0xc06bff },
+  { id: 'hittite', act: 3, hour: 'HOUR 8 · THE IRON SKY', name: 'THE HITTITE ENGINE', epithet: 'The Bow That Only Bent',
+    quote: '"You broke the Nine. You only bent me."',
+    brief: 'An iron sky-fortress rebuilt from a Bow you broke, borne on chariot-wheel rotors. Walls of fire, rings of steel.',
+    health: 530, patterns: 'Wall barrage · Cross ring', arena: 'The iron sky', accent: 0xff7a3a },
+  { id: 'ammit', act: 3, hour: 'HOUR 9 · THE JUDGEMENT HALL', name: 'AMMIT', epithet: 'Devourer of Hearts',
+    quote: '"Your heart is heavy, Heir. I can smell it."',
+    brief: 'Crocodile, lion and hippo in one hungry body, crouched beneath the scales that weigh your heart against a feather.',
+    health: 600, patterns: 'Dual spiral · Radial burst', arena: 'The Judgement Hall', accent: 0xff3355 },
 ];
-const ACT_NAMES = { 1: 'ACT I: DUSK', 2: 'ACT II: MIDNIGHT' };
+const ACT_NAMES = { 1: 'ACT I: DUSK', 2: 'ACT II: MIDNIGHT', 3: 'ACT III: THE DEEP NIGHT' };
 const hull = h => Math.round(h * 1.3 / 10) * 10;
 
 // ---------------------------------------------------------------- renderer

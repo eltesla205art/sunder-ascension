@@ -1,6 +1,6 @@
-"""SUNDER: Ascension II — the Keepers of Act I (Hours 1–3) and Act II (Hours 4–6), modeled procedurally.
+"""SUNDER: Ascension II — the Keepers of Acts I–III (Hours 1–9), modeled procedurally.
 
-    python keepers.py <out_dir> [samples] [act]      act = 1 or 2 (default: every Keeper)
+    python keepers.py <out_dir> [samples] [act]      act = 1, 2 or 3 (default: every Keeper)
 
 For each Keeper writes:
   keeper_<id>.png          top-down boss sprite (longest side 360 px, transparent, front facing DOWN the screen)
@@ -25,7 +25,7 @@ sys.argv = _argv
 
 OUT = sys.argv[1] if len(sys.argv) > 1 else "."
 SAMPLES = int(sys.argv[2]) if len(sys.argv) > 2 else 64
-ONLY_ACT = sys.argv[3] if len(sys.argv) > 3 else None   # "1" or "2" renders one act; default: all
+ONLY_ACT = sys.argv[3] if len(sys.argv) > 3 else None   # "1", "2" or "3" renders one act; default: all
 assign, smooth, flat_poly = ships.assign, ships.smooth, ships.flat_poly
 
 
@@ -69,6 +69,13 @@ def materials():
     m["ember"] = ships.mat_glow("ember", (1.0, 0.32, 0.03), 1.6)
     m["sand"] = ships.mat_metal("sand", (0.36, 0.22, 0.10), rough=0.4, metal=0.65)
     m["feather_dark"] = ships.mat_metal("feather_dark", (0.06, 0.045, 0.035), rough=0.5, metal=0.3)
+    # Act III: iron, rust, beast hide, the feather of Ma'at, the weighed heart
+    m["iron"] = ships.mat_metal("iron", (0.10, 0.10, 0.11), rough=0.55, metal=0.9)
+    m["rust"] = ships.mat_metal("rust", (0.30, 0.10, 0.04), rough=0.7, metal=0.4)
+    m["hide"] = ships.mat_metal("hide", (0.10, 0.12, 0.14), rough=0.6, metal=0.15)
+    m["mane"] = ships.mat_metal("mane", (0.70, 0.42, 0.12), rough=0.45, metal=0.6)
+    m["feather"] = ships.mat_glow("feather", (0.92, 0.95, 1.0), 1.2)
+    m["heart"] = ships.mat_glow("heart", (0.85, 0.05, 0.12), 2.0)
     return m
 
 
@@ -390,9 +397,156 @@ def seraphs(M):
                 fl.scale = (1, 0.35, 1)
 
 
+def as_mesh(o):
+    """Curves don't join into the exported mesh; bake one to geometry."""
+    bpy.ops.object.select_all(action="DESELECT")
+    o.select_set(True)
+    bpy.context.view_layer.objects.active = o
+    bpy.ops.object.convert(target="MESH")
+    return bpy.context.view_layer.objects.active
+
+
+def umbra_coiled(M):
+    """Hour 7 — UMBRA returns with Apep's coil wound around it, faster and colder."""
+    umbra(M)
+    cu = bpy.data.curves.new("coil", "CURVE")
+    cu.dimensions = "3D"
+    cu.bevel_depth = 0.32
+    cu.bevel_resolution = 1                                   # faceted crystal cross-section
+    cu.resolution_u = 20
+    sp = cu.splines.new("BEZIER")
+    pts = []
+    for i in range(10):                                       # a helix loosely wrapped round the ship
+        a = i * 0.95
+        r = 3.1 - i * 0.12
+        pts.append((math.cos(a) * r, math.sin(a) * r * 0.78, 0.15 + 0.85 * math.sin(i * 1.9), 0.55 + 0.5 * math.sin(i / 9 * math.pi)))
+    sp.bezier_points.add(len(pts) - 1)
+    for bp, (x, y, z, r) in zip(sp.bezier_points, pts):
+        bp.co = (x, y, z)
+        bp.handle_left_type = bp.handle_right_type = "AUTO"
+        bp.radius = r
+    ob = bpy.data.objects.new("coil", cu)
+    bpy.context.collection.objects.link(ob)
+    ob.data.materials.append(M["serpent"] if "serpent" in M else M["obsidian"])
+    as_mesh(ob)
+    # magenta crystal spines along the coil, and a serpent head biting toward the player
+    for i in range(1, 9):
+        x, y, z, r = pts[i]
+        shard((x, y, z + 0.3 * r), 0.55 * r + 0.2, 0.12, M["glass"], tilt=(0.3, 0.2, 0))
+    hx, hy, hz, _ = pts[-1]
+    head = Vector((hx, hy, hz))
+    strike = (Vector((0, -3.4, 0)) - head).normalized()
+    for jaw in (1, -1):
+        j = cone(head + strike * 0.9 + Vector((0, 0, jaw * 0.22)), 0.62, 0.05, 1.9, M["obsidian"], rot=toward(strike), verts=4)
+        j.scale = (1, 0.5, 1)
+    ball(head + strike * 1.0, (0.3, 0.3, 0.2), M["crystal"], seg=16)              # glowing maw
+    side = strike.cross(Vector((0, 0, 1))).normalized()
+    for e in (1, -1):
+        ball(head + side * e * 0.28 + Vector((0, 0, 0.42)), (0.08, 0.08, 0.06), M["eye"], seg=12)
+
+
+def hittite(M):
+    """Hour 8 — the Hittite Engine: an iron sky-fortress rebuilt from a broken Bow, borne on chariot-wheel rotors."""
+    # armoured hull: a long hexagonal deck
+    hull = [(0, -2.4), (1.5, -1.6), (1.7, 1.3), (0.9, 2.3), (-0.9, 2.3), (-1.7, 1.3), (-1.5, -1.6)]
+    flat_poly("deck", hull, 0.55, M["iron"], z=-0.2)
+    flat_poly("deck_trim", [(x * 0.82, y * 0.82) for x, y in hull], 0.12, M["rust"], z=0.36)
+    # battlements along the deck edge and four corner towers
+    for (x0, y0), (x1, y1) in zip(hull, hull[1:] + hull[:1]):
+        n = max(2, int(math.hypot(x1 - x0, y1 - y0) / 0.42))
+        for k in range(n):
+            t = (k + 0.5) / n
+            box((x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, 0.48), (0.2, 0.2, 0.22), M["iron"], bevel=0.02)
+    for x, y in ((1.5, -1.5), (-1.5, -1.5), (1.6, 1.25), (-1.6, 1.25)):
+        cyl((x, y, 0.6), 0.28, 0.9, M["iron"], verts=8)
+        cone((x, y, 1.2), 0.32, 0.0, 0.4, M["rust"], verts=8)
+    # rivet rows
+    for y in (-1.2, -0.2, 0.8, 1.7):
+        for x in (-1.2, -0.6, 0.6, 1.2):
+            ball((x, y, 0.5), (0.06, 0.06, 0.04), M["bronze"], seg=8)
+    # central citadel with a crystal reactor
+    box((0, 0.5, 0.75), (1.3, 1.6, 0.6), M["iron"], bevel=0.08)
+    box((0, 0.5, 1.12), (1.0, 1.25, 0.14), M["bronze"], bevel=0.04)
+    for x in (-0.3, 0.3):
+        box((x, 0.5, 1.25), (0.18, 0.9, 0.08), M["crystal"], bevel=0)    # reactor vents
+    ball((0, 0.5, 1.3), (0.28, 0.28, 0.2), M["core"], seg=16)
+    # wall-barrage battery along the bow: a row of cannons aimed down the screen
+    for i in range(7):
+        x = -1.05 + i * 0.35
+        cyl((x, -2.0 + abs(x) * 0.5, 0.42), 0.09, 0.9, M["iron"], rot=(math.pi / 2, 0, 0), verts=12)
+        cyl((x, -2.45 + abs(x) * 0.5, 0.42), 0.06, 0.04, M["core"], rot=(math.pi / 2, 0, 0), verts=12)
+    # four six-spoked Hittite chariot wheels, laid flat as rotors on outriggers
+    for sx, sy in ((1, -1), (-1, -1), (1, 1), (-1, 1)):
+        c = Vector((sx * 2.6, sy * 1.35 + 0.25, 0.2))
+        limb((sx * 1.4, sy * 1.0 + 0.25, 0.2), c, 0.14, M["iron"])
+        bpy.ops.mesh.primitive_torus_add(major_radius=0.95, minor_radius=0.1, location=c)
+        assign(obj(), M["bronze"])
+        for k in range(6):
+            a = k * math.pi / 3
+            box(c + Vector((math.cos(a) * 0.47, math.sin(a) * 0.47, 0)), (0.94, 0.08, 0.06), M["iron"],
+                rot=(0, 0, a), bevel=0)
+        cyl(c, 0.22, 0.3, M["rust"], verts=16)
+        ball(c + Vector((0, 0, 0.18)), (0.12, 0.12, 0.08), M["crystal"], seg=12)
+    # broken Bow trophies: crystal shards punched through the iron
+    for x, y in ((-0.9, 1.6), (1.0, -0.9), (-1.1, -0.6), (0.7, 1.9)):
+        shard((x, y, 0.3), 0.9, 0.16, M["glass"], tilt=(0.3 * x, -0.3 * y, 0))
+
+
+def ammit(M):
+    """Hour 9 — Ammit, Devourer of Hearts: crocodile head, lion forequarters, hippo hindquarters, beneath the scales."""
+    # hippo hindquarters and lion chest
+    ball((0, 1.0, 0.2), (0.95, 0.9, 0.45), M["hide"])
+    ball((0, -0.3, 0.35), (1.0, 0.95, 0.6), M["mane"])
+    # lion mane: a ring of gold blades around the neck
+    for i in range(16):
+        a = math.pi + i * math.tau / 16
+        d = Vector((math.cos(a), math.sin(a) * 0.8, 0))
+        m = cone((0, 0, 0), 0.3, 0.0, 1.25, M["mane"] if i % 2 else M["gold"], rot=toward(d + Vector((0, 0, 0.3))), verts=6)
+        m.location = Vector((0, -0.9, 0.55)) + d * 0.95
+        m.scale = (1, 0.4, 1)
+    # crocodile head and long jaws, pointing down the screen
+    ball((0, -1.25, 0.6), (0.55, 0.6, 0.42), M["hide"])
+    for z, mat, k in ((0.62, M["hide"], 1.0), (0.38, M["bronze"], 0.9)):     # tapered upper and lower jaws
+        j = cone((0, -2.2, z), 0.42 * k, 0.08, 1.7, mat, rot=toward((0, -1, 0)), verts=4)
+        j.scale = (1.0, 0.42, 1.0)
+        j.rotation_euler.rotate_axis("Y", math.pi / 4)
+    for s in (1, -1):
+        for i in range(5):
+            cone((s * 0.26, -1.65 - i * 0.24, 0.42), 0.04, 0.0, 0.18, M["bone"], rot=(math.pi, 0, 0), verts=6)
+        ball((s * 0.24, -1.4, 0.95), (0.06, 0.08, 0.04), M["eye"], seg=16)
+    box((0, -1.0, 0.98), (0.7, 0.35, 0.08), M["gold"], rot=(0.25, 0, 0))   # headdress band
+    # lion forelegs with claws, hippo hind legs
+    for s in (1, -1):
+        a, b = Vector((s * 0.85, -0.5, 0.1)), Vector((s * 1.45, -1.35, -0.1))
+        limb(a, b, 0.22, M["mane"])
+        for k in (-0.14, 0, 0.14):
+            cone(b + Vector((k, -0.15, 0)), 0.05, 0.0, 0.35, M["bone"], rot=toward((k, -1, -0.3)), verts=8)
+        limb((s * 0.95, 1.35, 0.0), (s * 1.25, 1.65, -0.15), 0.3, M["hide"])        # stubby hippo legs
+        ball((s * 1.25, 1.65, -0.2), (0.34, 0.34, 0.2), M["hide"], seg=16)
+    # stubby hippo tail
+    limb((0, 2.05, 0.2), (0, 2.5, 0.05), 0.12, M["hide"])
+    # the scales of judgement hovering over its back: beam, pillar, heart and feather pans
+    cyl((0, 0.6, 1.6), 0.06, 1.6, M["gold"], verts=12)
+    box((0, 0.6, 2.4), (3.4, 0.12, 0.1), M["gold"], bevel=0.03)
+    for s, item in ((1, "heart"), (-1, "feather")):
+        pan = Vector((s * 1.6, 0.6, 1.95))
+        for k in range(3):
+            a = k * math.tau / 3
+            limb(pan + Vector((math.cos(a) * 0.4, math.sin(a) * 0.4, 0)), Vector((s * 1.6, 0.6, 2.38)), 0.015, M["gold"])
+        bpy.ops.mesh.primitive_cylinder_add(vertices=24, radius=0.45, depth=0.06, location=pan)
+        assign(obj(), M["gold"])
+        if item == "heart":
+            ball(pan + Vector((0, 0, 0.18)), (0.2, 0.18, 0.18), M["heart"], seg=16)
+        else:
+            f = ball(pan + Vector((0, 0, 0.12)), (0.12, 0.42, 0.04), M["feather"], seg=16)
+            f.rotation_euler = (0, 0, 0.5)
+
+
 KEEPERS = {"wepwawet": wepwawet, "sobek": sobek, "umbra": umbra,
-           "nun": nun, "sokar": sokar, "seraphs": seraphs}
-ACTS = {"1": ("wepwawet", "sobek", "umbra"), "2": ("nun", "sokar", "seraphs")}
+           "nun": nun, "sokar": sokar, "seraphs": seraphs,
+           "umbra_coiled": umbra_coiled, "hittite": hittite, "ammit": ammit}
+ACTS = {"1": ("wepwawet", "sobek", "umbra"), "2": ("nun", "sokar", "seraphs"),
+        "3": ("umbra_coiled", "hittite", "ammit")}
 
 
 # ------------------------------------------------------------------ render setup
@@ -493,7 +647,8 @@ def main():
         render(f"{OUT}/keeper_{kid}.png", round(size.x * 1.06 * k), round(size.y * 1.06 * k), top)
         # 3/4 portrait, looking at the Keeper's face from below-front
         d = max(size.x, size.y) * 0.85
-        port = camera("portrait", loc=(cx + d * 0.55, cy - d * 1.25, d * 0.9), target=(cx, cy - size.y * 0.12, 0), lens=55)
+        cz = (lo.z + hi.z) / 2                     # aim at mid-height so tall Keepers (Ammit's scales) stay in frame
+        port = camera("portrait", loc=(cx + d * 0.55, cy - d * 1.25, d * 0.9 + cz), target=(cx, cy - size.y * 0.12, cz), lens=55)
         render(f"{OUT}/keeper_{kid}_portrait.png", 320, 320, port)
         merge_for_export()
         bpy.ops.export_scene.gltf(filepath=f"{OUT}/keeper_{kid}.glb", export_format="GLB",

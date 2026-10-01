@@ -22,6 +22,8 @@ Kling result URLs expire after 24 h, and this sandbox cannot download from Kling
 
 ## Done: Act II Keepers (Hours 4–6) — Nun, Sokar, the Fire Lake Seraphs (see final-evidence.md)
 
+## Done: Act III Keepers (Hours 7–9) — UMBRA Coiled, the Hittite Engine, Ammit (see final-evidence.md)
+
 ## Next
-- Keepers for Act III (Ammit, the Hittite Engine; UMBRA's rematch already uses its model) and Act IV (the Overlord's Echo, Apep).
+- Act IV Keepers: the Overlord's Echo (Hour 10) and APEP (Hour 12, multi-phase finale); Hour 11 UMBRA keeps its model.
 - Optional: send the favourite Kling concepts back into the chat so the models can be matched to them.
