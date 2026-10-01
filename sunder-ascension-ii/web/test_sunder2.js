@@ -111,9 +111,10 @@ test('defeat banner says DAWN DENIED', () => {
   assert(G.banner.startsWith('DAWN DENIED\n\nHour 7'));
 });
 
-test('every Hour has a Blender Keeper; Act IV Hours have stage backdrops', () => {
+test('every Hour has a Blender Keeper and its own stage backdrop', () => {
   for (const st of STAGES) assert(/^keeper_/.test(st.art), 'Hour ' + st.num + ' art ' + st.art);
-  for (const n of [10, 11, 12]) assert(/^stage_/.test(STAGES[n - 1].stage || ''), 'Hour ' + n + ' has no stage backdrop');
+  for (const st of STAGES) assert(/^stage_/.test(st.stage || '') && new RegExp(st.stage + ':').test(src), 'Hour ' + st.num + ' has no embedded stage backdrop');
+  assert.strictEqual(new Set(STAGES.map(st => st.stage)).size, 12, 'two Hours share a backdrop');
   assert(/keeper_apep_p3:/.test(src), "Apep's final-phase render is not embedded");
 });
 

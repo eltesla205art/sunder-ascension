@@ -26,8 +26,10 @@ Kling result URLs expire after 24 h, and this sandbox cannot download from Kling
 
 ## Done: Act IV — the Overlord's Echo, UMBRA Unmasked, Apep (+ final phase), stage backdrops for Hours 10–12
 
+## Done: stage backdrops for Hours 1–9 (Blender), Kling concepts requested for each
+
 ## Next
-- Swap in the Kling stage concepts if the user sends them; stage backdrops for Hours 1–9.
+- Fold in Kling stage concepts the user sends back (art/kling/stage_<id>.png, re-run stages.py).
 - Move embedded art out of game.html before release (732 KB).
 - Optional: send the favourite Kling concepts back into the chat so the models can be matched to them.
 
@@ -40,3 +42,17 @@ Kling result URLs expire after 24 h, and this sandbox cannot download from Kling
 | Stage 10 — Starfall (9:16 tile) | AYpe56bFBiODXPncTtROP8E3GvFM-PnTnynFglfS0HL5yfbRW8DD78IoY0kKBEL5U59MQWQn |
 | Stage 11 — Heart chamber (9:16 tile) | AddAPZ9MJsCtOhmUrrI5yOU6kGjd9lBLF98hU50RvxZ6NM_pCQkhJZu-q2QxUpP9YFz-1ZD7 |
 | Stage 12 — Apep's back (9:16 tile) | AePLNRS8HHZKYAkdqh8paYj36fckKkrI9tgjaWiiWtXlfz5As6FA45_GFYwu-YjNdxTd41MK |
+
+## Hours 1–9 stage concept jobs (Kling, 4 credits each, 9:16, 2 images)
+| Hour | Generation ID |
+|---|---|
+| 1 Western Horizon | AVHGrBAH2mct_yVCAtPzBFmnSl5WZ64_cxILbCa3Md8wravhsQcC6VwOfLaGB6ozuzsE5iAe |
+| 2 Drowned Fields | AeGncFA6NLway761_4tcOjm0cKJK4U9hwdccUjhytzqGfI8qJnQ0sFQyvGZxr69cXQY1jG3x |
+| 3 Mirror | AYh0A-J6g7TRWg08olE1mhMkMOgn_9W0iu41B8agd9SkUYe2rRcCbIM1QiDsQNJXYZJa2FmY |
+| 4 Sunken Spires | AXscCYVp7ynIcsj6CW2ydxBYJQTMkejnwv2oVuiDigf-qP5GTOqHDe8H0eksrRth9wEdq0UA |
+| 5 Sokar's Sand | AdjK-jBcAKPp-OBPSZR9rX-gqTeY9LV04_Tssn4u4ZctoKm6OT0ZZ9QMUnvrn04Fl0loI9LB |
+| 6 Lake of Fire | ATatDwHaWIwr9hVTGppkZ115YtvQktodKfrw1DtkP5RAF0vv4HG_sjrm2J6jzsEron3KMat0 |
+| 7 Coiled One | AQ0frvLaZ757hJcZpnIzRGTAA9QHTAkZEkLI7TU_TNtJzQxNvbCEu-qZk-9IVbCrmEyznaAG |
+| 8 Iron Sky | AXhrWwr8EIkt-Ft08DEuQ4YYzk13VvQQmWFE4VwJ7N5Plw317LL0OwOqkApx9FrqZE-OqMvW |
+| 9 Judgement Hall | ARoZcPRWQGDFNMs0JRtv3ryXoM6TNvBEpJ1lU7HrwEHXdIo4CCHh8YWnw4qbn3QYyC-E6wyg |
+Workflow: save a chosen image as `art/kling/stage_<id>.png` and re-run `blender/stages.py` — it becomes the ground texture.

@@ -30,7 +30,8 @@ original *SUNDER: Ascension — The Nine Bows* (`web/`, `godot/`, `docs/`), whic
   Seraphs (Act II); UMBRA Coiled, the Hittite Engine, Ammit (Act III); the Overlord's Echo, UMBRA Unmasked and Apep
   (Act IV), with Apep changing form for its final phase. Top-down sprites in play, portraits on the boss-intro card,
   GLBs in the Keeper Codex.
-- **Stage backdrops** for Hours 10–12: scrolling Blender tiles (`blender/stages.py`) behind play.
+- **Stage backdrops for all twelve Hours:** scrolling Blender tiles (`blender/stages.py`) behind play, one per arena.
+  Kling stage concepts can be folded in as ground textures (save as `art/kling/stage_<id>.png`, re-run the script).
 
 ## Re-rendering the Blender art
 
@@ -40,7 +41,7 @@ Blender runs headless as a Python module (`pip install bpy==4.2.0`, Python 3.11)
 python blender/ships.py art/blender 256                       # ship_sunborn/scarab/ibis.png
 python blender/title_scene.py art/blender/title_bg.png 720 1080 128
 python blender/keepers.py art/blender/keepers 128 [1|2|3|4]   # one act or all: sprites, portraits, GLBs (move .glb to web/models/)
-python blender/stages.py art/blender/stages 64                # Act IV stage backdrop tiles
+python blender/stages.py art/blender/stages 64 [id ...]       # stage backdrops (all, or e.g. horizon delta)
 ```
 
 To view the Keeper Codex locally: `cd web && python3 -m http.server 5188`, then open http://127.0.0.1:5188/keepers.html.

@@ -1,4 +1,4 @@
-# The Twelve Keepers and Act IV stages — evidence (2026-10-01)
+# The Twelve Keepers and stage backdrops — evidence (2026-10-01)
 
 Skills followed: `skills/threejs-game-director`, `threejs-aaa-graphics-builder` (visual-scorecard, authoring-recipes,
 technical-art), `threejs-qa-release` (canvas inspector + `check_evidence.py`). Credential probe: Tripo, Gemini and
@@ -63,6 +63,20 @@ ElevenLabs keys MISSING, so concepts came from Kling and models were authored in
   transmissive materials after the Overlord's crown measured contrast 200 (now 172).
 - `test_sunder2.js`: 8/8 — new check that every Hour has a Blender Keeper and the Act IV Hours have backdrops.
 
+## Stage backdrops for Hours 1–9
+- `blender/stages.py` gained nine builders, one per arena in DESIGN.md: desert rail yards with crystal-burst wrecks (1),
+  black floodwater with reed islands and fallen obelisks (2), a cracked glass desert (3), gold-capped Atlantean spires
+  on the sea floor (4), Sokar's dune sea with half-buried bronze hawks (5), crust plates on a dim lava lake (6), Apep's
+  coils passing under open night (7), iron girder walkways over storm cloud (8), and the checkered Judgement Hall with
+  column tops and gold feather inlays (9). Every Hour now has its own backdrop.
+- Review passes removed what competed with gameplay: cyan rings around the spires read as targeting reticles, the lava
+  was bright orange, the white feather inlays could pass for pickups, and the glossy water/mirror threw hot specular
+  patches. All dimmed or replaced; in-play captures (`stages-play/hour1-9.png`) show bullets and enemies clear on each.
+- **Kling + Blender:** nine Kling stage concepts (one per Hour, job IDs in `game-progress.md`). `stages.py` now uses
+  `art/kling/stage_<id>.png` as the ground texture when present, under Blender's props and lighting; verified with a
+  stand-in texture. The Kling images still need to be sent back, as this sandbox can't download them.
+- `test_sunder2.js`: 8/8, now requiring a distinct embedded backdrop for all 12 Hours. `game.html` is 792 KB.
+
 ## Keeper Codex inspection (`keepers-evidence.json`, run `keepers-act4-pass-2`)
 All 26 captures (13 entries × desktop/mobile) PASS; `check_evidence.py`: 26 artifacts confirmed.
 SwiftShader (software) rasterizer, so FPS is not measured. Identical diagnostics on both viewports:
@@ -98,8 +112,8 @@ deliberate night-showroom look, not fog standing in for geometry. The scorecard 
 SUNDER II are the 2D game captures in `act1-bosses/` … `act4-bosses/`.
 
 ## Still weak
-- Hours 1–9 have no stage backdrop yet (starfield only); Act IV's backdrops are Blender tiles until Kling ones are sent back.
-- `game.html` is 732 KB with every render embedded; still one file, but worth moving art to separate files before release.
+- Stage backdrops are Blender tiles until Kling concepts are sent back and folded in through `art/kling/`.
+- `game.html` is 792 KB with every render embedded; still one file, but worth moving art to separate files before release.
 - Sokar's feather blades are thin, so the hawk reads slighter in the low 3/4 Codex view than top-down in the game.
 - Keeper models are static (no rig/animation); motion in the viewer is hover, turntable and emissive pulse only.
 - Kling concepts could not be inspected or used as image-to-3D input here (CDN blocked); models follow the written brief.
