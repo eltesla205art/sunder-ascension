@@ -1,6 +1,6 @@
-"""SUNDER: Ascension II — the Keepers of Acts I–III (Hours 1–9), modeled procedurally.
+"""SUNDER: Ascension II — the Keepers of all four acts (Hours 1–12), modeled procedurally.
 
-    python keepers.py <out_dir> [samples] [act]      act = 1, 2 or 3 (default: every Keeper)
+    python keepers.py <out_dir> [samples] [act]      act = 1, 2, 3 or 4 (default: every Keeper)
 
 For each Keeper writes:
   keeper_<id>.png          top-down boss sprite (longest side 360 px, transparent, front facing DOWN the screen)
@@ -25,7 +25,7 @@ sys.argv = _argv
 
 OUT = sys.argv[1] if len(sys.argv) > 1 else "."
 SAMPLES = int(sys.argv[2]) if len(sys.argv) > 2 else 64
-ONLY_ACT = sys.argv[3] if len(sys.argv) > 3 else None   # "1", "2" or "3" renders one act; default: all
+ONLY_ACT = sys.argv[3] if len(sys.argv) > 3 else None   # "1".."4" renders one act; default: all
 assign, smooth, flat_poly = ships.assign, ships.smooth, ships.flat_poly
 
 
@@ -76,6 +76,11 @@ def materials():
     m["mane"] = ships.mat_metal("mane", (0.70, 0.42, 0.12), rough=0.45, metal=0.6)
     m["feather"] = ships.mat_glow("feather", (0.92, 0.95, 1.0), 1.2)
     m["heart"] = ships.mat_glow("heart", (0.85, 0.05, 0.12), 2.0)
+    # Act IV: void-crystal scales, starfire, the Heart of Atlantis
+    m["void"] = ships.mat_metal("void", (0.035, 0.015, 0.07), rough=0.22, metal=0.85)
+    m["violet"] = ships.mat_glow("violet", (0.45, 0.12, 1.0), 2.2)
+    m["starfire"] = ships.mat_glow("starfire", (0.85, 0.80, 1.0), 4.0)
+    m["atlantis_heart"] = ships.mat_glow("atlantis_heart", (1.0, 0.42, 0.04), 1.8)
     return m
 
 
@@ -542,11 +547,138 @@ def ammit(M):
             f.rotation_euler = (0, 0, 0.5)
 
 
+def overlord_echo(M):
+    """Hour 10 — the Overlord's Echo: the broken crown of Part 1's Crystal Overlord, full of falling stars."""
+    # the hollow crown: a broken ring of crystal blades leaning outward
+    for i in range(14):
+        if i in (3, 9):                      # two blades lost when it shattered
+            continue
+        a = i * math.tau / 14
+        out = Vector((math.cos(a), math.sin(a), 0))
+        h = 1.8 + 0.9 * ((i * 5) % 3) / 2 + (1.0 if math.sin(a) < -0.6 else 0)   # tallest blades face the player
+        b = shard(out * 1.55, h, 0.34, M["glass"], tilt=(-out.y * 0.45, out.x * 0.45, a))
+        if i % 2 == 0:
+            shard(out * 1.2, h * 0.6, 0.18, M["crystal"], tilt=(-out.y * 0.3, out.x * 0.3, a))
+    bpy.ops.mesh.primitive_torus_add(major_radius=1.55, minor_radius=0.16, major_segments=64, location=(0, 0, 0.1))
+    assign(obj(), M["void"])
+    # the hollow core: a void bowl full of falling stars
+    ball((0, 0, -0.2), (1.25, 1.25, 0.35), M["void"])
+    random.seed(10)
+    for k in range(26):
+        r, a = random.uniform(0, 1.05), random.uniform(0, math.tau)
+        ball((math.cos(a) * r, math.sin(a) * r, random.uniform(0.0, 1.4)), (0.07,) * 3,
+             M["starfire"] if k % 3 else M["core"], seg=10)
+    ball((0, 0, 0.35), (0.38, 0.38, 0.38), M["core"])
+    # glowing cracks across the void bowl
+    for k in range(5):
+        a = k * math.tau / 5 + 0.3
+        box((math.cos(a) * 0.7, math.sin(a) * 0.7, 0.13), (1.0, 0.05, 0.04), M["violet"], rot=(0, 0, a), bevel=0)
+    # gold Atlantean armour fragments still orbiting what's left
+    for k in range(7):
+        a = k * math.tau / 7 + 0.4
+        p = Vector((math.cos(a) * 3.0, math.sin(a) * 2.6, 0.3 + 0.3 * math.sin(k)))
+        f = box(p, (0.7, 0.35, 0.08), M["gold"], rot=(0.4 * math.sin(k), 0.3, a + 0.6), bevel=0.03)
+        box(p + Vector((0, 0, 0.05)), (0.45, 0.06, 0.06), M["violet"], rot=(0.4 * math.sin(k), 0.3, a + 0.6), bevel=0)
+    # the jagged "jaw" of crystal reaching toward the player
+    for k, x in enumerate((-0.7, -0.25, 0.25, 0.7)):
+        shard((x, -1.7, 0.0), 1.6 - abs(x) * 0.6, 0.22, M["glass"], tilt=(1.25, 0, 0))
+
+
+def umbra_unmasked(M):
+    """Hour 11 — UMBRA unmasked: the obsidian shell peels away and the gold Thunder beneath shows through.
+    It was ELTESLA's shadow all along."""
+    spec = dict(ships.SHIPS["sunborn"])
+    spec.update(span=1.75, sweep=0.7, glow=(1.0, 0.85, 0.5))
+    before = set(bpy.data.objects)
+    ships.build_ship(spec)
+    parts = [o for o in bpy.data.objects if o not in before]
+    bpy.ops.object.empty_add(location=(0, 0, 0))
+    root = obj()
+    for o in parts:
+        o.parent = root
+    root.rotation_euler = (0, 0, math.pi)
+    root.scale = (1.9, 1.9, 1.9)
+    # obsidian mask plates still clinging on, and others peeling away, each with a hot gold seam
+    random.seed(11)
+    for k in range(16):
+        a = random.uniform(0, math.tau)
+        clinging = k < 7
+        r = random.uniform(0.6, 2.4) if clinging else random.uniform(2.8, 3.9)
+        c = Vector((math.cos(a) * r, math.sin(a) * r * 0.75, 0.45 if clinging else random.uniform(0.6, 1.6)))
+        sz = random.uniform(0.35, 0.7)
+        tri = [(c.x, c.y + sz), (c.x + sz * 0.9, c.y - sz * 0.6), (c.x - sz * 0.8, c.y - sz * 0.5)]
+        plate = flat_poly("mask", tri, 0.08, M["obsidian"], z=c.z)
+        if clinging:   # a hot gold seam where the mask is splitting from the hull
+            box((c.x, c.y, c.z + 0.1), (sz * 0.9, 0.05, 0.03), M["ember"], rot=(0, 0, random.uniform(0, 3)), bevel=0)
+        else:
+            plate.rotation_euler = (random.uniform(-0.8, 0.8), random.uniform(-0.8, 0.8), 0)
+    # the light breaking out of it
+    ball((0, 0.2, 0.75), (0.3, 0.3, 0.2), M["atlantis_heart"], seg=16)
+
+
+def apep(M, open_jaws=False):
+    """Hour 12 — APEP, the Serpent of Unmaking. Phases 1–2: the head with its jaws shut, coils trailing behind.
+    Final phase (open_jaws): the jaws thrown open on the Heart of Atlantis."""
+    # coils trailing up the screen behind the head
+    cu = bpy.data.curves.new("apep_body", "CURVE")
+    cu.dimensions = "3D"
+    cu.bevel_depth = 1.05
+    cu.bevel_resolution = 1                                    # faceted crystal cross-section
+    cu.resolution_u = 24
+    sp = cu.splines.new("BEZIER")
+    pts = [(0, 1.0, 0.1, 1.0), (2.7, 2.9, -0.2, 0.95), (-2.4, 4.8, 0.0, 0.75), (1.0, 6.3, -0.3, 0.4)]
+    sp.bezier_points.add(len(pts) - 1)
+    for bp, (x, y, z, r) in zip(sp.bezier_points, pts):
+        bp.co = (x, y, z)
+        bp.handle_left_type = bp.handle_right_type = "AUTO"
+        bp.radius = r
+    ob = bpy.data.objects.new("apep_body", cu)
+    bpy.context.collection.objects.link(ob)
+    ob.data.materials.append(M["void"])
+    as_mesh(ob)
+    # violet light between the scales and a ridge of crystal spines down the back
+    for i, (x, y, z, r) in enumerate(pts[:-1]):
+        shard((x, y, z + r * 1.4), 1.5 * r + 0.3, 0.26 * r + 0.05, M["glass"], tilt=(0.25, 0, 0))
+        ball((x, y, z + r * 1.2), (0.22 * r + 0.05,) * 3, M["core"], seg=12)
+    # the head: broad and flat, pointing down the screen
+    ball((0, -0.5, 0.4), (1.9, 1.6, 0.75), M["void"])
+    if not open_jaws:
+        j = cone((0, -2.8, 0.4), 1.75, 0.15, 3.8, M["void"], rot=toward((0, -1, 0)), verts=4)
+        j.scale = (1.0, 0.38, 1.0)
+        j.rotation_euler.rotate_axis("Y", math.pi / 4)
+        for s in (1, -1):
+            for k in range(5):
+                cone((s * (1.05 - k * 0.2), -1.7 - k * 0.48, 0.2), 0.09, 0.0, 0.42, M["glass"], rot=(math.pi, 0, 0), verts=6)
+    else:
+        # the jaws thrown open sideways, so the Heart is visible from above
+        for s in (1, -1):
+            d = Vector((s * 0.5, -1, 0)).normalized()
+            j = cone((0, 0, 0), 1.15, 0.12, 3.6, M["void"], rot=toward(d), verts=4)
+            j.location = Vector((s * 1.05, -2.3, 0.4))
+            j.scale = (1.0, 0.38, 1.0)
+            j.rotation_euler.rotate_axis("Y", math.pi / 4)
+            for k in range(6):                                 # fangs along the inner edge
+                p = Vector((s * 0.55, -1.6, 0.6)) + d * (k * 0.5)
+                cone(p, 0.1, 0.0, 0.55, M["glass"], rot=toward((-s, 0, -0.4)), verts=6)
+        ball((0, -2.3, 0.5), (0.75, 0.75, 0.6), M["atlantis_heart"])
+        bpy.ops.mesh.primitive_torus_add(major_radius=1.1, minor_radius=0.08, location=(0, -2.3, 0.5))
+        assign(obj(), M["violet"])
+    # crown of crystal spines and burning eyes
+    for i in range(9):
+        a = math.pi * (0.1 + 0.8 * i / 8)
+        shard((math.cos(a) * 1.75, 0.1 - math.sin(a) * 0.3, 0.9), 1.8 + 0.6 * math.sin(a), 0.28, M["glass"],
+              tilt=(-0.5, math.cos(a) * 0.6, 0))
+    for s in (1, -1):
+        ball((s * 0.95, -1.35, 1.0), (0.16, 0.24, 0.07), M["eye"], seg=16)
+
+
 KEEPERS = {"wepwawet": wepwawet, "sobek": sobek, "umbra": umbra,
            "nun": nun, "sokar": sokar, "seraphs": seraphs,
-           "umbra_coiled": umbra_coiled, "hittite": hittite, "ammit": ammit}
+           "umbra_coiled": umbra_coiled, "hittite": hittite, "ammit": ammit,
+           "overlord_echo": overlord_echo, "umbra_unmasked": umbra_unmasked,
+           "apep": apep, "apep_p3": lambda M: apep(M, open_jaws=True)}
 ACTS = {"1": ("wepwawet", "sobek", "umbra"), "2": ("nun", "sokar", "seraphs"),
-        "3": ("umbra_coiled", "hittite", "ammit")}
+        "3": ("umbra_coiled", "hittite", "ammit"), "4": ("overlord_echo", "umbra_unmasked", "apep", "apep_p3")}
 
 
 # ------------------------------------------------------------------ render setup

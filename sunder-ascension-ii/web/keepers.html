@@ -29,8 +29,9 @@ header .act{font:500 11px/1 var(--head);letter-spacing:.24em;color:var(--muted)}
 #info .brief{font:400 13px/1.55 var(--body);color:var(--muted)}
 #info dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin-top:16px;font:500 11px/1.5 var(--head);letter-spacing:.12em}
 #info dt{color:var(--muted)} #info dd{color:var(--text)}
-#cards{position:fixed;left:50%;bottom:max(20px,env(safe-area-inset-bottom));transform:translateX(-50%);display:flex;gap:12px}
-#cards button{all:unset;cursor:pointer;width:88px;padding:8px 8px 10px;border-radius:12px;border:var(--hair);background:var(--glass);
+#cards{position:fixed;left:50%;bottom:max(20px,env(safe-area-inset-bottom));transform:translateX(-50%);display:flex;gap:10px;
+  max-width:calc(100% - 32px);overflow-x:auto;padding:10px 4px 4px;scrollbar-width:none}
+#cards button{all:unset;cursor:pointer;flex:0 0 78px;width:78px;padding:8px 8px 10px;border-radius:12px;border:var(--hair);background:var(--glass);
   text-align:center;transition:transform .25s cubic-bezier(.2,.8,.2,1),box-shadow .25s,border-color .25s;backdrop-filter:blur(8px)}
 #cards button img{display:block;width:100%;aspect-ratio:1;object-fit:contain;filter:drop-shadow(0 4px 10px rgba(0,0,0,.6))}
 #cards button span{display:block;margin-top:6px;font:500 10px/1.3 var(--head);letter-spacing:.16em;color:var(--muted)}
@@ -115,8 +116,24 @@ const KEEPERS = [
     quote: '"Your heart is heavy, Heir. I can smell it."',
     brief: 'Crocodile, lion and hippo in one hungry body, crouched beneath the scales that weigh your heart against a feather.',
     health: 600, patterns: 'Dual spiral · Radial burst', arena: 'The Judgement Hall', accent: 0xff3355 },
+  { id: 'overlord_echo', act: 4, hour: 'HOUR 10 · THE STARFALL', name: "THE OVERLORD'S ECHO", epithet: 'What Is Left of the Crystal',
+    quote: '"I DROWNED ATLANTIS. I WILL OUTLIVE THE SUN."',
+    brief: 'The broken crown of the enemy you shattered in Part 1, hollow and full of falling stars, its gold armour still in orbit.',
+    health: 690, patterns: 'Dual spiral · Wall barrage · Radial burst', arena: 'A plain cratered by fallen stars', accent: 0xd65cff },
+  { id: 'umbra_unmasked', act: 4, hour: 'HOUR 11 · THE HEART', name: 'UMBRA', epithet: 'Unmasked',
+    quote: '"Take off the mask? Heir — this IS your face."',
+    brief: 'The obsidian mask peels away and the gold Thunder beneath shows through. UMBRA was your own shadow all along.',
+    health: 810, patterns: 'Dual spiral · Wall barrage · Cross ring · Spiral', arena: 'The buried chamber of the Heart', accent: 0xffc24a },
+  { id: 'apep', act: 4, hour: 'HOUR 12 · APEP', name: 'APEP', epithet: 'The Serpent of Unmaking',
+    quote: '"I WAS HERE BEFORE THE FIRST DAWN. I WILL EAT THE LAST."',
+    brief: 'The serpent rises from the bottom of the Duat to swallow the sun barque. Fly up its coils and into its jaws.',
+    health: 1100, patterns: 'Every pattern at once', arena: "Apep's own back", accent: 0x8a3cff },
+  { id: 'apep_p3', act: 4, hour: 'HOUR 12 · FINAL PHASE', name: 'APEP', epithet: 'Jaws of Unmaking',
+    quote: '"Dawn or nothing, ELTESLA."',
+    brief: 'In its last third of hull Apep throws its jaws open — and there, beating gold inside the throat, is the Heart of Atlantis.',
+    health: 1100, patterns: 'Every pattern at once', arena: "Inside Apep's jaws", accent: 0xff8a1f },
 ];
-const ACT_NAMES = { 1: 'ACT I: DUSK', 2: 'ACT II: MIDNIGHT', 3: 'ACT III: THE DEEP NIGHT' };
+const ACT_NAMES = { 1: 'ACT I: DUSK', 2: 'ACT II: MIDNIGHT', 3: 'ACT III: THE DEEP NIGHT', 4: 'ACT IV: DAWN OR NOTHING' };
 const hull = h => Math.round(h * 1.3 / 10) * 10;
 
 // ---------------------------------------------------------------- renderer
@@ -241,7 +258,8 @@ function prepare(gltf){
     const m = o.material;
     if (m && m.emissive && m.emissiveIntensity > 0 && m.emissive.getHex() !== 0){
       // Cycles emission strengths are far hotter than real-time PBR needs; cap them so bloom stays a finish
-      m.emissiveIntensity = Math.min(m.emissiveIntensity, 1.3);
+      // see-through crystal stacks up under bloom (the Overlord's crown is mostly crystal), so cap it harder
+      m.emissiveIntensity = Math.min(m.emissiveIntensity, m.transmission > 0 ? 0.55 : 1.3);
       glows.push({ m, base: m.emissiveIntensity });
     }
   });
@@ -278,7 +296,7 @@ const cards = $('cards');
 KEEPERS.forEach((k, i) => {
   const b = document.createElement('button');
   b.role = 'tab'; b.setAttribute('aria-label', `${k.name}, ${k.hour}`);
-  b.innerHTML = `<img src="./models/keeper_${k.id}_portrait.webp" alt=""><span>HOUR ${i + 1}</span>`;
+  b.innerHTML = `<img src="./models/keeper_${k.id}_portrait.webp" alt=""><span>${k.hour.split(' · ')[0]}${k.id.endsWith('_p3') ? ' · II' : ''}</span>`;
   b.addEventListener('click', () => show(i));
   if (i > 0 && KEEPERS[i - 1].act !== k.act) b.classList.add('act-start');
   cards.appendChild(b);

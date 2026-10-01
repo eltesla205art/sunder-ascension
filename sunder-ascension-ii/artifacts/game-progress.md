@@ -24,6 +24,19 @@ Kling result URLs expire after 24 h, and this sandbox cannot download from Kling
 
 ## Done: Act III Keepers (Hours 7–9) — UMBRA Coiled, the Hittite Engine, Ammit (see final-evidence.md)
 
+## Done: Act IV — the Overlord's Echo, UMBRA Unmasked, Apep (+ final phase), stage backdrops for Hours 10–12
+
 ## Next
-- Act IV Keepers: the Overlord's Echo (Hour 10) and APEP (Hour 12, multi-phase finale); Hour 11 UMBRA keeps its model.
+- Swap in the Kling stage concepts if the user sends them; stage backdrops for Hours 1–9.
+- Move embedded art out of game.html before release (732 KB).
 - Optional: send the favourite Kling concepts back into the chat so the models can be matched to them.
+
+## Act IV Kling jobs (account 49246555, 4 credits each)
+| Image | Generation ID |
+|---|---|
+| Overlord's Echo concept | AdFrx72QR9tWJ_tAumh43ljxHB1aaBUBw0lGqLM6ihxWwEUTr1AzPdSVHv5KF29CjCtuyYCg |
+| UMBRA Unmasked concept | ASGvQfuNnU4q6otnsRLmC4OSJQCYMzjUqdbBWRXbnyadx5NiEvHYppJWh1Hwq5GAJtZRmOZe |
+| Apep concept | AXKhL_5tPL6P3F4yYuj4rj_lNKsSrYdWEEccT5lxJhaCXSgRqd8vFqLjeZrpwixlpFpDdPgg |
+| Stage 10 — Starfall (9:16 tile) | AYpe56bFBiODXPncTtROP8E3GvFM-PnTnynFglfS0HL5yfbRW8DD78IoY0kKBEL5U59MQWQn |
+| Stage 11 — Heart chamber (9:16 tile) | AddAPZ9MJsCtOhmUrrI5yOU6kGjd9lBLF98hU50RvxZ6NM_pCQkhJZu-q2QxUpP9YFz-1ZD7 |
+| Stage 12 — Apep's back (9:16 tile) | AePLNRS8HHZKYAkdqh8paYj36fckKkrI9tgjaWiiWtXlfz5As6FA45_GFYwu-YjNdxTd41MK |
