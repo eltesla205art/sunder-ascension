@@ -28,9 +28,10 @@ Kling result URLs expire after 24 h, and this sandbox cannot download from Kling
 
 ## Done: stage backdrops for Hours 1–9 (Blender), Kling concepts requested for each
 
+## Done: art moved out of game.html into web/assets/ (808 KB → 111 KB)
+
 ## Next
 - Fold in Kling stage concepts the user sends back (art/kling/stage_<id>.png, re-run stages.py).
-- Move embedded art out of game.html before release (732 KB).
 - Optional: send the favourite Kling concepts back into the chat so the models can be matched to them.
 
 ## Act IV Kling jobs (account 49246555, 4 credits each)

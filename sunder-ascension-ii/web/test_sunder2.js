@@ -118,6 +118,18 @@ test('every Hour has a Blender Keeper and its own stage backdrop', () => {
   assert(/keeper_apep_p3:/.test(src), "Apep's final-phase render is not embedded");
 });
 
+test('every image the game references ships in web/assets as a real WebP', () => {
+  const refs = [...new Set(src.match(/assets\/[a-z0-9_]+\.webp/g))];
+  assert(refs.length >= 43, 'expected the Blender art set, found ' + refs.length);
+  for (const r of refs){
+    const f = path.join(__dirname, r);
+    assert(fs.existsSync(f), r + ' is missing');
+    const head = fs.readFileSync(f).subarray(0, 12).toString('latin1');
+    assert(head.startsWith('RIFF') && head.endsWith('WEBP'), r + ' is not WebP');
+  }
+  assert(!/data:image\/webp/.test(src), 'art is still embedded in game.html');
+});
+
 test('sequel never talks to the Part 1 leaderboard', () => {
   assert.strictEqual(g.SUNDER_CONFIG.SUPABASE_URL, '');
   assert.strictEqual(g.SUNDER_CONFIG.SUPABASE_ANON_KEY, '');

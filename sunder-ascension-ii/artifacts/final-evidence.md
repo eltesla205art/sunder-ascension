@@ -77,6 +77,14 @@ ElevenLabs keys MISSING, so concepts came from Kling and models were authored in
   stand-in texture. The Kling images still need to be sent back, as this sandbox can't download them.
 - `test_sunder2.js`: 8/8, now requiring a distinct embedded backdrop for all 12 Hours. `game.html` is 792 KB.
 
+## Art moved out of game.html
+- All 43 embedded WebP images (Blender art table + hangar) extracted byte-for-byte to `web/assets/<key>.webp`;
+  `game.html` went from 808 KB to 111 KB. Part 1's SVG sprites stay inline (generated at runtime).
+- Checked: sampled assets are SHA-256 identical to the original encodes; all 43 are valid WebP; in Chromium every image
+  loads with no failed requests or console errors both over HTTP (258 ms) and opened as a local file (184 ms);
+  title, hangar and Apep's final phase render as before. `test_sunder2.js` 9/9 — new check that every referenced
+  asset exists as WebP and nothing is still embedded.
+
 ## Keeper Codex inspection (`keepers-evidence.json`, run `keepers-act4-pass-2`)
 All 26 captures (13 entries × desktop/mobile) PASS; `check_evidence.py`: 26 artifacts confirmed.
 SwiftShader (software) rasterizer, so FPS is not measured. Identical diagnostics on both viewports:
@@ -113,7 +121,6 @@ SUNDER II are the 2D game captures in `act1-bosses/` … `act4-bosses/`.
 
 ## Still weak
 - Stage backdrops are Blender tiles until Kling concepts are sent back and folded in through `art/kling/`.
-- `game.html` is 792 KB with every render embedded; still one file, but worth moving art to separate files before release.
 - Sokar's feather blades are thin, so the hawk reads slighter in the low 3/4 Codex view than top-down in the game.
 - Keeper models are static (no rig/animation); motion in the viewer is hover, turntable and emissive pulse only.
 - Kling concepts could not be inspected or used as image-to-3D input here (CDN blocked); models follow the written brief.

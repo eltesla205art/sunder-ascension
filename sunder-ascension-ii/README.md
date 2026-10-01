@@ -6,7 +6,8 @@ original *SUNDER: Ascension — The Nine Bows* (`web/`, `godot/`, `docs/`), whic
 | Path | What it is |
 |---|---|
 | `DESIGN.md` | Storyline, gameplay ideas, PS5-style UI direction, prompt pack |
-| `web/game.html` | The sequel build (single file, open it in a browser) |
+| `web/game.html` | The sequel build: open it in a browser (it loads its art from `web/assets/`) |
+| `web/assets/` | The game's 43 images as WebP: title, hangar, ships, Keeper sprites and portraits, stage backdrops |
 | `web/keepers.html` | Keeper Codex: real-time Three.js viewer of the Keeper models (serve the `web/` folder over HTTP; three.js is self-hosted in `web/vendor/three`, MIT) |
 | `web/models/` | Keeper GLB models exported from Blender, plus portrait thumbnails |
 | `web/test_sunder2.js` | Headless test of the 12-Hour campaign against the battle-math law: `node web/test_sunder2.js` |
@@ -46,6 +47,10 @@ python blender/stages.py art/blender/stages 64 [id ...]       # stage backdrops 
 
 To view the Keeper Codex locally: `cd web && python3 -m http.server 5188`, then open http://127.0.0.1:5188/keepers.html.
 
-The game embeds compressed WebP copies of these renders, so `game.html` stays a single file.
+The game loads compressed WebP copies of these renders from `web/assets/` (same name as the art key, e.g.
+`keeper_nun.webp`, `stage_delta.webp`). After re-rendering, re-encode to WebP and replace the file there.
+
+**Shipping:** upload the whole `web/` folder — `game.html` and `assets/` must stay side by side.
+The page shows SVG fallbacks for any image that hasn't arrived yet, so a slow connection never blocks play.
 
 Kling subject for the Mk II: **Scarab Warbringer Mk II**, id `322794480306968`.
