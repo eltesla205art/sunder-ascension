@@ -29,20 +29,23 @@ header .act{font:500 11px/1 var(--head);letter-spacing:.24em;color:var(--muted)}
 #info .brief{font:400 13px/1.55 var(--body);color:var(--muted)}
 #info dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin-top:16px;font:500 11px/1.5 var(--head);letter-spacing:.12em}
 #info dt{color:var(--muted)} #info dd{color:var(--text)}
-#cards{position:fixed;left:50%;bottom:max(20px,env(safe-area-inset-bottom));transform:translateX(-50%);display:flex;gap:14px}
-#cards button{all:unset;cursor:pointer;width:118px;padding:8px 8px 10px;border-radius:12px;border:var(--hair);background:var(--glass);
+#cards{position:fixed;left:50%;bottom:max(20px,env(safe-area-inset-bottom));transform:translateX(-50%);display:flex;gap:12px}
+#cards button{all:unset;cursor:pointer;width:104px;padding:8px 8px 10px;border-radius:12px;border:var(--hair);background:var(--glass);
   text-align:center;transition:transform .25s cubic-bezier(.2,.8,.2,1),box-shadow .25s,border-color .25s;backdrop-filter:blur(8px)}
 #cards button img{display:block;width:100%;aspect-ratio:1;object-fit:contain;filter:drop-shadow(0 4px 10px rgba(0,0,0,.6))}
 #cards button span{display:block;margin-top:6px;font:500 10px/1.3 var(--head);letter-spacing:.16em;color:var(--muted)}
 #cards button[aria-selected="true"]{transform:translateY(-8px) scale(1.06);border-color:var(--cyan);box-shadow:0 0 0 1px var(--cyan),0 0 28px rgba(140,217,255,.35)}
 #cards button[aria-selected="true"] span{color:var(--cyan)}
 #cards button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
-#hint{position:fixed;right:24px;bottom:max(28px,env(safe-area-inset-bottom));font:500 10px/1.6 var(--head);letter-spacing:.18em;color:var(--muted);text-align:right;pointer-events:none}
+#cards button.act-start{margin-left:18px;position:relative}
+#cards button.act-start::before{content:'';position:absolute;left:-17px;top:12%;bottom:12%;border-left:1px solid var(--gold-soft)}
+#hint{position:fixed;right:16px;top:calc(max(16px,env(safe-area-inset-top)) + 22px);font:500 10px/1.6 var(--head);letter-spacing:.18em;color:var(--muted);text-align:right;pointer-events:none}
 #loading{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);font:500 12px var(--head);letter-spacing:.3em;color:var(--muted)}
 @media (max-width:760px){
   #info{top:auto;left:16px;right:16px;width:auto;bottom:154px;padding:14px 16px}
   #info h1{font-size:22px} #info .brief,#info dl{display:none} #info .quote{margin:8px 0 0;font-size:13px}
-  #cards{gap:10px} #cards button{width:92px;padding:6px} #hint{display:none}
+  #cards{gap:8px;left:0;right:0;transform:none;overflow-x:auto;padding:10px 16px 4px;scroll-snap-type:x mandatory;scrollbar-width:none}
+  #cards button{flex:0 0 84px;width:84px;padding:6px;scroll-snap-align:center} #hint{display:none}
   header .act{display:none}
 }
 </style>
@@ -52,7 +55,7 @@ header .act{font:500 11px/1 var(--head);letter-spacing:.24em;color:var(--muted)}
 </head>
 <body>
 <canvas id="view" aria-label="Real-time 3D model of the selected Keeper"></canvas>
-<header><div class="brand">SUNDER · ASCENSION <b>II</b></div><div class="act">KEEPER CODEX — ACT I: DUSK</div></header>
+<header><div class="brand">SUNDER · ASCENSION <b>II</b></div><div class="act" id="k-act">KEEPER CODEX</div></header>
 <section id="info" class="glass" aria-live="polite">
   <div class="hour" id="k-hour"></div>
   <h1 id="k-name"></h1>
@@ -76,19 +79,32 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 // Act I Keepers. Hull follows the battle-math law: boss_health x 1.3, rounded to 10s (game.html STAGES).
 const KEEPERS = [
-  { id: 'wepwawet', hour: 'HOUR 1 · THE WESTERN HORIZON', name: 'WEPWAWET', epithet: 'Opener of Ways',
+  { id: 'wepwawet', act: 1, hour: 'HOUR 1 · THE WESTERN HORIZON', name: 'WEPWAWET', epithet: 'Opener of Ways',
     quote: '"I open every way. I close this one — on you."',
     brief: 'A jackal war-walker of obsidian and gold, guarding the first gate with crystal cannon pods on each shoulder.',
     health: 180, patterns: 'Aimed volley', arena: 'Desert rail yards', accent: 0xffb54a },
-  { id: 'sobek', hour: 'HOUR 2 · THE DROWNED FIELDS', name: 'SOBEK REBORN', epithet: 'The Flood Dreadnought',
+  { id: 'sobek', act: 1, hour: 'HOUR 2 · THE DROWNED FIELDS', name: 'SOBEK REBORN', epithet: 'The Flood Dreadnought',
     quote: '"The flood remembers no heroes, little sun."',
     brief: 'A crocodile dreadnought rising from the black water, fanning fire from jaw cannons and side turrets.',
     health: 220, patterns: 'Spread fan · Aimed volley', arena: 'Flooded Nile delta', accent: 0x4ff2c8 },
-  { id: 'umbra', hour: 'HOUR 3 · THE MIRROR', name: 'UMBRA', epithet: 'The Shadow Heir',
+  { id: 'umbra', act: 1, hour: 'HOUR 3 · THE MIRROR', name: 'UMBRA', epithet: 'The Shadow Heir',
     quote: '"Every move you make, I made first."',
     brief: 'Your own Thunder, rebuilt in obsidian crystal. It knows every move you know — and its drones remember the rest.',
     health: 270, patterns: 'Horizontal sweep · Spread fan', arena: 'The glass desert', accent: 0xc06bff },
+  { id: 'nun', act: 2, hour: 'HOUR 4 · THE SUNKEN SPIRES', name: 'NUN', epithet: 'The Primeval Deep',
+    quote: '"Before the world, there was me. After it, me again."',
+    brief: 'The waters before creation, wearing the drowned spires of Atlantis as a crown. Its rings close like a net.',
+    health: 310, patterns: 'Radial burst · Horizontal sweep', arena: 'The sunken spires of Atlantis', accent: 0x4fb8ff },
+  { id: 'sokar', act: 2, hour: "HOUR 5 · SOKAR'S SAND", name: 'SOKAR', epithet: 'Hawk of the Hidden Sand',
+    quote: '"The sand sees you. The hawk is already falling."',
+    brief: 'A bronze war-hawk that hunts from the shifting dunes, striking in crosses of fire from wings edged with crystal.',
+    health: 350, patterns: 'Cross ring · Aimed volley', arena: 'The dark sand-sea', accent: 0xffb54a },
+  { id: 'seraphs', act: 2, hour: 'HOUR 6 · THE LAKE OF FIRE', name: 'THE FIRE LAKE SERAPHS', epithet: 'Four Who Burn the Unworthy',
+    quote: '"Burn, and be weighed by the fire."',
+    brief: 'Four winged fire-cobras circle the burning lake, spinning their flame in spirals. Break them before the lake takes the sky.',
+    health: 410, patterns: 'Spiral · Radial burst', arena: 'The Lake of Fire', accent: 0xff5a1f },
 ];
+const ACT_NAMES = { 1: 'ACT I: DUSK', 2: 'ACT II: MIDNIGHT' };
 const hull = h => Math.round(h * 1.3 / 10) * 10;
 
 // ---------------------------------------------------------------- renderer
@@ -230,15 +246,19 @@ const $ = id => document.getElementById(id);
 async function show(i){
   i = (i + KEEPERS.length) % KEEPERS.length;
   const k = KEEPERS[i];
-  [...document.querySelectorAll('#cards button')].forEach((b, j) => b.setAttribute('aria-selected', String(j === i)));
+  [...document.querySelectorAll('#cards button')].forEach((b, j) => {
+    b.setAttribute('aria-selected', String(j === i));
+    if (j === i && b.scrollIntoView) b.scrollIntoView({ block: 'nearest', inline: 'center' });
+  });
   $('k-hour').textContent = k.hour; $('k-name').textContent = k.name; $('k-epithet').textContent = k.epithet;
   $('k-quote').textContent = k.quote; $('k-brief').textContent = k.brief;
+  $('k-act').textContent = 'KEEPER CODEX — ' + ACT_NAMES[k.act];
   $('k-hull').textContent = hull(k.health); $('k-patterns').textContent = k.patterns; $('k-arena').textContent = k.arena;
   current = i;
   const p = await load(i);
   if (current !== i) return;
   holder.clear(); holder.add(p.group); emissive = p.glows; swapT = 0;
-  practical.color.setHex(k.accent === 0xffb54a ? 0xff3fa4 : k.accent);
+  practical.color.setHex(k.id === 'wepwawet' ? 0xff3fa4 : k.accent);
   $('loading').style.display = 'none';
 }
 
@@ -248,6 +268,7 @@ KEEPERS.forEach((k, i) => {
   b.role = 'tab'; b.setAttribute('aria-label', `${k.name}, ${k.hour}`);
   b.innerHTML = `<img src="./models/keeper_${k.id}_portrait.webp" alt=""><span>HOUR ${i + 1}</span>`;
   b.addEventListener('click', () => show(i));
+  if (i > 0 && KEEPERS[i - 1].act !== k.act) b.classList.add('act-start');
   cards.appendChild(b);
 });
 addEventListener('keydown', e => {

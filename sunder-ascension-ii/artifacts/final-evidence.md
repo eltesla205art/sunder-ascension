@@ -1,4 +1,4 @@
-# Act I Keepers — evidence (2026-10-01)
+# Act I + Act II Keepers — evidence (2026-10-01)
 
 Skills followed: `skills/threejs-game-director`, `threejs-aaa-graphics-builder` (visual-scorecard, authoring-recipes,
 technical-art), `threejs-qa-release` (canvas inspector + `check_evidence.py`). Credential probe: Tripo, Gemini and
@@ -19,17 +19,32 @@ ElevenLabs keys MISSING, so concepts came from Kling and models were authored in
 - `node web/test_sunder2.js`: 7/7 pass (12-Hour campaign vs battle-math law, all ships, swarm soak, defeat, leaderboard isolation).
 - Captures: `act1-bosses/boss{1,2,3}_{intro,fight}.png`, no page or console errors.
 
-## Keeper Codex inspection (`keepers-evidence.json`, run `keepers-pass-6`)
-All 6 captures PASS; `check_evidence.py`: 6 artifacts confirmed. Rasterized on SwiftShader (software), so FPS is not measured.
+## Act II (Hours 4–6)
+- `blender/keepers.py <out> 128 2` builds **Nun, the Primeval Deep** (abyssal ring guardian crowned with sunken
+  Atlantean spires, tentacle arms), **Sokar, Hawk of the Hidden Sand** (bronze war-hawk, crystal-edged wings,
+  tail fan) and **the Fire Lake Seraphs** (four hooded fire-cobras around a burning brazier).
+- Blender passes: draft 1 had a washed-out water dome, floating ring blocks, a toy-like hawk and blown-white fire;
+  fixed with a deep coated water material, a solid lock-ring with spokes, a wider darker wingspan and heavier beak,
+  flat hoods facing the camera, and saturated low-strength fire (AgX desaturates bright emission).
+- Game: Hours 4–6 use the new sprites and intro portraits (`act2-bosses/`), Sokar drawn at 0.6 to cover its hitbox.
+- Codex: 6 Keepers across two acts, act divider, act name in the header, horizontally scrolling cards on phones;
+  the controls hint moved under the header after it overlapped the sixth card.
 
-| Capture | calls | triangles | geometries | textures | entropy | edges | contrast |
-|---|---|---|---|---|---|---|---|
-| desktop wepwawet | 45 | 45,252 | 14 | 17 | 3.40 | 0.122 | 50.9 |
-| desktop sobek | 51 | 54,726 | 22 | 17 | 3.06 | 0.122 | 48.5 |
-| desktop umbra | 48 | 38,016 | 21 | 17 | 3.27 | 0.110 | 35.7 |
-| mobile wepwawet | 45 | 45,252 | 14 | 17 | 3.84 | 0.204 | 91.6 |
-| mobile sobek | 51 | 54,726 | 22 | 17 | 3.36 | 0.206 | 96.0 |
-| mobile umbra | 48 | 38,016 | 21 | 17 | 3.68 | 0.190 | 97.7 |
+## Keeper Codex inspection (`keepers-evidence.json`, run `keepers-act2-pass-2`)
+All 12 captures (6 Keepers × desktop/mobile) PASS; `check_evidence.py`: 12 artifacts confirmed.
+SwiftShader (software) rasterizer, so FPS is not measured. Identical diagnostics on both viewports:
+
+| Keeper | calls | triangles | geometries | textures |
+|---|---|---|---|---|
+| Wepwawet | 45 | 45,252 | 14 | 17 |
+| Sobek Reborn | 51 | 54,726 | 22 | 17 |
+| UMBRA | 48 | 38,016 | 21 | 17 |
+| Nun | 45 | 52,170 | 20 | 17 |
+| Sokar | 48 | 36,930 | 21 | 17 |
+| Fire Lake Seraphs | 31 | 42,552 | 19 | 17 |
+
+Pixel metrics, desktop → mobile: entropy 3.1–3.6 → 3.3–4.1, edge density 0.13–0.16 → 0.20–0.24,
+contrast 52–92 → 95–127. All within the desktop (300 calls) and mobile (150 calls) budgets.
 
 Render setup: ACES filmic, sRGB, DPR cap 2 desktop / 1.5 mobile, 1 shadow-casting light (2048 / 1024 map),
 1 post pass (bloom, threshold 0.9) + output. Budget fixes made during QA:
@@ -38,10 +53,12 @@ Render setup: ACES filmic, sRGB, DPR cap 2 desktop / 1.5 mobile, 1 shadow-castin
 - Diagnostics originally read 1 call / 1 triangle (three.js resets `renderer.info` per composer pass); counters now span the frame.
 - Pass 2 failed only on a Google Fonts request the sandbox proxy blocks and a missing favicon; the page now uses a local font stack.
 
-Low desktop contrast (36–51) is a deliberate night-showroom look with a large obsidian plinth, not fog standing in for
-geometry; the scorecard targets active-play captures, which for SUNDER II are the 2D game captures above.
+Desktop contrast (52–92) sits lower than mobile because the wide view shows more of the dark obsidian plinth — a
+deliberate night-showroom look, not fog standing in for geometry. The scorecard targets active-play captures, which for
+SUNDER II are the 2D game captures in `act1-bosses/` and `act2-bosses/`.
 
 ## Still weak
-- Bosses for Hours 4–6, 8–10 and 12 still use Part 1 SVG art.
+- Bosses for Hours 8–10 and 12 still use Part 1 SVG art.
+- Sokar's feather blades are thin, so the hawk reads slighter in the low 3/4 Codex view than top-down in the game.
 - Keeper models are static (no rig/animation); motion in the viewer is hover, turntable and emissive pulse only.
 - Kling concepts could not be inspected or used as image-to-3D input here (CDN blocked); models follow the written brief.

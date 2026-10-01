@@ -1,12 +1,12 @@
 {
   "url": "http://127.0.0.1:5188/keepers.html",
   "mode": "mobile",
-  "state": "keeper-sobek",
-  "requestedState": "keeper-sobek",
-  "appliedState": "keeper-sobek",
-  "runId": "keepers-pass-6",
+  "state": "keeper-sokar",
+  "requestedState": "keeper-sokar",
+  "appliedState": "keeper-sokar",
+  "runId": "keepers-act2-pass-2",
   "seed": 42,
-  "screenshotPath": "artifacts/keepers-pass-6/mobile-sobek.png",
+  "screenshotPath": "artifacts/keepers-act2-pass-2/mobile-sokar.png",
   "gpu": {
     "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
     "vendor": "Google Inc. (Google)",
@@ -26,20 +26,20 @@
       "height": 996
     },
     "alphaPixels": 4111,
-    "variance": 254,
-    "colorBuckets": 212,
+    "variance": 255,
+    "colorBuckets": 198,
     "metrics": {
-      "colorBuckets": 404,
+      "colorBuckets": 372,
       "colorEntropyBits": 3.36,
-      "edgeDensity": 0.206,
+      "edgeDensity": 0.213,
       "luminance": {
-        "mean": 21,
+        "mean": 20.2,
         "p5": 0.4,
-        "p95": 96.4,
-        "contrast": 96
+        "p95": 95,
+        "contrast": 94.6
       },
-      "dominantColorShare": 0.397,
-      "nonBackgroundShare": 0.603
+      "dominantColorShare": 0.306,
+      "nonBackgroundShare": 0.694
     },
     "renderBudget": {
       "tier": "mobile",
@@ -47,19 +47,19 @@
       "rows": [
         {
           "metric": "calls",
-          "actual": 51,
+          "actual": 48,
           "limit": 150,
           "ok": true
         },
         {
           "metric": "triangles",
-          "actual": 54726,
+          "actual": 36930,
           "limit": 300000,
           "ok": true
         },
         {
           "metric": "geometries",
-          "actual": 22,
+          "actual": 21,
           "limit": 200,
           "ok": true
         },
@@ -74,14 +74,14 @@
     },
     "diagnostics": {
       "renderer": {
-        "calls": 51,
-        "triangles": 54726,
-        "geometries": 22,
+        "calls": 48,
+        "triangles": 36930,
+        "geometries": 21,
         "textures": 17,
         "postPasses": 1,
         "dpr": 1.5
       },
-      "keeper": "sobek"
+      "keeper": "sokar"
     }
   },
   "consoleErrors": [],

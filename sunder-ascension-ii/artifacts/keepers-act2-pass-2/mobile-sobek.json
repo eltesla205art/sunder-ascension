@@ -1,12 +1,12 @@
 {
   "url": "http://127.0.0.1:5188/keepers.html",
   "mode": "mobile",
-  "state": "keeper-umbra",
-  "requestedState": "keeper-umbra",
-  "appliedState": "keeper-umbra",
-  "runId": "keepers-pass-6",
+  "state": "keeper-sobek",
+  "requestedState": "keeper-sobek",
+  "appliedState": "keeper-sobek",
+  "runId": "keepers-act2-pass-2",
   "seed": 42,
-  "screenshotPath": "artifacts/keepers-pass-6/mobile-umbra.png",
+  "screenshotPath": "artifacts/keepers-act2-pass-2/mobile-sobek.png",
   "gpu": {
     "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
     "vendor": "Google Inc. (Google)",
@@ -26,20 +26,20 @@
       "height": 996
     },
     "alphaPixels": 4111,
-    "variance": 255,
-    "colorBuckets": 207,
+    "variance": 254,
+    "colorBuckets": 210,
     "metrics": {
-      "colorBuckets": 403,
-      "colorEntropyBits": 3.68,
-      "edgeDensity": 0.19,
+      "colorBuckets": 410,
+      "colorEntropyBits": 3.31,
+      "edgeDensity": 0.209,
       "luminance": {
-        "mean": 21.7,
-        "p5": 1.4,
-        "p95": 99.1,
-        "contrast": 97.7
+        "mean": 20.8,
+        "p5": 0.4,
+        "p95": 96.5,
+        "contrast": 96.1
       },
-      "dominantColorShare": 0.319,
-      "nonBackgroundShare": 0.681
+      "dominantColorShare": 0.412,
+      "nonBackgroundShare": 0.588
     },
     "renderBudget": {
       "tier": "mobile",
@@ -47,19 +47,19 @@
       "rows": [
         {
           "metric": "calls",
-          "actual": 48,
+          "actual": 51,
           "limit": 150,
           "ok": true
         },
         {
           "metric": "triangles",
-          "actual": 38016,
+          "actual": 54726,
           "limit": 300000,
           "ok": true
         },
         {
           "metric": "geometries",
-          "actual": 21,
+          "actual": 22,
           "limit": 200,
           "ok": true
         },
@@ -74,14 +74,14 @@
     },
     "diagnostics": {
       "renderer": {
-        "calls": 48,
-        "triangles": 38016,
-        "geometries": 21,
+        "calls": 51,
+        "triangles": 54726,
+        "geometries": 22,
         "textures": 17,
         "postPasses": 1,
         "dpr": 1.5
       },
-      "keeper": "umbra"
+      "keeper": "sobek"
     }
   },
   "consoleErrors": [],

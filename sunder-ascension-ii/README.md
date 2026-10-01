@@ -26,8 +26,9 @@ original *SUNDER: Ascension — The Nine Bows* (`web/`, `godot/`, `docs/`), whic
 - **Battle math** unchanged, scaled to 12 Hours: boss bullets deal 2 from Hour 7.
 - **Scores stay on the device.** The sequel has no online leaderboard yet, so it can never write into
   Part 1's live leaderboard. It needs its own Supabase table before going online.
-- **Act I Keepers** (Wepwawet, Sobek Reborn, UMBRA) are Blender models: top-down sprites in Hours 1–3
-  (and UMBRA's rematches in Hours 7 and 11), portraits on the boss-intro card, GLBs in the Keeper Codex.
+- **Keepers of Acts I and II** are Blender models: Wepwawet, Sobek Reborn, UMBRA (Hours 1–3, and UMBRA's
+  rematches in Hours 7 and 11) and Nun, Sokar, the Fire Lake Seraphs (Hours 4–6). Top-down sprites in play,
+  portraits on the boss-intro card, GLBs in the Keeper Codex.
 
 The other Hours still use Part 1's SVG bosses (assigned per Hour through each stage's `art` field).
 
@@ -38,7 +39,7 @@ Blender runs headless as a Python module (`pip install bpy==4.2.0`, Python 3.11)
 ```bash
 python blender/ships.py art/blender 256                       # ship_sunborn/scarab/ibis.png
 python blender/title_scene.py art/blender/title_bg.png 720 1080 128
-python blender/keepers.py art/blender/keepers 128             # sprites, portraits and GLBs (move the .glb files to web/models/)
+python blender/keepers.py art/blender/keepers 128 [1|2]       # one act or all: sprites, portraits, GLBs (move .glb to web/models/)
 ```
 
 To view the Keeper Codex locally: `cd web && python3 -m http.server 5188`, then open http://127.0.0.1:5188/keepers.html.

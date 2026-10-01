@@ -20,6 +20,8 @@ Kling result URLs expire after 24 h, and this sandbox cannot download from Kling
 - Never change Part 1 (`web/`, `docs/`, `godot/`); sequel lives in `sunder-ascension-ii/`.
 - Battle-math law holds; sequel never writes to Part 1's leaderboard.
 
+## Done: Act II Keepers (Hours 4–6) — Nun, Sokar, the Fire Lake Seraphs (see final-evidence.md)
+
 ## Next
-- Keepers for Act II (Nun, Sokar, the Fire Lake Seraphs) with the same Blender → sprite/portrait/GLB pipeline.
+- Keepers for Act III (Ammit, the Hittite Engine; UMBRA's rematch already uses its model) and Act IV (the Overlord's Echo, Apep).
 - Optional: send the favourite Kling concepts back into the chat so the models can be matched to them.

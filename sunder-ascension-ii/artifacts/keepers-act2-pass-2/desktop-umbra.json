@@ -1,12 +1,12 @@
 {
   "url": "http://127.0.0.1:5188/keepers.html",
   "mode": "desktop",
-  "state": "keeper-wepwawet",
-  "requestedState": "keeper-wepwawet",
-  "appliedState": "keeper-wepwawet",
-  "runId": "keepers-pass-6",
+  "state": "keeper-umbra",
+  "requestedState": "keeper-umbra",
+  "appliedState": "keeper-umbra",
+  "runId": "keepers-act2-pass-2",
   "seed": 42,
-  "screenshotPath": "artifacts/keepers-pass-6/desktop-wepwawet.png",
+  "screenshotPath": "artifacts/keepers-act2-pass-2/desktop-umbra.png",
   "gpu": {
     "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
     "vendor": "Google Inc. (Google)",
@@ -29,17 +29,17 @@
     "variance": 255,
     "colorBuckets": 161,
     "metrics": {
-      "colorBuckets": 302,
-      "colorEntropyBits": 3.4,
-      "edgeDensity": 0.122,
+      "colorBuckets": 325,
+      "colorEntropyBits": 3.35,
+      "edgeDensity": 0.123,
       "luminance": {
-        "mean": 18.6,
+        "mean": 18.9,
         "p5": 1.4,
-        "p95": 52.3,
-        "contrast": 50.9
+        "p95": 52.7,
+        "contrast": 51.3
       },
-      "dominantColorShare": 0.269,
-      "nonBackgroundShare": 0.731
+      "dominantColorShare": 0.305,
+      "nonBackgroundShare": 0.695
     },
     "renderBudget": {
       "tier": "desktop",
@@ -47,19 +47,19 @@
       "rows": [
         {
           "metric": "calls",
-          "actual": 45,
+          "actual": 48,
           "limit": 300,
           "ok": true
         },
         {
           "metric": "triangles",
-          "actual": 45252,
+          "actual": 38016,
           "limit": 750000,
           "ok": true
         },
         {
           "metric": "geometries",
-          "actual": 14,
+          "actual": 21,
           "limit": 300,
           "ok": true
         },
@@ -74,14 +74,14 @@
     },
     "diagnostics": {
       "renderer": {
-        "calls": 45,
-        "triangles": 45252,
-        "geometries": 14,
+        "calls": 48,
+        "triangles": 38016,
+        "geometries": 21,
         "textures": 17,
         "postPasses": 1,
         "dpr": 1
       },
-      "keeper": "wepwawet"
+      "keeper": "umbra"
     }
   },
   "consoleErrors": [],

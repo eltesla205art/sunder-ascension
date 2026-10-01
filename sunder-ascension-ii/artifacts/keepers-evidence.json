@@ -1,36 +1,66 @@
 {
  "version": 1,
- "runId": "keepers-pass-6",
+ "runId": "keepers-act2-pass-2",
  "captures": [
   {
    "mode": "desktop",
    "state": "keeper-wepwawet",
-   "report": "artifacts/keepers-pass-6/desktop-wepwawet.json"
+   "report": "artifacts/keepers-act2-pass-2/desktop-wepwawet.json"
   },
   {
    "mode": "desktop",
    "state": "keeper-sobek",
-   "report": "artifacts/keepers-pass-6/desktop-sobek.json"
+   "report": "artifacts/keepers-act2-pass-2/desktop-sobek.json"
   },
   {
    "mode": "desktop",
    "state": "keeper-umbra",
-   "report": "artifacts/keepers-pass-6/desktop-umbra.json"
+   "report": "artifacts/keepers-act2-pass-2/desktop-umbra.json"
+  },
+  {
+   "mode": "desktop",
+   "state": "keeper-nun",
+   "report": "artifacts/keepers-act2-pass-2/desktop-nun.json"
+  },
+  {
+   "mode": "desktop",
+   "state": "keeper-sokar",
+   "report": "artifacts/keepers-act2-pass-2/desktop-sokar.json"
+  },
+  {
+   "mode": "desktop",
+   "state": "keeper-seraphs",
+   "report": "artifacts/keepers-act2-pass-2/desktop-seraphs.json"
   },
   {
    "mode": "mobile",
    "state": "keeper-wepwawet",
-   "report": "artifacts/keepers-pass-6/mobile-wepwawet.json"
+   "report": "artifacts/keepers-act2-pass-2/mobile-wepwawet.json"
   },
   {
    "mode": "mobile",
    "state": "keeper-sobek",
-   "report": "artifacts/keepers-pass-6/mobile-sobek.json"
+   "report": "artifacts/keepers-act2-pass-2/mobile-sobek.json"
   },
   {
    "mode": "mobile",
    "state": "keeper-umbra",
-   "report": "artifacts/keepers-pass-6/mobile-umbra.json"
+   "report": "artifacts/keepers-act2-pass-2/mobile-umbra.json"
+  },
+  {
+   "mode": "mobile",
+   "state": "keeper-nun",
+   "report": "artifacts/keepers-act2-pass-2/mobile-nun.json"
+  },
+  {
+   "mode": "mobile",
+   "state": "keeper-sokar",
+   "report": "artifacts/keepers-act2-pass-2/mobile-sokar.json"
+  },
+  {
+   "mode": "mobile",
+   "state": "keeper-seraphs",
+   "report": "artifacts/keepers-act2-pass-2/mobile-seraphs.json"
   }
  ]
 }
