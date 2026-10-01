@@ -130,6 +130,20 @@ test('every image the game references ships in web/assets as a real WebP', () =>
   assert(!/data:image\/webp/.test(src), 'art is still embedded in game.html');
 });
 
+test('every Keeper has a Blender animation sheet of whole frames', () => {
+  const keys = STAGES.map(st => st.art).concat(['keeper_apep_p3']);
+  const m = src.match(/KEEPER_FRAMES = (\d+)/);
+  assert(m, 'KEEPER_FRAMES missing');
+  const frames = Number(m[1]);
+  for (const k of new Set(keys)){
+    assert(new RegExp(k + "_anim: 'assets/" + k + "_anim.webp'").test(src), k + ' has no animation sheet');
+    const b = fs.readFileSync(path.join(__dirname, 'assets', k + '_anim.webp'));
+    assert.strictEqual(b.subarray(12, 16).toString('latin1'), 'VP8X', k + '_anim.webp should be extended WebP (alpha)');
+    const w = 1 + b.readUIntLE(24, 3);
+    assert.strictEqual(w % frames, 0, k + '_anim width ' + w + ' is not ' + frames + ' whole frames');
+  }
+});
+
 test('sequel never talks to the Part 1 leaderboard', () => {
   assert.strictEqual(g.SUNDER_CONFIG.SUPABASE_URL, '');
   assert.strictEqual(g.SUNDER_CONFIG.SUPABASE_ANON_KEY, '');

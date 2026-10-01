@@ -1,11 +1,15 @@
 """SUNDER: Ascension II — the Keepers of all four acts (Hours 1–12), modeled procedurally.
 
-    python keepers.py <out_dir> [samples] [act]      act = 1, 2, 3 or 4 (default: every Keeper)
+    python keepers.py <out_dir> [samples] [act|id]          act = 1..4 or one Keeper id (default: every Keeper)
+    python keepers.py <out_dir> [samples] [act|id] --anim   animation frames instead (see below)
 
 For each Keeper writes:
   keeper_<id>.png          top-down boss sprite (longest side 360 px, transparent, front facing DOWN the screen)
   keeper_<id>_portrait.png 3/4 hero portrait for the boss-intro card (320x320, transparent)
   keeper_<id>.glb          the model, for the Three.js Keeper viewer
+With --anim, writes anim/keeper_<id>_fNN.png instead: FRAMES top-down frames of one seamless loop, drawn
+at the static sprite's pixels-per-unit on a larger canvas centred on the same point (pack_anim.py crops and
+packs them into the game's sprite sheets). The static outputs are not touched in this mode.
 Concept references: Kling jobs listed in ../artifacts/game-progress.md; canon in ../DESIGN.md §1.
 Coordinates: +X right, +Y toward the top of the screen, +Z toward the camera. Bosses face -Y.
 """
@@ -16,16 +20,20 @@ import sys
 
 import bpy
 import bmesh
-from mathutils import Euler, Vector
+from mathutils import Euler, Matrix, Vector
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 _argv, sys.argv = sys.argv, sys.argv[:1]          # ships.py reads argv at import
 import ships                                      # noqa: E402  (shared materials + parts)
 sys.argv = _argv
 
-OUT = sys.argv[1] if len(sys.argv) > 1 else "."
-SAMPLES = int(sys.argv[2]) if len(sys.argv) > 2 else 64
-ONLY_ACT = sys.argv[3] if len(sys.argv) > 3 else None   # "1".."4" renders one act; default: all
+ANIM = "--anim" in sys.argv
+_args = [a for a in sys.argv if a != "--anim"]
+OUT = _args[1] if len(_args) > 1 else "."
+SAMPLES = int(_args[2]) if len(_args) > 2 else 64
+ONLY_ACT = _args[3] if len(_args) > 3 else None   # "1".."4" renders one act, or a Keeper id; default: all
+FRAMES = 8                                        # animation loop length (the game plays it at 8 fps)
+WAVE = None                                       # animation phase in radians; None = the static model
 assign, smooth, flat_poly = ships.assign, ships.smooth, ships.flat_poly
 
 
@@ -143,6 +151,38 @@ def limb(a, b, r, mat):
     return o
 
 
+# ------------------------------------------------------------------ parts, for animation
+_MARKS = []
+
+
+def mark(name):
+    """Start a named part: every object created from here to the next mark belongs to it.
+    Marks only label objects, so the static model is identical with or without them."""
+    _MARKS.append((name, set(bpy.data.objects)))
+
+
+def parts():
+    """name -> objects created under that mark (objects made before the first mark are the fixed body)."""
+    out, snaps = {}, _MARKS + [("", set(bpy.data.objects))]
+    for (name, before), (_, after) in zip(snaps, snaps[1:]):
+        out.setdefault(name, []).extend(o for o in after - before)
+    return out
+
+
+def move(objs, pivot=(0, 0, 0), rot=(0, 0, 0), shift=(0, 0, 0), scale=None):
+    """Rigidly turn (XYZ Euler, radians) and/or scale a part about pivot, then shift it."""
+    p = Vector(pivot)
+    m = Euler(rot).to_matrix().to_4x4()
+    if scale is not None:
+        sc = (scale,) * 3 if isinstance(scale, (int, float)) else scale
+        m = m @ Matrix.Diagonal((*sc, 1))
+    m = Matrix.Translation(p + Vector(shift)) @ m @ Matrix.Translation(-p)
+    for o in objs:
+        if o.parent in objs:          # its parent carries it
+            continue
+        o.matrix_world = m @ o.matrix_world
+
+
 # ------------------------------------------------------------------ the Keepers
 def wepwawet(M):
     """Hour 1 — Wepwawet, Opener of Ways: a jackal-headed war-walker."""
@@ -155,6 +195,7 @@ def wepwawet(M):
     for i, (x, y) in enumerate([(-0.45, 1.2), (0.45, 1.2), (-0.3, 1.65), (0.3, 1.65), (0, 1.35)]):
         shard((x, y, 0.45), 0.9 + 0.25 * (i % 2), 0.16, M["glass"], tilt=(0.35, x * 0.6, 0))
     # neck + jackal head, snout pointing down the screen (-Y)
+    mark("head")
     limb((0, -1.05, 0.35), (0, -1.65, 0.55), 0.32, M["obsidian"])
     head = ball((0, -1.95, 0.6), (0.7, 0.62, 0.48), M["obsidian"])
     box((0, -1.45, 0.55), (1.5, 0.22, 0.3), M["gold"])                     # gold collar
@@ -171,6 +212,7 @@ def wepwawet(M):
         g.scale = (1, 0.3, 1)
         ball((s * 0.27, -2.3, 0.88), (0.1, 0.13, 0.06), M["eye"], seg=16)  # eyes
     # shoulders with crystal cannon pods
+    mark("shoulders")
     for s in (1, -1):
         ball((s * 1.25, -0.55, 0.45), (0.55, 0.6, 0.38), M["gold"])
         cyl((s * 1.55, -1.25, 0.5), 0.2, 1.5, M["obsidian"], rot=(math.pi / 2, 0, 0), verts=6)
@@ -178,6 +220,7 @@ def wepwawet(M):
         cyl((s * 1.55, -2.07, 0.5), 0.14, 0.04, M["core"], rot=(math.pi / 2, 0, 0), verts=6)
     # four splayed legs: hip -> knee -> clawed foot
     for sx, sy in ((1, -1), (-1, -1), (1, 1), (-1, 1)):
+        mark(f"leg{sx}{sy}")
         hip = Vector((sx * 0.95, sy * 0.55 + 0.25, 0.1))
         knee = Vector((sx * 2.0, sy * 1.25 + 0.25, 0.45))
         foot = Vector((sx * 2.35, sy * 2.0 + 0.25, -0.2))
@@ -188,6 +231,7 @@ def wepwawet(M):
             cone(foot + Vector((k, sy * 0.25, 0)), 0.07, 0.01, 0.45, M["bone"],
                  rot=toward((k, sy, -0.3)), verts=8)
     # short tail
+    mark("tail")
     limb((0, 1.6, 0.2), (0, 2.5, 0.05), 0.16, M["obsidian"])
     cone((0, 2.85, 0.0), 0.16, 0.0, 0.6, M["gold"], rot=toward((0, 1, -0.1)), verts=8)
 
@@ -218,12 +262,14 @@ def sobek(M):
     # side turret clusters
     for s in (1, -1):
         for y in (-0.7, 0.9):
+            mark(f"turret{s}{y}")
             cyl((s * 1.15, y, 0.35), 0.32, 0.3, M["bronze"])
             ball((s * 1.15, y, 0.52), (0.26, 0.26, 0.18), M["obsidian"])
             for k in (-0.12, 0.12):
                 cyl((s * 1.15 + k, y - 0.45, 0.55), 0.05, 0.7, M["obsidian"], rot=(math.pi / 2, 0, 0), verts=12)
     # stubby clawed legs
     for sx, sy in ((1, -1), (-1, -1), (1, 1), (-1, 1)):
+        mark(f"leg{sx}{sy}")
         a = Vector((sx * 0.9, sy * 1.1 + 0.2, 0.0))
         b = Vector((sx * 1.75, sy * 1.45 + 0.2, -0.1))
         limb(a, b, 0.2, M["teal"])
@@ -232,6 +278,7 @@ def sobek(M):
     # segmented tail curving behind it
     prev = Vector((0, 2.25, 0.1))
     for i in range(7):
+        mark(f"tail{i}")
         r = 0.42 * (1 - i / 8)
         p = Vector((0.35 * math.sin(i * 0.7), 2.45 + i * 0.42, 0.1 - i * 0.02))
         ball(p, (r * 1.2, 0.3, r * 0.8), M["teal"], seg=16)
@@ -261,6 +308,7 @@ def umbra(M):
                   tilt=(0.3, s * 0.3, 0))
     # orbiting shard drones
     for i in range(4):
+        mark(f"drone{i}")
         a = math.pi / 4 + i * math.pi / 2
         p = Vector((math.cos(a) * 2.9, math.sin(a) * 2.2, 0.3))
         bpy.ops.mesh.primitive_ico_sphere_add(subdivisions=1, radius=0.28, location=p)
@@ -281,18 +329,22 @@ def nun(M):
     # two concentric gold rings, the outer one segmented like a lock
     bpy.ops.mesh.primitive_torus_add(major_radius=1.75, minor_radius=0.12, location=(0, 0, 0.25))
     assign(obj(), M["gold"])
+    mark("ring")
     bpy.ops.mesh.primitive_torus_add(major_radius=2.75, minor_radius=0.3, major_segments=96, location=(0, 0, 0.15))
     ring = obj()
     ring.scale = (1, 1, 0.55)
     assign(ring, M["abyss"])
+    mark("spokes")
     for k in range(6):                                                     # spokes tying the ring to the dome
         a = k * math.tau / 6 + 0.26
         limb((math.cos(a) * 1.7, math.sin(a) * 1.7, 0.25), (math.cos(a) * 2.6, math.sin(a) * 2.6, 0.2), 0.1, M["gold"])
+    mark("bars")
     for i in range(12):
         a = i * math.tau / 12
         box((math.cos(a) * 2.75, math.sin(a) * 2.75, 0.33), (0.6, 0.1, 0.05), M["atlantean"],
             rot=(0, 0, a + math.pi / 2), bevel=0)
     # eight sunken Atlantean spires standing on the ring, leaning outward
+    mark("spires")
     for i in range(8):
         a = math.pi / 8 + i * math.tau / 8
         base = Vector((math.cos(a) * 2.75, math.sin(a) * 2.75, 0.3))
@@ -304,6 +356,7 @@ def nun(M):
     # four tentacle arms reaching toward the player, crystal-tipped
     for s in (1, -1):
         for k, spread in ((0, 0.45), (1, 1.05)):
+            mark(f"arm{s}{k}")
             pts = [Vector((s * (0.6 + 0.3 * k), -1.1, 0.1)),
                    Vector((s * (1.3 + spread), -2.4, 0.0)),
                    Vector((s * (1.0 + spread * 1.4), -3.6, -0.05))]
@@ -329,6 +382,7 @@ def sokar(M):
         ball((s * 0.26, -1.72, 0.92), (0.09, 0.09, 0.05), M["eye"], seg=16)
     # wings: layered feather blades sweeping out and slightly forward
     for s in (1, -1):
+        mark(f"wing{s}")
         for i in range(11):
             t = i / 10
             root = Vector((s * (0.6 + t * 1.1), 0.2 - t * 0.3, 0.25 + 0.02 * i))
@@ -342,6 +396,7 @@ def sokar(M):
         for i in range(4):
             shard((s * (1.6 + i * 0.75), 0.75 - i * 0.2, 0.4), 0.7, 0.13, M["glass"], tilt=(0.5, s * 0.4, 0))
     # tail fan at the top of the screen
+    mark("tail")
     for i in range(7):
         a = math.pi / 2 + (i - 3) * 0.16
         root = Vector((0, 1.3, 0.25))
@@ -351,6 +406,7 @@ def sokar(M):
                (tip.x + perp.x, tip.y + perp.y), (root.x + perp.x, root.y + perp.y)]
         flat_poly("tail", pts, 0.05, M["feather_dark"] if i % 2 else M["sand"], z=0.2 + i * 0.01)
     # talons gripping a gold sun-disc beneath it
+    mark("talons")
     bpy.ops.mesh.primitive_torus_add(major_radius=0.55, minor_radius=0.09, location=(0, 0.55, -0.2))
     assign(obj(), M["gold"])
     for s in (1, -1):
@@ -370,9 +426,11 @@ def seraphs(M):
     for i in range(10):
         a = i * math.tau / 10 + 0.3
         r = 0.35 + 0.45 * ((i * 7) % 3) / 2
+        mark(f"ember{i}")
         cone((math.cos(a) * r, math.sin(a) * r, 0.1), 0.18, 0.0, 0.6 + 0.25 * (i % 3), M["ember"], verts=8).location.z += 0.35
     # four seraphs at the diagonals, each rearing toward the player's side of the screen
     for i in range(4):
+        mark(f"seraph{i}")
         a = math.pi / 4 + i * math.pi / 2
         c = Vector((math.cos(a) * 2.35, math.sin(a) * 2.0, 0.2))
         out = Vector((math.cos(a), math.sin(a), 0))
@@ -393,6 +451,7 @@ def seraphs(M):
         for s in (1, -1):
             ball(hood + Vector((s * 0.1, -0.92, 0.3)), (0.04, 0.05, 0.03), M["eye"], seg=12)
         # flame wings spreading outward from the brazier
+        mark(f"flame{i}")
         for s in (1, -1):
             side = Vector((-out.y, out.x, 0)) * s
             for f in range(3):
@@ -414,6 +473,7 @@ def as_mesh(o):
 def umbra_coiled(M):
     """Hour 7 — UMBRA returns with Apep's coil wound around it, faster and colder."""
     umbra(M)
+    mark("coil")
     cu = bpy.data.curves.new("coil", "CURVE")
     cu.dimensions = "3D"
     cu.bevel_depth = 0.32
@@ -439,6 +499,7 @@ def umbra_coiled(M):
         x, y, z, r = pts[i]
         shard((x, y, z + 0.3 * r), 0.55 * r + 0.2, 0.12, M["glass"], tilt=(0.3, 0.2, 0))
     hx, hy, hz, _ = pts[-1]
+    mark("coilhead")
     head = Vector((hx, hy, hz))
     strike = (Vector((0, -3.4, 0)) - head).normalized()
     for jaw in (1, -1):
@@ -476,14 +537,18 @@ def hittite(M):
         box((x, 0.5, 1.25), (0.18, 0.9, 0.08), M["crystal"], bevel=0)    # reactor vents
     ball((0, 0.5, 1.3), (0.28, 0.28, 0.2), M["core"], seg=16)
     # wall-barrage battery along the bow: a row of cannons aimed down the screen
+    mark("guns")
     for i in range(7):
         x = -1.05 + i * 0.35
         cyl((x, -2.0 + abs(x) * 0.5, 0.42), 0.09, 0.9, M["iron"], rot=(math.pi / 2, 0, 0), verts=12)
         cyl((x, -2.45 + abs(x) * 0.5, 0.42), 0.06, 0.04, M["core"], rot=(math.pi / 2, 0, 0), verts=12)
+    mark("outriggers")
     # four six-spoked Hittite chariot wheels, laid flat as rotors on outriggers
     for sx, sy in ((1, -1), (-1, -1), (1, 1), (-1, 1)):
         c = Vector((sx * 2.6, sy * 1.35 + 0.25, 0.2))
+        mark(f"strut{sx}{sy}")
         limb((sx * 1.4, sy * 1.0 + 0.25, 0.2), c, 0.14, M["iron"])
+        mark(f"rotor{sx}{sy}")
         bpy.ops.mesh.primitive_torus_add(major_radius=0.95, minor_radius=0.1, location=c)
         assign(obj(), M["bronze"])
         for k in range(6):
@@ -493,6 +558,7 @@ def hittite(M):
         cyl(c, 0.22, 0.3, M["rust"], verts=16)
         ball(c + Vector((0, 0, 0.18)), (0.12, 0.12, 0.08), M["crystal"], seg=12)
     # broken Bow trophies: crystal shards punched through the iron
+    mark("trophies")
     for x, y in ((-0.9, 1.6), (1.0, -0.9), (-1.1, -0.6), (0.7, 1.9)):
         shard((x, y, 0.3), 0.9, 0.16, M["glass"], tilt=(0.3 * x, -0.3 * y, 0))
 
@@ -503,6 +569,7 @@ def ammit(M):
     ball((0, 1.0, 0.2), (0.95, 0.9, 0.45), M["hide"])
     ball((0, -0.3, 0.35), (1.0, 0.95, 0.6), M["mane"])
     # lion mane: a ring of gold blades around the neck
+    mark("mane")
     for i in range(16):
         a = math.pi + i * math.tau / 16
         d = Vector((math.cos(a), math.sin(a) * 0.8, 0))
@@ -510,6 +577,7 @@ def ammit(M):
         m.location = Vector((0, -0.9, 0.55)) + d * 0.95
         m.scale = (1, 0.4, 1)
     # crocodile head and long jaws, pointing down the screen
+    mark("head")
     ball((0, -1.25, 0.6), (0.55, 0.6, 0.42), M["hide"])
     for z, mat, k in ((0.62, M["hide"], 1.0), (0.38, M["bronze"], 0.9)):     # tapered upper and lower jaws
         j = cone((0, -2.2, z), 0.42 * k, 0.08, 1.7, mat, rot=toward((0, -1, 0)), verts=4)
@@ -521,6 +589,7 @@ def ammit(M):
         ball((s * 0.24, -1.4, 0.95), (0.06, 0.08, 0.04), M["eye"], seg=16)
     box((0, -1.0, 0.98), (0.7, 0.35, 0.08), M["gold"], rot=(0.25, 0, 0))   # headdress band
     # lion forelegs with claws, hippo hind legs
+    mark("legs")
     for s in (1, -1):
         a, b = Vector((s * 0.85, -0.5, 0.1)), Vector((s * 1.45, -1.35, -0.1))
         limb(a, b, 0.22, M["mane"])
@@ -529,11 +598,15 @@ def ammit(M):
         limb((s * 0.95, 1.35, 0.0), (s * 1.25, 1.65, -0.15), 0.3, M["hide"])        # stubby hippo legs
         ball((s * 1.25, 1.65, -0.2), (0.34, 0.34, 0.2), M["hide"], seg=16)
     # stubby hippo tail
+    mark("tail")
     limb((0, 2.05, 0.2), (0, 2.5, 0.05), 0.12, M["hide"])
     # the scales of judgement hovering over its back: beam, pillar, heart and feather pans
+    mark("pillar")
     cyl((0, 0.6, 1.6), 0.06, 1.6, M["gold"], verts=12)
+    mark("beam")
     box((0, 0.6, 2.4), (3.4, 0.12, 0.1), M["gold"], bevel=0.03)
     for s, item in ((1, "heart"), (-1, "feather")):
+        mark(f"pan{s}")
         pan = Vector((s * 1.6, 0.6, 1.95))
         for k in range(3):
             a = k * math.tau / 3
@@ -541,6 +614,7 @@ def ammit(M):
         bpy.ops.mesh.primitive_cylinder_add(vertices=24, radius=0.45, depth=0.06, location=pan)
         assign(obj(), M["gold"])
         if item == "heart":
+            mark("heart")
             ball(pan + Vector((0, 0, 0.18)), (0.2, 0.18, 0.18), M["heart"], seg=16)
         else:
             f = ball(pan + Vector((0, 0, 0.12)), (0.12, 0.42, 0.04), M["feather"], seg=16)
@@ -559,27 +633,33 @@ def overlord_echo(M):
         b = shard(out * 1.55, h, 0.34, M["glass"], tilt=(-out.y * 0.45, out.x * 0.45, a))
         if i % 2 == 0:
             shard(out * 1.2, h * 0.6, 0.18, M["crystal"], tilt=(-out.y * 0.3, out.x * 0.3, a))
+    mark("bowl")
     bpy.ops.mesh.primitive_torus_add(major_radius=1.55, minor_radius=0.16, major_segments=64, location=(0, 0, 0.1))
     assign(obj(), M["void"])
     # the hollow core: a void bowl full of falling stars
     ball((0, 0, -0.2), (1.25, 1.25, 0.35), M["void"])
     random.seed(10)
     for k in range(26):
+        mark(f"star{k}")
         r, a = random.uniform(0, 1.05), random.uniform(0, math.tau)
         ball((math.cos(a) * r, math.sin(a) * r, random.uniform(0.0, 1.4)), (0.07,) * 3,
              M["starfire"] if k % 3 else M["core"], seg=10)
+    mark("core")
     ball((0, 0, 0.35), (0.38, 0.38, 0.38), M["core"])
+    mark("cracks")
     # glowing cracks across the void bowl
     for k in range(5):
         a = k * math.tau / 5 + 0.3
         box((math.cos(a) * 0.7, math.sin(a) * 0.7, 0.13), (1.0, 0.05, 0.04), M["violet"], rot=(0, 0, a), bevel=0)
     # gold Atlantean armour fragments still orbiting what's left
     for k in range(7):
+        mark(f"frag{k}")
         a = k * math.tau / 7 + 0.4
         p = Vector((math.cos(a) * 3.0, math.sin(a) * 2.6, 0.3 + 0.3 * math.sin(k)))
         f = box(p, (0.7, 0.35, 0.08), M["gold"], rot=(0.4 * math.sin(k), 0.3, a + 0.6), bevel=0.03)
         box(p + Vector((0, 0, 0.05)), (0.45, 0.06, 0.06), M["violet"], rot=(0.4 * math.sin(k), 0.3, a + 0.6), bevel=0)
     # the jagged "jaw" of crystal reaching toward the player
+    mark("jaw")
     for k, x in enumerate((-0.7, -0.25, 0.25, 0.7)):
         shard((x, -1.7, 0.0), 1.6 - abs(x) * 0.6, 0.22, M["glass"], tilt=(1.25, 0, 0))
 
@@ -601,6 +681,7 @@ def umbra_unmasked(M):
     # obsidian mask plates still clinging on, and others peeling away, each with a hot gold seam
     random.seed(11)
     for k in range(16):
+        mark(f"plate{k}")
         a = random.uniform(0, math.tau)
         clinging = k < 7
         r = random.uniform(0.6, 2.4) if clinging else random.uniform(2.8, 3.9)
@@ -609,10 +690,12 @@ def umbra_unmasked(M):
         tri = [(c.x, c.y + sz), (c.x + sz * 0.9, c.y - sz * 0.6), (c.x - sz * 0.8, c.y - sz * 0.5)]
         plate = flat_poly("mask", tri, 0.08, M["obsidian"], z=c.z)
         if clinging:   # a hot gold seam where the mask is splitting from the hull
+            mark(f"seam{k}")
             box((c.x, c.y, c.z + 0.1), (sz * 0.9, 0.05, 0.03), M["ember"], rot=(0, 0, random.uniform(0, 3)), bevel=0)
         else:
             plate.rotation_euler = (random.uniform(-0.8, 0.8), random.uniform(-0.8, 0.8), 0)
     # the light breaking out of it
+    mark("heart")
     ball((0, 0.2, 0.75), (0.3, 0.3, 0.2), M["atlantis_heart"], seg=16)
 
 
@@ -627,6 +710,8 @@ def apep(M, open_jaws=False):
     cu.resolution_u = 24
     sp = cu.splines.new("BEZIER")
     pts = [(0, 1.0, 0.1, 1.0), (2.7, 2.9, -0.2, 0.95), (-2.4, 4.8, 0.0, 0.75), (1.0, 6.3, -0.3, 0.4)]
+    if WAVE is not None:                                       # animation: a wave travels down the coils
+        pts = [(x + 0.55 * i / 3 * math.sin(WAVE - i * 1.3), y, z, r) for i, (x, y, z, r) in enumerate(pts)]
     sp.bezier_points.add(len(pts) - 1)
     for bp, (x, y, z, r) in zip(sp.bezier_points, pts):
         bp.co = (x, y, z)
@@ -641,6 +726,7 @@ def apep(M, open_jaws=False):
         shard((x, y, z + r * 1.4), 1.5 * r + 0.3, 0.26 * r + 0.05, M["glass"], tilt=(0.25, 0, 0))
         ball((x, y, z + r * 1.2), (0.22 * r + 0.05,) * 3, M["core"], seg=12)
     # the head: broad and flat, pointing down the screen
+    mark("head")
     ball((0, -0.5, 0.4), (1.9, 1.6, 0.75), M["void"])
     if not open_jaws:
         j = cone((0, -2.8, 0.4), 1.75, 0.15, 3.8, M["void"], rot=toward((0, -1, 0)), verts=4)
@@ -652,6 +738,7 @@ def apep(M, open_jaws=False):
     else:
         # the jaws thrown open sideways, so the Heart is visible from above
         for s in (1, -1):
+            mark(f"jaw{s}")
             d = Vector((s * 0.5, -1, 0)).normalized()
             j = cone((0, 0, 0), 1.15, 0.12, 3.6, M["void"], rot=toward(d), verts=4)
             j.location = Vector((s * 1.05, -2.3, 0.4))
@@ -660,10 +747,12 @@ def apep(M, open_jaws=False):
             for k in range(6):                                 # fangs along the inner edge
                 p = Vector((s * 0.55, -1.6, 0.6)) + d * (k * 0.5)
                 cone(p, 0.1, 0.0, 0.55, M["glass"], rot=toward((-s, 0, -0.4)), verts=6)
+        mark("heart")
         ball((0, -2.3, 0.5), (0.75, 0.75, 0.6), M["atlantis_heart"])
         bpy.ops.mesh.primitive_torus_add(major_radius=1.1, minor_radius=0.08, location=(0, -2.3, 0.5))
         assign(obj(), M["violet"])
     # crown of crystal spines and burning eyes
+    mark("crown")
     for i in range(9):
         a = math.pi * (0.1 + 0.8 * i / 8)
         shard((math.cos(a) * 1.75, 0.1 - math.sin(a) * 0.3, 0.9), 1.8 + 0.6 * math.sin(a), 0.28, M["glass"],
@@ -679,6 +768,130 @@ KEEPERS = {"wepwawet": wepwawet, "sobek": sobek, "umbra": umbra,
            "apep": apep, "apep_p3": lambda M: apep(M, open_jaws=True)}
 ACTS = {"1": ("wepwawet", "sobek", "umbra"), "2": ("nun", "sokar", "seraphs"),
         "3": ("umbra_coiled", "hittite", "ammit"), "4": ("overlord_echo", "umbra_unmasked", "apep", "apep_p3")}
+
+
+# ------------------------------------------------------------------ animation: one seamless loop per Keeper
+# Each animator poses the parts for loop angle w (0..2π). Only whole-loop motion is used (sin/cos of w,
+# rotations through a symmetry step), so frame FRAMES wraps cleanly back to frame 0.
+def pick(P, prefix):
+    return [o for name, objs in P.items() if name.startswith(prefix) for o in objs]
+
+
+def a_wepwawet(P, w):
+    for sx, sy in ((1, -1), (-1, -1), (1, 1), (-1, 1)):            # diagonal pairs stride together
+        stride = math.sin(w + (0 if sx * sy < 0 else math.pi))
+        move(P[f"leg{sx}{sy}"], (sx * 0.95, sy * 0.55 + 0.25, 0.1), rot=(0, 0, sx * 0.16 * stride))
+    move(P["head"], (0, -1.05, 0.35), rot=(0, 0, 0.07 * math.sin(w)))
+    move(P["tail"], (0, 1.6, 0.2), rot=(0, 0, 0.35 * math.sin(2 * w)))
+
+
+def a_sobek(P, w):
+    for i in range(7):                                             # a wave travelling down the tail
+        move(P[f"tail{i}"], shift=(0.32 * (i + 1) / 7 * math.sin(w - i * 0.8), 0, 0))
+    for sx, sy in ((1, -1), (-1, -1), (1, 1), (-1, 1)):            # legs paddle
+        move(P[f"leg{sx}{sy}"], (sx * 0.9, sy * 1.1 + 0.2, 0), rot=(0, 0, 0.22 * math.sin(w + (sx * sy) * 1.5)))
+    for name, objs in P.items():                                   # turrets track the player
+        if name.startswith("turret"):
+            s = 1 if name[6] == "1" else -1
+            y = float(name[7:] if s > 0 else name[8:])
+            move(objs, (s * 1.15, y, 0.35), rot=(0, 0, s * 0.3 * math.sin(w + y)))
+
+
+def a_umbra(P, w):
+    move(pick(P, "drone"), rot=(0, 0, math.pi / 2 * w / math.tau))  # drones orbit one quarter turn per loop
+
+
+def a_nun(P, w):
+    move(P["spires"], rot=(0, 0, math.pi / 4 * w / math.tau))        # the spire crown turns one spire per loop
+    for s in (1, -1):
+        for k in (0, 1):
+            move(P[f"arm{s}{k}"], (s * (0.6 + 0.3 * k), -1.1, 0.1), rot=(0, 0, 0.2 * math.sin(w + k * 1.8 + s)))
+
+
+def a_sokar(P, w):
+    for s in (1, -1):                                              # wingbeat
+        move(P[f"wing{s}"], (s * 0.6, 0, 0.25), rot=(0, s * 0.55 * math.sin(w), 0))
+    move(P["tail"], (0, 1.3, 0.25), rot=(0, 0, 0.14 * math.sin(w + 1)))
+
+
+def a_seraphs(P, w):
+    for i in range(4):
+        a = math.pi / 4 + i * math.pi / 2
+        c = (math.cos(a) * 2.35, math.sin(a) * 2.0, 0.2)
+        sway = 0.14 * math.sin(w + i * math.pi / 2)
+        move(P[f"seraph{i}"] + P[f"flame{i}"], c, rot=(0, 0, sway))
+        move(P[f"flame{i}"], c, scale=1 + 0.16 * math.sin(2 * w + i))  # flame wings flicker
+    for i in range(10):
+        e = P[f"ember{i}"]
+        move(e, e[0].location, scale=(1 + 0.3 * math.sin(2 * w + i * 1.7),) * 2 + (1,))
+
+
+def a_umbra_coiled(P, w):
+    a_umbra(P, w)
+    move(P["coil"] + P["coilhead"], rot=(0, 0, 0.16 * math.sin(w)))  # the coil tightens and slackens
+    move(P["coilhead"], shift=(0, -0.3 * max(0.0, math.sin(w + 1.2)), 0))   # and the head strikes
+
+
+def a_hittite(P, w):
+    for sx, sy in ((1, -1), (-1, -1), (1, 1), (-1, 1)):            # chariot wheels spin a third of a turn
+        move(P[f"rotor{sx}{sy}"], (sx * 2.6, sy * 1.35 + 0.25, 0.2), rot=(0, 0, sx * sy * math.tau / 3 * w / math.tau))
+    move(P["guns"], shift=(0, 0.14 * max(0.0, math.sin(2 * w)), 0))   # barrage recoil
+
+
+def a_ammit(P, w):
+    move(P["head"], (0, -0.9, 0.55), rot=(0, 0, 0.1 * math.sin(w)))
+    move(P["mane"], (0, -0.9, 0.55), scale=1 + 0.05 * math.sin(2 * w))
+    tilt = 0.28 * math.sin(w)                                      # the scales of judgement rock
+    pivot = Vector((0, 0.6, 2.4))
+    move(P["beam"], pivot, rot=(0, tilt, 0))
+    for s in (1, -1):
+        hang = Vector((s * 1.6, 0.6, 2.38))
+        moved = Euler((0, tilt, 0)).to_matrix() @ (hang - pivot) + pivot
+        move(P[f"pan{s}"] + (P["heart"] if s > 0 else []), shift=moved - hang)
+    move(P["heart"], P["heart"][0].matrix_world.translation, scale=1 + 0.2 * max(0.0, math.sin(3 * w)))
+
+
+def a_overlord_echo(P, w):
+    for k in range(7):                                             # armour fragments orbit
+        a = k * math.tau / 7 + 0.4
+        da = math.tau / 7 * w / math.tau
+        old = Vector((math.cos(a) * 3.0, math.sin(a) * 2.6, 0))
+        new = Vector((math.cos(a + da) * 3.0, math.sin(a + da) * 2.6, 0))
+        f = P[f"frag{k}"]
+        move(f, f[0].location, rot=(0, 0, da), shift=new - old)
+    for k in range(26):                                            # falling stars twinkle
+        st = P[f"star{k}"]
+        move(st, st[0].location, scale=0.5 + 0.7 * (0.5 + 0.5 * math.sin(w + k * 2.3)))
+    move(P["core"], (0, 0, 0.35), scale=1 + 0.15 * math.sin(2 * w))
+
+
+def a_umbra_unmasked(P, w):
+    for k in range(16):
+        plate = P[f"plate{k}"]
+        if f"seam{k}" in P:                                        # clinging plates: seams pulse
+            seam = P[f"seam{k}"]
+            move(seam, seam[0].location, scale=(1 + 0.35 * math.sin(2 * w + k),) * 2 + (1,))
+        else:                                                      # loose plates drift out and back
+            c = plate[0].matrix_world @ Vector(plate[0].bound_box[0]).lerp(Vector(plate[0].bound_box[6]), 0.5)
+            out = Vector((c.x, c.y, 0)).normalized()
+            move(plate, c, rot=(0, 0, 0.25 * math.sin(w + k)), shift=out * 0.3 * math.sin(w + k))
+    move(P["heart"], (0, 0.2, 0.75), scale=1 + 0.25 * math.sin(2 * w))
+
+
+def a_apep(P, w):                                                  # the coil wave comes from WAVE in apep()
+    move([o for name, objs in P.items() if name for o in objs], (0, 0.6, 0.4), rot=(0, 0, 0.05 * math.sin(w)))
+
+
+def a_apep_p3(P, w):
+    for s in (1, -1):                                              # the open jaws flex on the Heart
+        move(P[f"jaw{s}"], (s * 0.6, -1.0, 0.4), rot=(0, 0, -s * 0.1 * math.sin(2 * w)))
+    move(P["heart"], (0, -2.3, 0.5), scale=1 + 0.12 * math.sin(2 * w))
+    a_apep(P, w)
+
+
+ANIMS = {"wepwawet": a_wepwawet, "sobek": a_sobek, "umbra": a_umbra, "nun": a_nun, "sokar": a_sokar,
+         "seraphs": a_seraphs, "umbra_coiled": a_umbra_coiled, "hittite": a_hittite, "ammit": a_ammit,
+         "overlord_echo": a_overlord_echo, "umbra_unmasked": a_umbra_unmasked, "apep": a_apep, "apep_p3": a_apep_p3}
 
 
 # ------------------------------------------------------------------ render setup
@@ -758,13 +971,52 @@ def merge_for_export():
     bpy.ops.object.join()
 
 
+def build_keeper(kid, w=None):
+    """Fresh scene with one Keeper; w=None is the static model, otherwise loop angle w is posed."""
+    global WAVE
+    ships.reset()
+    _MARKS.clear()
+    WAVE = w
+    M = materials()
+    KEEPERS[kid](M)
+    WAVE = None
+    bpy.context.view_layer.update()
+    if w is not None:
+        ANIMS[kid](parts(), w)
+        bpy.context.view_layer.update()
+    lights()
+
+
+def main_anim(kid):
+    """FRAMES loop frames at the static sprite's scale, on a 1.5x canvas centred where the sprite is."""
+    random.seed(7)
+    build_keeper(kid)
+    lo, hi = bounds()
+    size = hi - lo
+    span = max(size.x, size.y) * 1.06            # same pixels-per-unit as keeper_<id>.png (360 / span)
+    cx, cy = (lo.x + hi.x) / 2, (lo.y + hi.y) / 2
+    os.makedirs(f"{OUT}/anim", exist_ok=True)
+    for f in range(FRAMES):
+        random.seed(7)
+        build_keeper(kid, math.tau * f / FRAMES)
+        cam = camera("top", ortho=span * 1.5, loc=(cx, cy, 30), target=(cx, cy, 0))
+        render(f"{OUT}/anim/keeper_{kid}_f{f:02d}.png", 540, 540, cam)
+    print("animated", kid)
+
+
 def main():
     random.seed(7)
     os.makedirs(OUT, exist_ok=True)
+    chosen = [k for k in KEEPERS if not ONLY_ACT or k == ONLY_ACT or k in ACTS.get(ONLY_ACT, ())]
+    if ANIM:
+        for kid in chosen:
+            main_anim(kid)
+        return
     for kid, build in KEEPERS.items():
-        if ONLY_ACT and kid not in ACTS[ONLY_ACT]:
+        if kid not in chosen:
             continue
         ships.reset()
+        _MARKS.clear()
         M = materials()
         build(M)
         bpy.context.view_layer.update()

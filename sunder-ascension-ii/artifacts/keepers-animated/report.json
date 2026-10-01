@@ -1,0 +1,110 @@
+{
+ "report": [
+  {
+   "key": "keeper_wepwawet",
+   "frameW": 292,
+   "frameH": 342,
+   "stillW": 280,
+   "stillH": 360,
+   "changed": true
+  },
+  {
+   "key": "keeper_sobek",
+   "frameW": 162,
+   "frameH": 346,
+   "stillW": 163,
+   "stillH": 360,
+   "changed": true
+  },
+  {
+   "key": "keeper_umbra",
+   "frameW": 346,
+   "frameH": 300,
+   "stillW": 360,
+   "stillH": 252,
+   "changed": true
+  },
+  {
+   "key": "keeper_nun",
+   "frameW": 316,
+   "frameH": 370,
+   "stillW": 326,
+   "stillH": 360,
+   "changed": true
+  },
+  {
+   "key": "keeper_sokar",
+   "frameW": 344,
+   "frameH": 208,
+   "stillW": 360,
+   "stillH": 214,
+   "changed": true
+  },
+  {
+   "key": "keeper_seraphs",
+   "frameW": 366,
+   "frameH": 338,
+   "stillW": 360,
+   "stillH": 331,
+   "changed": true
+  },
+  {
+   "key": "keeper_umbra_coiled",
+   "frameW": 346,
+   "frameH": 284,
+   "stillW": 360,
+   "stillH": 272,
+   "changed": true
+  },
+  {
+   "key": "keeper_hittite",
+   "frameW": 346,
+   "frameH": 244,
+   "stillW": 360,
+   "stillH": 252,
+   "changed": true
+  },
+  {
+   "key": "keeper_ammit",
+   "frameW": 252,
+   "frameH": 346,
+   "stillW": 262,
+   "stillH": 360,
+   "changed": true
+  },
+  {
+   "key": "keeper_overlord_echo",
+   "frameW": 374,
+   "frameH": 330,
+   "stillW": 360,
+   "stillH": 334,
+   "changed": true
+  },
+  {
+   "key": "keeper_umbra_unmasked",
+   "frameW": 378,
+   "frameH": 250,
+   "stillW": 360,
+   "stillH": 243,
+   "changed": true
+  },
+  {
+   "key": "keeper_apep",
+   "frameW": 220,
+   "frameH": 346,
+   "stillW": 206,
+   "stillH": 360,
+   "changed": true
+  },
+  {
+   "key": "keeper_apep_p3",
+   "frameW": 240,
+   "frameH": 346,
+   "stillW": 224,
+   "stillH": 360,
+   "changed": true
+  }
+ ],
+ "errors": [],
+ "failed": []
+}

@@ -122,5 +122,26 @@ SUNDER II are the 2D game captures in `act1-bosses/` … `act4-bosses/`.
 ## Still weak
 - Stage backdrops are Blender tiles until Kling concepts are sent back and folded in through `art/kling/`.
 - Sokar's feather blades are thin, so the hawk reads slighter in the low 3/4 Codex view than top-down in the game.
-- Keeper models are static (no rig/animation); motion in the viewer is hover, turntable and emissive pulse only.
+- The in-game Keepers animate, but the Codex GLBs are still static (hover, turntable and emissive pulse only).
 - Kling concepts could not be inspected or used as image-to-3D input here (CDN blocked); models follow the written brief.
+
+## Animated Keepers (Blender + Kling)
+- **Blender:** `keepers.py --anim` renders an 8-frame seamless loop per Keeper (13 loops, 104 frames, Cycles 48 samples),
+  and `pack_anim.py` packs each into `web/assets/keeper_<id>_anim.webp` (47–131 KB each, about 1 MB total).
+  Builders now label their parts with `mark()`; each Keeper has an animator that poses those parts for the loop angle:
+  Wepwawet strides in diagonal pairs, Sobek's tail waves and its turrets track, UMBRA's drones orbit, Nun's spires turn
+  and its tentacles sway, Sokar beats its wings, the Seraphs sway with flickering flame wings and embers, UMBRA Coiled's
+  coil tightens as the head strikes, the Hittite chariot wheels spin and the guns recoil, Ammit's scales of judgement
+  rock while the heart throbs, the Overlord's armour fragments orbit among twinkling stars, UMBRA's loose mask plates drift
+  while its seams pulse, and a wave runs down Apep's coils (in the final phase its open jaws flex on the Heart).
+- Static art unchanged: Act IV re-rendered with the old and new script has identical sizes and alpha, with colour
+  differences only at denoiser-noise level (max 8/255, mean < 0.02); the shipped static sprites were not re-rendered.
+- One defect found and fixed: the Hittite rotors' struts were grouped with the previous rotor, so they spun off the hull
+  (sheet hit the 544 px canvas edge); each strut now has its own mark, and the sheet is back to 346 px wide.
+- Game: `drawKeeper` plays the sheet at 8 fps once loaded (the still sprite until then and as fallback), at the still
+  sprite's scale and centre, including the hit flash. Chromium capture of all 13 (`keepers-animated/`, `report.json`):
+  the on-screen frame changes on every Keeper, no page errors, no failed requests.
+- `test_sunder2.js`: 10/10 — new check that every Keeper has an animation sheet, as alpha WebP, a whole number of frames wide.
+- **Kling:** 12 reveal clips, one per Keeper (5 s, 720p, `kling-video-v3_0_turbo`, 480 credits): image-to-video from the
+  concept art for Wepwawet, Sobek, UMBRA, the Overlord's Echo, UMBRA Unmasked and Apep; text-to-video for the other six.
+  All 12 completed; job IDs in `game-progress.md`. Links expire in 24 h and can't be downloaded here.

@@ -30,8 +30,11 @@ Kling result URLs expire after 24 h, and this sandbox cannot download from Kling
 
 ## Done: art moved out of game.html into web/assets/ (808 KB → 111 KB)
 
+## Done: animated Keepers — Blender 8-frame loops in play, Kling reveal clips (all 12 completed)
+
 ## Next
 - Fold in Kling stage concepts the user sends back (art/kling/stage_<id>.png, re-run stages.py).
+- Optional: animate the Codex GLBs (glTF animation tracks from the same part animators).
 - Optional: send the favourite Kling concepts back into the chat so the models can be matched to them.
 
 ## Act IV Kling jobs (account 49246555, 4 credits each)
@@ -57,3 +60,20 @@ Kling result URLs expire after 24 h, and this sandbox cannot download from Kling
 | 8 Iron Sky | AXhrWwr8EIkt-Ft08DEuQ4YYzk13VvQQmWFE4VwJ7N5Plw317LL0OwOqkApx9FrqZE-OqMvW |
 | 9 Judgement Hall | ARoZcPRWQGDFNMs0JRtv3ryXoM6TNvBEpJ1lU7HrwEHXdIo4CCHh8YWnw4qbn3QYyC-E6wyg |
 Workflow: save a chosen image as `art/kling/stage_<id>.png` and re-run `blender/stages.py` — it becomes the ground texture.
+
+## Keeper reveal clips (Kling video, `kling-video-v3_0_turbo`, 5 s, 720p, 40 credits each = 480)
+Image-to-video from the Kling concept art where one existed; text-to-video from the Keeper brief otherwise.
+| Hour | Keeper | Mode | Generation ID |
+|---|---|---|---|
+| 1 | Wepwawet | image→video | AcT4VJDJzi178FmqFLFDEFKvG3jUcNL-mD5ZYEPwAMIJdNUTbHG_8kqEk6ivel75OhAHkCiu |
+| 2 | Sobek Reborn | image→video | AUZMHNx7qhQSeI3nSITeOlyKUWuX6KjP5cJh5gDAxPnsBs6NWrP0IyubeLd0NljIsTyQ3dHg |
+| 3 | UMBRA | image→video | AdSqlOH_VHZPQ8W_nBTD7pnCRCAnfAIy-G5dYwaYOmnpzSXeTZ_ebw_2v6tKU79MU1AVz_6L |
+| 4 | Nun | text→video | AVDZWktUXN8OMJ-uiJsv2fe9C_fqKVTQWnI6S0xOGwJF6GSSGsajlCBDiR7zf_oyStgxf_Ok |
+| 5 | Sokar | text→video | AbqLuiAsaH0uwL8VrZ5ZDgI7DXQxYdg463Z6wt5nsfBtiYjsKWLV3O7q1GLZxFSNKUNeLPRT |
+| 6 | Fire Lake Seraphs | text→video | AW322Pop6-vCaHOr2tGVK_a_IiAxXnvrn8WEqRJYwjww-m_3_MneDwM4MdGHyTwMpUmdw6Je |
+| 7 | UMBRA, Coiled | text→video | AQjUq6cq53trXr8NVV8bT-D7J_GeaoD2Qm32gX_oZ34sNj_TkeiO0IgQmkQkxiIDerD9CM9v |
+| 8 | Hittite Engine | text→video | AY6ScxG0ySCujS-7tXozyXBRn2J_PwdRDyOGFxXC3CRXcC7Yuug3L06qS8OEzkOVW2T_9lE8 |
+| 9 | Ammit | text→video | AeLLUo_jPtHMMOq192B-BOIcevdK5_xuEKy-JkqCGKp6Y1UyGXSTi698r85Gq5sST-9kwx6P |
+| 10 | Overlord's Echo | image→video | AaAZzE4lkQbZwIYfgS34lGneQNBSuu6dk6CNkpCipUmy7L0trRVz15q0TP3ymnBgzB5zbifg |
+| 11 | UMBRA, Unmasked | image→video | AZ8eJOIK-9cd2L21HQ_Dzbs8CF4bgQ8mYJbLX0xzY4WfdTpySTllgnlb9AzS9fqH4qZhcrlL |
+| 12 | Apep | image→video | Ad84SIL76Bm6otqiIyrhnhWVKzabqJOwIjUM7UMO6em41O5TuO7y-G-StmWZlvajS2Jy71lT |

@@ -297,6 +297,20 @@ const BLENDER_ART = {
   stage_starfall: 'assets/stage_starfall.webp',
   stage_heart: 'assets/stage_heart.webp',
   stage_apep: 'assets/stage_apep.webp',
+  // Keeper animation loops (blender/keepers.py --anim, packed by blender/pack_anim.py): KEEPER_FRAMES frames side by side
+  keeper_wepwawet_anim: 'assets/keeper_wepwawet_anim.webp',
+  keeper_sobek_anim: 'assets/keeper_sobek_anim.webp',
+  keeper_umbra_anim: 'assets/keeper_umbra_anim.webp',
+  keeper_nun_anim: 'assets/keeper_nun_anim.webp',
+  keeper_sokar_anim: 'assets/keeper_sokar_anim.webp',
+  keeper_seraphs_anim: 'assets/keeper_seraphs_anim.webp',
+  keeper_umbra_coiled_anim: 'assets/keeper_umbra_coiled_anim.webp',
+  keeper_hittite_anim: 'assets/keeper_hittite_anim.webp',
+  keeper_ammit_anim: 'assets/keeper_ammit_anim.webp',
+  keeper_overlord_echo_anim: 'assets/keeper_overlord_echo_anim.webp',
+  keeper_umbra_unmasked_anim: 'assets/keeper_umbra_unmasked_anim.webp',
+  keeper_apep_anim: 'assets/keeper_apep_anim.webp',
+  keeper_apep_p3_anim: 'assets/keeper_apep_p3_anim.webp',
   ibis: 'assets/ibis.webp',
 };
 const ART = {};
@@ -1280,16 +1294,22 @@ function drawShip(ship, x, y, alpha, scale, flashTint){
 }
 // Blender Keeper sprites are rendered at 2x; Sobek is long and thin, so it is drawn larger to cover its hitbox
 const KEEPER_SCALE = { keeper_sobek: 0.62, keeper_sokar: 0.6, keeper_apep: 0.75, keeper_apep_p3: 0.75 };
+// A Keeper plays its Blender animation loop once the sheet has loaded, and its still sprite until then.
+// Sheet frames share the still sprite's scale and centre, so both draw with the same KEEPER_SCALE.
+const KEEPER_FRAMES = 8, KEEPER_FPS = 8;
 function drawKeeper(key, x, y, flash){
-  const im = ART[key], k = KEEPER_SCALE[key] || 0.5;
-  const w = im.naturalWidth * k, h = im.naturalHeight * k;
+  const anim = artReady(key + '_anim') ? ART[key + '_anim'] : null;
+  const im = anim || ART[key], k = KEEPER_SCALE[key] || 0.5;
+  const fw = anim ? im.naturalWidth / KEEPER_FRAMES : im.naturalWidth, fh = im.naturalHeight;
+  const sx = anim ? (Math.floor(G.time * KEEPER_FPS) % KEEPER_FRAMES) * fw : 0;
+  const w = fw * k, h = fh * k;
   ctx.save();
   ctx.translate(x, y + Math.sin(G.time * 1.6) * 3);
-  ctx.drawImage(im, -w/2, -h/2, w, h);
+  ctx.drawImage(im, sx, 0, fw, fh, -w/2, -h/2, w, h);
   if (flash && flash > 0){                      // hit flash, same feel as the SVG bosses
     ctx.globalCompositeOperation = 'lighter';
     ctx.globalAlpha = Math.min(flash * 8, 0.9);
-    ctx.drawImage(im, -w/2, -h/2, w, h);
+    ctx.drawImage(im, sx, 0, fw, fh, -w/2, -h/2, w, h);
   }
   ctx.restore();
 }
