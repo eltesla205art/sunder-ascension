@@ -1,0 +1,36 @@
+{
+ "version": 1,
+ "runId": "keepers-pass-6",
+ "captures": [
+  {
+   "mode": "desktop",
+   "state": "keeper-wepwawet",
+   "report": "artifacts/keepers-pass-6/desktop-wepwawet.json"
+  },
+  {
+   "mode": "desktop",
+   "state": "keeper-sobek",
+   "report": "artifacts/keepers-pass-6/desktop-sobek.json"
+  },
+  {
+   "mode": "desktop",
+   "state": "keeper-umbra",
+   "report": "artifacts/keepers-pass-6/desktop-umbra.json"
+  },
+  {
+   "mode": "mobile",
+   "state": "keeper-wepwawet",
+   "report": "artifacts/keepers-pass-6/mobile-wepwawet.json"
+  },
+  {
+   "mode": "mobile",
+   "state": "keeper-sobek",
+   "report": "artifacts/keepers-pass-6/mobile-sobek.json"
+  },
+  {
+   "mode": "mobile",
+   "state": "keeper-umbra",
+   "report": "artifacts/keepers-pass-6/mobile-umbra.json"
+  }
+ ]
+}

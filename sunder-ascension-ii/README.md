@@ -7,9 +7,12 @@ original *SUNDER: Ascension — The Nine Bows* (`web/`, `godot/`, `docs/`), whic
 |---|---|
 | `DESIGN.md` | Storyline, gameplay ideas, PS5-style UI direction, prompt pack |
 | `web/game.html` | The sequel build (single file, open it in a browser) |
+| `web/keepers.html` | Keeper Codex: real-time Three.js viewer of the Keeper models (serve the `web/` folder over HTTP; three.js is self-hosted in `web/vendor/three`, MIT) |
+| `web/models/` | Keeper GLB models exported from Blender, plus portrait thumbnails |
 | `web/test_sunder2.js` | Headless test of the 12-Hour campaign against the battle-math law: `node web/test_sunder2.js` |
 | `blender/` | Blender Python scripts that model and render the game art |
-| `art/blender/` | Full-resolution Blender renders (title backdrop, three ship sprites) |
+| `art/blender/` | Full-resolution Blender renders (title backdrop, ship sprites, `keepers/` boss sprites and portraits) |
+| `artifacts/` | Progress note, QA evidence (`final-evidence.md`), inspector captures |
 | `art/` | AI concept art: key art A/B, Scarab Warbringer Mk II A/B, Mk II hangar shots A/B |
 
 ## What the build has so far
@@ -23,9 +26,10 @@ original *SUNDER: Ascension — The Nine Bows* (`web/`, `godot/`, `docs/`), whic
 - **Battle math** unchanged, scaled to 12 Hours: boss bullets deal 2 from Hour 7.
 - **Scores stay on the device.** The sequel has no online leaderboard yet, so it can never write into
   Part 1's live leaderboard. It needs its own Supabase table before going online.
+- **Act I Keepers** (Wepwawet, Sobek Reborn, UMBRA) are Blender models: top-down sprites in Hours 1–3
+  (and UMBRA's rematches in Hours 7 and 11), portraits on the boss-intro card, GLBs in the Keeper Codex.
 
-Bosses still use Part 1's SVG art (assigned per Hour through each stage's `art` field) until they get
-their own Blender models.
+The other Hours still use Part 1's SVG bosses (assigned per Hour through each stage's `art` field).
 
 ## Re-rendering the Blender art
 
@@ -34,7 +38,10 @@ Blender runs headless as a Python module (`pip install bpy==4.2.0`, Python 3.11)
 ```bash
 python blender/ships.py art/blender 256                       # ship_sunborn/scarab/ibis.png
 python blender/title_scene.py art/blender/title_bg.png 720 1080 128
+python blender/keepers.py art/blender/keepers 128             # sprites, portraits and GLBs (move the .glb files to web/models/)
 ```
+
+To view the Keeper Codex locally: `cd web && python3 -m http.server 5188`, then open http://127.0.0.1:5188/keepers.html.
 
 The game embeds compressed WebP copies of these renders, so `game.html` stays a single file.
 

@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Keeper Codex — SUNDER: Ascension II</title>
+<link rel="icon" href="data:,">
+<style>
+:root{
+  --night:#0B0F2A; --void:#05040c; --violet:#5B2A86; --gold:#E6C252; --gold-soft:rgba(230,194,82,.55);
+  --cyan:#8CD9FF; --magenta:#FF3FA4; --text:#EDE6D0; --muted:#9C9078;
+  --glass:rgba(14,12,32,.62); --hair:1px solid rgba(230,194,82,.45);
+  --head:'Courier New',ui-monospace,monospace; --body:system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--void);color:var(--text);font-family:var(--body);overflow:hidden}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
+.glass{background:var(--glass);border:var(--hair);border-radius:14px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  box-shadow:inset 0 0 24px rgba(140,217,255,.06),0 10px 40px rgba(0,0,0,.45)}
+header{position:fixed;top:max(16px,env(safe-area-inset-top));left:16px;right:16px;display:flex;justify-content:space-between;align-items:baseline;pointer-events:none}
+header .brand{font:800 15px/1 var(--head);letter-spacing:.32em;color:var(--gold)}
+header .brand b{color:var(--cyan);font-weight:800}
+header .act{font:500 11px/1 var(--head);letter-spacing:.24em;color:var(--muted)}
+#info{position:fixed;left:24px;top:84px;width:min(360px,calc(100% - 48px));padding:22px 22px 18px}
+#info .hour{font:500 11px/1.4 var(--head);letter-spacing:.22em;color:var(--cyan)}
+#info h1{font:800 30px/1.1 var(--head);letter-spacing:.06em;color:var(--gold);margin:8px 0 2px;text-shadow:0 0 18px rgba(230,194,82,.35)}
+#info .epithet{font:600 14px/1.4 var(--body);color:var(--text);opacity:.85}
+#info .quote{margin:14px 0;font:italic 400 14px/1.5 var(--body);color:#F4D77B;border-left:2px solid var(--magenta);padding-left:12px}
+#info .brief{font:400 13px/1.55 var(--body);color:var(--muted)}
+#info dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin-top:16px;font:500 11px/1.5 var(--head);letter-spacing:.12em}
+#info dt{color:var(--muted)} #info dd{color:var(--text)}
+#cards{position:fixed;left:50%;bottom:max(20px,env(safe-area-inset-bottom));transform:translateX(-50%);display:flex;gap:14px}
+#cards button{all:unset;cursor:pointer;width:118px;padding:8px 8px 10px;border-radius:12px;border:var(--hair);background:var(--glass);
+  text-align:center;transition:transform .25s cubic-bezier(.2,.8,.2,1),box-shadow .25s,border-color .25s;backdrop-filter:blur(8px)}
+#cards button img{display:block;width:100%;aspect-ratio:1;object-fit:contain;filter:drop-shadow(0 4px 10px rgba(0,0,0,.6))}
+#cards button span{display:block;margin-top:6px;font:500 10px/1.3 var(--head);letter-spacing:.16em;color:var(--muted)}
+#cards button[aria-selected="true"]{transform:translateY(-8px) scale(1.06);border-color:var(--cyan);box-shadow:0 0 0 1px var(--cyan),0 0 28px rgba(140,217,255,.35)}
+#cards button[aria-selected="true"] span{color:var(--cyan)}
+#cards button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+#hint{position:fixed;right:24px;bottom:max(28px,env(safe-area-inset-bottom));font:500 10px/1.6 var(--head);letter-spacing:.18em;color:var(--muted);text-align:right;pointer-events:none}
+#loading{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);font:500 12px var(--head);letter-spacing:.3em;color:var(--muted)}
+@media (max-width:760px){
+  #info{top:auto;left:16px;right:16px;width:auto;bottom:154px;padding:14px 16px}
+  #info h1{font-size:22px} #info .brief,#info dl{display:none} #info .quote{margin:8px 0 0;font-size:13px}
+  #cards{gap:10px} #cards button{width:92px;padding:6px} #hint{display:none}
+  header .act{display:none}
+}
+</style>
+<script type="importmap">
+{ "imports": { "three": "./vendor/three/build/three.module.min.js", "three/addons/": "./vendor/three/examples/jsm/" } }
+</script>
+</head>
+<body>
+<canvas id="view" aria-label="Real-time 3D model of the selected Keeper"></canvas>
+<header><div class="brand">SUNDER · ASCENSION <b>II</b></div><div class="act">KEEPER CODEX — ACT I: DUSK</div></header>
+<section id="info" class="glass" aria-live="polite">
+  <div class="hour" id="k-hour"></div>
+  <h1 id="k-name"></h1>
+  <div class="epithet" id="k-epithet"></div>
+  <p class="quote" id="k-quote"></p>
+  <p class="brief" id="k-brief"></p>
+  <dl><dt>HULL</dt><dd id="k-hull"></dd><dt>ATTACKS</dt><dd id="k-patterns"></dd><dt>ARENA</dt><dd id="k-arena"></dd></dl>
+</section>
+<nav id="cards" role="tablist" aria-label="Choose a Keeper"></nav>
+<div id="hint">← → CHOOSE · DRAG TO ORBIT · SCROLL TO ZOOM</div>
+<div id="loading">SUMMONING…</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+
+// Act I Keepers. Hull follows the battle-math law: boss_health x 1.3, rounded to 10s (game.html STAGES).
+const KEEPERS = [
+  { id: 'wepwawet', hour: 'HOUR 1 · THE WESTERN HORIZON', name: 'WEPWAWET', epithet: 'Opener of Ways',
+    quote: '"I open every way. I close this one — on you."',
+    brief: 'A jackal war-walker of obsidian and gold, guarding the first gate with crystal cannon pods on each shoulder.',
+    health: 180, patterns: 'Aimed volley', arena: 'Desert rail yards', accent: 0xffb54a },
+  { id: 'sobek', hour: 'HOUR 2 · THE DROWNED FIELDS', name: 'SOBEK REBORN', epithet: 'The Flood Dreadnought',
+    quote: '"The flood remembers no heroes, little sun."',
+    brief: 'A crocodile dreadnought rising from the black water, fanning fire from jaw cannons and side turrets.',
+    health: 220, patterns: 'Spread fan · Aimed volley', arena: 'Flooded Nile delta', accent: 0x4ff2c8 },
+  { id: 'umbra', hour: 'HOUR 3 · THE MIRROR', name: 'UMBRA', epithet: 'The Shadow Heir',
+    quote: '"Every move you make, I made first."',
+    brief: 'Your own Thunder, rebuilt in obsidian crystal. It knows every move you know — and its drones remember the rest.',
+    health: 270, patterns: 'Horizontal sweep · Spread fan', arena: 'The glass desert', accent: 0xc06bff },
+];
+const hull = h => Math.round(h * 1.3 / 10) * 10;
+
+// ---------------------------------------------------------------- renderer
+const canvas = document.getElementById('view');
+const mobile = matchMedia('(max-width: 760px)').matches;
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(devicePixelRatio, mobile ? 1.5 : 2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.info.autoReset = false;   // count the whole frame (all composer passes), not just the last pass
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(36, 1, 0.1, 200);
+camera.position.set(5.6, 3.6, 9.8);
+
+// background: indigo-to-void gradient sky with a faint violet horizon
+function skyTexture(){
+  const c = document.createElement('canvas'); c.width = 4; c.height = 256;
+  const g = c.getContext('2d').createLinearGradient(0, 0, 0, 256);
+  g.addColorStop(0, '#05040c'); g.addColorStop(0.1, '#0b0f2a'); g.addColorStop(0.24, '#16102e'); g.addColorStop(1, '#16102e');
+  const x = c.getContext('2d'); x.fillStyle = g; x.fillRect(0, 0, 4, 256);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+scene.background = skyTexture();
+scene.fog = new THREE.Fog(0x16102e, 14, 34);
+
+// stars: one draw call
+{
+  const n = 900, pos = new Float32Array(n * 3);
+  for (let i = 0; i < n; i++){
+    const r = 40 + Math.random() * 30, th = Math.random() * Math.PI * 2, ph = Math.random() * Math.PI * 0.45;
+    pos.set([r * Math.cos(th) * Math.cos(ph), 2 + r * Math.sin(ph), r * Math.sin(th) * Math.cos(ph)], i * 3);
+  }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  scene.add(new THREE.Points(g, new THREE.PointsMaterial({ color: 0xcfd6ff, size: 0.12, fog: false, transparent: true, opacity: 0.8 })));
+}
+
+// lighting stack: key (form), fill (legibility), rim (separation), practical (crystal bounce)
+scene.add(new THREE.HemisphereLight(0x5a6aa8, 0x1a0f08, 0.55));
+const key = new THREE.DirectionalLight(0xffe3c0, 3.4);
+key.position.set(-5, 8, 6); key.castShadow = true;
+key.shadow.mapSize.set(mobile ? 1024 : 2048, mobile ? 1024 : 2048);
+key.shadow.camera.left = key.shadow.camera.bottom = -6; key.shadow.camera.right = key.shadow.camera.top = 6;
+key.shadow.bias = -0.0004; key.shadow.normalBias = 0.02;
+scene.add(key);
+const rim = new THREE.DirectionalLight(0x7d9cff, 2.8); rim.position.set(4, 3, -7); scene.add(rim);
+const fill = new THREE.DirectionalLight(0xc8d2ff, 1.1); fill.position.set(3, 2.5, 9); scene.add(fill);
+const practical = new THREE.PointLight(0xff3fa4, 9, 8, 2); practical.position.set(0, 2.2, 2.2); scene.add(practical);
+
+// turntable plinth: obsidian disc, gold rim, glyph band, glowing seam
+function glyphTexture(){
+  const c = document.createElement('canvas'); c.width = 2048; c.height = 64;
+  const x = c.getContext('2d'); x.fillStyle = '#000'; x.fillRect(0, 0, 2048, 64);
+  x.strokeStyle = '#ffd27a'; x.lineWidth = 3; x.lineCap = 'round';
+  let rnd = 7; const r = () => ((rnd = (rnd * 16807) % 2147483647) / 2147483647);
+  for (let gx = 12; gx < 2040; gx += 26){   // abstract carved glyphs: ankh-like loops, bars, eyes
+    const k = Math.floor(r() * 4); x.beginPath();
+    if (k === 0){ x.arc(gx + 8, 20, 6, 0, Math.PI * 2); x.moveTo(gx + 8, 26); x.lineTo(gx + 8, 52); x.moveTo(gx, 36); x.lineTo(gx + 16, 36); }
+    else if (k === 1){ x.moveTo(gx, 14); x.lineTo(gx + 16, 14); x.moveTo(gx + 8, 14); x.lineTo(gx + 8, 52); x.moveTo(gx, 52); x.lineTo(gx + 16, 52); }
+    else if (k === 2){ x.ellipse(gx + 8, 32, 9, 5, 0, 0, Math.PI * 2); x.moveTo(gx + 8, 37); x.lineTo(gx + 4, 50); }
+    else { x.moveTo(gx, 50); x.lineTo(gx + 8, 14); x.lineTo(gx + 16, 50); }
+    x.stroke();
+  }
+  const t = new THREE.CanvasTexture(c); t.wrapS = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+const MAT = {
+  obsidian: new THREE.MeshStandardMaterial({ color: 0x16121f, metalness: 0.6, roughness: 0.32 }),
+  gold: new THREE.MeshStandardMaterial({ color: 0xc89a3c, metalness: 1, roughness: 0.32 }),
+  seam: new THREE.MeshBasicMaterial({ color: 0xff3fa4 }),
+  glyph: new THREE.MeshStandardMaterial({ color: 0x1a1208, metalness: 0.6, roughness: 0.4, emissive: 0xffc860,
+    emissiveIntensity: 0.9, emissiveMap: glyphTexture() }),
+};
+const plinth = new THREE.Group();
+const disc = new THREE.Mesh(new THREE.CylinderGeometry(3.2, 3.35, 0.32, 96), MAT.obsidian);
+disc.position.y = -0.16; disc.receiveShadow = true; plinth.add(disc);
+const band = new THREE.Mesh(new THREE.CylinderGeometry(3.36, 3.36, 0.18, 128, 1, true), MAT.glyph);
+band.position.y = -0.17; band.material.emissiveMap.repeat.set(3, 1); plinth.add(band);
+const goldRing = new THREE.Mesh(new THREE.TorusGeometry(3.22, 0.045, 12, 160), MAT.gold);
+goldRing.rotation.x = Math.PI / 2; goldRing.position.y = 0.005; plinth.add(goldRing);
+const seam = new THREE.Mesh(new THREE.TorusGeometry(2.55, 0.018, 8, 160), MAT.seam);
+seam.rotation.x = Math.PI / 2; seam.position.y = 0.006; plinth.add(seam);
+const ground = new THREE.Mesh(new THREE.CircleGeometry(60, 64),
+  new THREE.MeshStandardMaterial({ color: 0x0a0814, metalness: 0.2, roughness: 0.85 }));
+ground.rotation.x = -Math.PI / 2; ground.position.y = -0.33; ground.receiveShadow = true;
+scene.add(plinth, ground);
+
+// ---------------------------------------------------------------- post (bloom on authored emissive only)
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
+const bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.38, 0.35, 0.9);
+composer.addPass(bloom);
+composer.addPass(new OutputPass());
+
+const controls = new OrbitControls(camera, canvas);
+controls.target.set(0, 1.1, 0);
+controls.enableDamping = true; controls.enablePan = false;
+controls.minDistance = 6; controls.maxDistance = 16; controls.maxPolarAngle = Math.PI * 0.49;
+controls.autoRotate = true; controls.autoRotateSpeed = 0.6;
+
+// ---------------------------------------------------------------- Keepers
+const loader = new GLTFLoader();
+const cache = new Map();
+const holder = new THREE.Group(); scene.add(holder);
+let current = -1, swapT = 1, emissive = [], paused = false, simTime = 0;
+
+function prepare(gltf){
+  const root = gltf.scene;
+  // Blender's Keepers face their -Y; glTF converts that to +Z, toward the default camera.
+  const box = new THREE.Box3().setFromObject(root);
+  const size = box.getSize(new THREE.Vector3()), center = box.getCenter(new THREE.Vector3());
+  const s = 5.0 / Math.max(size.x, size.z);
+  root.scale.setScalar(s);
+  root.position.set(-center.x * s, -box.min.y * s + 0.02, -center.z * s);
+  const group = new THREE.Group(); group.add(root);
+  const glows = [];
+  root.traverse(o => {
+    if (!o.isMesh) return;
+    o.castShadow = true; o.receiveShadow = true;
+    const m = o.material;
+    if (m && m.emissive && m.emissiveIntensity > 0 && m.emissive.getHex() !== 0){
+      // Cycles emission strengths are far hotter than real-time PBR needs; cap them so bloom stays a finish
+      m.emissiveIntensity = Math.min(m.emissiveIntensity, 1.3);
+      glows.push({ m, base: m.emissiveIntensity });
+    }
+  });
+  return { group, glows };
+}
+function load(i){
+  const k = KEEPERS[i];
+  if (cache.has(k.id)) return Promise.resolve(cache.get(k.id));
+  return new Promise((res, rej) => loader.load(`./models/keeper_${k.id}.glb`, g => {
+    const p = prepare(g); cache.set(k.id, p); res(p);
+  }, undefined, rej));
+}
+const $ = id => document.getElementById(id);
+async function show(i){
+  i = (i + KEEPERS.length) % KEEPERS.length;
+  const k = KEEPERS[i];
+  [...document.querySelectorAll('#cards button')].forEach((b, j) => b.setAttribute('aria-selected', String(j === i)));
+  $('k-hour').textContent = k.hour; $('k-name').textContent = k.name; $('k-epithet').textContent = k.epithet;
+  $('k-quote').textContent = k.quote; $('k-brief').textContent = k.brief;
+  $('k-hull').textContent = hull(k.health); $('k-patterns').textContent = k.patterns; $('k-arena').textContent = k.arena;
+  current = i;
+  const p = await load(i);
+  if (current !== i) return;
+  holder.clear(); holder.add(p.group); emissive = p.glows; swapT = 0;
+  practical.color.setHex(k.accent === 0xffb54a ? 0xff3fa4 : k.accent);
+  $('loading').style.display = 'none';
+}
+
+const cards = $('cards');
+KEEPERS.forEach((k, i) => {
+  const b = document.createElement('button');
+  b.role = 'tab'; b.setAttribute('aria-label', `${k.name}, ${k.hour}`);
+  b.innerHTML = `<img src="./models/keeper_${k.id}_portrait.webp" alt=""><span>HOUR ${i + 1}</span>`;
+  b.addEventListener('click', () => show(i));
+  cards.appendChild(b);
+});
+addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight') show(current + 1);
+  if (e.key === 'ArrowLeft') show(current - 1);
+});
+
+function resize(){
+  const w = innerWidth, h = innerHeight;
+  renderer.setSize(w, h, false); composer.setSize(w, h);
+  camera.aspect = w / h;
+  // keep the Keeper clear of the info panel: shift it right on desktop, up on phones
+  camera.setViewOffset(w, h, w > 760 ? -w * 0.12 : 0, w > 760 ? h * 0.04 : h * 0.2, w, h);
+  camera.fov = w > 760 ? 36 : 50;
+  camera.updateProjectionMatrix();
+}
+addEventListener('resize', resize); resize();
+
+// ---------------------------------------------------------------- loop
+const clock = new THREE.Clock();
+function frame(){
+  const dt = Math.min(clock.getDelta(), 0.05);
+  if (!paused){
+    simTime += dt;
+    swapT = Math.min(1, swapT + dt * 2.2);
+    const e = 1 - Math.pow(1 - swapT, 3);
+    holder.scale.setScalar(0.6 + 0.4 * e);
+    holder.position.y = 0.25 + Math.sin(simTime * 1.4) * 0.08;          // hover
+    for (const g of emissive) g.m.emissiveIntensity = g.base * (0.75 + 0.35 * Math.sin(simTime * 3.1));
+    seam.material.color.setHSL(0.92, 1, 0.45 + 0.12 * Math.sin(simTime * 2));
+    controls.autoRotate = true;
+  } else controls.autoRotate = false;
+  controls.update();
+  renderer.info.reset();
+  composer.render();
+  const info = renderer.info;
+  window.__THREE_GAME_DIAGNOSTICS__ = { renderer: { calls: info.render.calls, triangles: info.render.triangles,
+    geometries: info.memory.geometries, textures: info.memory.textures, postPasses: 1, dpr: renderer.getPixelRatio() },
+    keeper: KEEPERS[current]?.id ?? null };
+  requestAnimationFrame(frame);
+}
+
+// inspector hooks (threejs-qa-release): named states are the three Keepers
+window.__THREE_GAME_TEST_HOOKS__ = {
+  async setState(name){
+    const i = KEEPERS.findIndex(k => 'keeper-' + k.id === name);
+    if (i < 0) throw new Error('unknown state ' + name);
+    await show(i); swapT = 1; holder.scale.setScalar(1);
+    return { state: name };
+  },
+  setPausedForScreenshot(p){ paused = !!p; return { paused }; },
+  seed(n){ simTime = (n % 100) * 0.1; return { seed: n }; },
+};
+
+show(0).catch(err => { $('loading').textContent = 'MODEL FAILED TO LOAD'; console.error(err); });
+frame();
+</script>
+</body>
+</html>
