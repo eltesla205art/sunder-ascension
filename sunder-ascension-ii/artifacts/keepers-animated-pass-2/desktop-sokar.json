@@ -1,0 +1,91 @@
+{
+  "url": "http://127.0.0.1:5188/keepers.html",
+  "mode": "desktop",
+  "state": "keeper-sokar",
+  "requestedState": "keeper-sokar",
+  "appliedState": "keeper-sokar",
+  "runId": "keepers-animated-pass-2",
+  "seed": 42,
+  "screenshotPath": "artifacts/keepers-animated-pass-2/desktop-sokar.png",
+  "gpu": {
+    "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+    "vendor": "Google Inc. (Google)",
+    "softwareRendered": true
+  },
+  "result": {
+    "ok": true,
+    "reason": "nonblank",
+    "rect": {
+      "x": 0,
+      "y": 0,
+      "width": 1280,
+      "height": 720
+    },
+    "drawingBuffer": {
+      "width": 1280,
+      "height": 720
+    },
+    "alphaPixels": 4096,
+    "variance": 255,
+    "colorBuckets": 151,
+    "metrics": {
+      "colorBuckets": 288,
+      "colorEntropyBits": 3.1,
+      "edgeDensity": 0.146,
+      "luminance": {
+        "mean": 17.2,
+        "p5": 0.4,
+        "p95": 60.5,
+        "contrast": 60.2
+      },
+      "dominantColorShare": 0.332,
+      "nonBackgroundShare": 0.668
+    },
+    "renderBudget": {
+      "tier": "desktop",
+      "note": "starting-point budget; adjust per game and document overrides",
+      "rows": [
+        {
+          "metric": "calls",
+          "actual": 70,
+          "limit": 300,
+          "ok": true
+        },
+        {
+          "metric": "triangles",
+          "actual": 36258,
+          "limit": 750000,
+          "ok": true
+        },
+        {
+          "metric": "geometries",
+          "actual": 47,
+          "limit": 300,
+          "ok": true
+        },
+        {
+          "metric": "textures",
+          "actual": 17,
+          "limit": 60,
+          "ok": true
+        }
+      ],
+      "withinBudget": true
+    },
+    "diagnostics": {
+      "renderer": {
+        "calls": 70,
+        "triangles": 36258,
+        "geometries": 47,
+        "textures": 17,
+        "postPasses": 1,
+        "dpr": 1
+      },
+      "keeper": "sokar"
+    }
+  },
+  "consoleErrors": [],
+  "pageErrors": [],
+  "consoleErrorCount": 0,
+  "pageErrorCount": 0
+}

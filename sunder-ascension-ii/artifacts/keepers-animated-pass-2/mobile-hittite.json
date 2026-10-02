@@ -1,0 +1,91 @@
+{
+  "url": "http://127.0.0.1:5188/keepers.html",
+  "mode": "mobile",
+  "state": "keeper-hittite",
+  "requestedState": "keeper-hittite",
+  "appliedState": "keeper-hittite",
+  "runId": "keepers-animated-pass-2",
+  "seed": 42,
+  "screenshotPath": "artifacts/keepers-animated-pass-2/mobile-hittite.png",
+  "gpu": {
+    "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+    "vendor": "Google Inc. (Google)",
+    "softwareRendered": true
+  },
+  "result": {
+    "ok": true,
+    "reason": "nonblank",
+    "rect": {
+      "x": 0,
+      "y": 0,
+      "width": 390,
+      "height": 664
+    },
+    "drawingBuffer": {
+      "width": 585,
+      "height": 996
+    },
+    "alphaPixels": 4111,
+    "variance": 255,
+    "colorBuckets": 247,
+    "metrics": {
+      "colorBuckets": 438,
+      "colorEntropyBits": 3.72,
+      "edgeDensity": 0.234,
+      "luminance": {
+        "mean": 21.4,
+        "p5": 0.4,
+        "p95": 99.8,
+        "contrast": 99.4
+      },
+      "dominantColorShare": 0.283,
+      "nonBackgroundShare": 0.717
+    },
+    "renderBudget": {
+      "tier": "mobile",
+      "note": "starting-point budget; adjust per game and document overrides",
+      "rows": [
+        {
+          "metric": "calls",
+          "actual": 104,
+          "limit": 150,
+          "ok": true
+        },
+        {
+          "metric": "triangles",
+          "actual": 50606,
+          "limit": 300000,
+          "ok": true
+        },
+        {
+          "metric": "geometries",
+          "actual": 60,
+          "limit": 200,
+          "ok": true
+        },
+        {
+          "metric": "textures",
+          "actual": 17,
+          "limit": 40,
+          "ok": true
+        }
+      ],
+      "withinBudget": true
+    },
+    "diagnostics": {
+      "renderer": {
+        "calls": 104,
+        "triangles": 50606,
+        "geometries": 60,
+        "textures": 17,
+        "postPasses": 1,
+        "dpr": 1.5
+      },
+      "keeper": "hittite"
+    }
+  },
+  "consoleErrors": [],
+  "pageErrors": [],
+  "consoleErrorCount": 0,
+  "pageErrorCount": 0
+}

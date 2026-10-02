@@ -1,0 +1,91 @@
+{
+  "url": "http://127.0.0.1:5188/keepers.html",
+  "mode": "desktop",
+  "state": "keeper-ammit",
+  "requestedState": "keeper-ammit",
+  "appliedState": "keeper-ammit",
+  "runId": "keepers-animated-pass-2",
+  "seed": 42,
+  "screenshotPath": "artifacts/keepers-animated-pass-2/desktop-ammit.png",
+  "gpu": {
+    "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+    "vendor": "Google Inc. (Google)",
+    "softwareRendered": true
+  },
+  "result": {
+    "ok": true,
+    "reason": "nonblank",
+    "rect": {
+      "x": 0,
+      "y": 0,
+      "width": 1280,
+      "height": 720
+    },
+    "drawingBuffer": {
+      "width": 1280,
+      "height": 720
+    },
+    "alphaPixels": 4096,
+    "variance": 255,
+    "colorBuckets": 248,
+    "metrics": {
+      "colorBuckets": 435,
+      "colorEntropyBits": 3.59,
+      "edgeDensity": 0.166,
+      "luminance": {
+        "mean": 20.4,
+        "p5": 1.3,
+        "p95": 90,
+        "contrast": 88.7
+      },
+      "dominantColorShare": 0.271,
+      "nonBackgroundShare": 0.729
+    },
+    "renderBudget": {
+      "tier": "desktop",
+      "note": "starting-point budget; adjust per game and document overrides",
+      "rows": [
+        {
+          "metric": "calls",
+          "actual": 56,
+          "limit": 300,
+          "ok": true
+        },
+        {
+          "metric": "triangles",
+          "actual": 22544,
+          "limit": 750000,
+          "ok": true
+        },
+        {
+          "metric": "geometries",
+          "actual": 51,
+          "limit": 300,
+          "ok": true
+        },
+        {
+          "metric": "textures",
+          "actual": 17,
+          "limit": 60,
+          "ok": true
+        }
+      ],
+      "withinBudget": true
+    },
+    "diagnostics": {
+      "renderer": {
+        "calls": 56,
+        "triangles": 22544,
+        "geometries": 51,
+        "textures": 17,
+        "postPasses": 1,
+        "dpr": 1
+      },
+      "keeper": "ammit"
+    }
+  },
+  "consoleErrors": [],
+  "pageErrors": [],
+  "consoleErrorCount": 0,
+  "pageErrorCount": 0
+}

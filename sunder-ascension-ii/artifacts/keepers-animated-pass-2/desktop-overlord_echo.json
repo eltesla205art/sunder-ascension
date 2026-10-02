@@ -1,0 +1,91 @@
+{
+  "url": "http://127.0.0.1:5188/keepers.html",
+  "mode": "desktop",
+  "state": "keeper-overlord_echo",
+  "requestedState": "keeper-overlord_echo",
+  "appliedState": "keeper-overlord_echo",
+  "runId": "keepers-animated-pass-2",
+  "seed": 42,
+  "screenshotPath": "artifacts/keepers-animated-pass-2/desktop-overlord_echo.png",
+  "gpu": {
+    "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+    "vendor": "Google Inc. (Google)",
+    "softwareRendered": true
+  },
+  "result": {
+    "ok": true,
+    "reason": "nonblank",
+    "rect": {
+      "x": 0,
+      "y": 0,
+      "width": 1280,
+      "height": 720
+    },
+    "drawingBuffer": {
+      "width": 1280,
+      "height": 720
+    },
+    "alphaPixels": 4096,
+    "variance": 255,
+    "colorBuckets": 169,
+    "metrics": {
+      "colorBuckets": 312,
+      "colorEntropyBits": 3.36,
+      "edgeDensity": 0.176,
+      "luminance": {
+        "mean": 23.3,
+        "p5": 0.3,
+        "p95": 148.6,
+        "contrast": 148.3
+      },
+      "dominantColorShare": 0.31,
+      "nonBackgroundShare": 0.69
+    },
+    "renderBudget": {
+      "tier": "desktop",
+      "note": "starting-point budget; adjust per game and document overrides",
+      "rows": [
+        {
+          "metric": "calls",
+          "actual": 129,
+          "limit": 300,
+          "ok": true
+        },
+        {
+          "metric": "triangles",
+          "actual": 31590,
+          "limit": 750000,
+          "ok": true
+        },
+        {
+          "metric": "geometries",
+          "actual": 78,
+          "limit": 300,
+          "ok": true
+        },
+        {
+          "metric": "textures",
+          "actual": 17,
+          "limit": 60,
+          "ok": true
+        }
+      ],
+      "withinBudget": true
+    },
+    "diagnostics": {
+      "renderer": {
+        "calls": 129,
+        "triangles": 31590,
+        "geometries": 78,
+        "textures": 17,
+        "postPasses": 1,
+        "dpr": 1
+      },
+      "keeper": "overlord_echo"
+    }
+  },
+  "consoleErrors": [],
+  "pageErrors": [],
+  "consoleErrorCount": 0,
+  "pageErrorCount": 0
+}

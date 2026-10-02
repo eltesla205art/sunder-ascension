@@ -1,0 +1,91 @@
+{
+  "url": "http://127.0.0.1:5188/keepers.html",
+  "mode": "mobile",
+  "state": "keeper-sokar",
+  "requestedState": "keeper-sokar",
+  "appliedState": "keeper-sokar",
+  "runId": "keepers-animated-pass-2",
+  "seed": 42,
+  "screenshotPath": "artifacts/keepers-animated-pass-2/mobile-sokar.png",
+  "gpu": {
+    "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+    "vendor": "Google Inc. (Google)",
+    "softwareRendered": true
+  },
+  "result": {
+    "ok": true,
+    "reason": "nonblank",
+    "rect": {
+      "x": 0,
+      "y": 0,
+      "width": 390,
+      "height": 664
+    },
+    "drawingBuffer": {
+      "width": 585,
+      "height": 996
+    },
+    "alphaPixels": 4111,
+    "variance": 255,
+    "colorBuckets": 186,
+    "metrics": {
+      "colorBuckets": 355,
+      "colorEntropyBits": 3.33,
+      "edgeDensity": 0.215,
+      "luminance": {
+        "mean": 20.1,
+        "p5": 0.3,
+        "p95": 96.4,
+        "contrast": 96.1
+      },
+      "dominantColorShare": 0.298,
+      "nonBackgroundShare": 0.702
+    },
+    "renderBudget": {
+      "tier": "mobile",
+      "note": "starting-point budget; adjust per game and document overrides",
+      "rows": [
+        {
+          "metric": "calls",
+          "actual": 70,
+          "limit": 150,
+          "ok": true
+        },
+        {
+          "metric": "triangles",
+          "actual": 36258,
+          "limit": 300000,
+          "ok": true
+        },
+        {
+          "metric": "geometries",
+          "actual": 47,
+          "limit": 200,
+          "ok": true
+        },
+        {
+          "metric": "textures",
+          "actual": 17,
+          "limit": 40,
+          "ok": true
+        }
+      ],
+      "withinBudget": true
+    },
+    "diagnostics": {
+      "renderer": {
+        "calls": 70,
+        "triangles": 36258,
+        "geometries": 47,
+        "textures": 17,
+        "postPasses": 1,
+        "dpr": 1.5
+      },
+      "keeper": "sokar"
+    }
+  },
+  "consoleErrors": [],
+  "pageErrors": [],
+  "consoleErrorCount": 0,
+  "pageErrorCount": 0
+}

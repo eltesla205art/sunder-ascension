@@ -2,11 +2,12 @@
 
     python keepers.py <out_dir> [samples] [act|id]          act = 1..4 or one Keeper id (default: every Keeper)
     python keepers.py <out_dir> [samples] [act|id] --anim   animation frames instead (see below)
+    python keepers.py <out_dir> [samples] [act|id] --glb    only the animated GLBs
 
 For each Keeper writes:
   keeper_<id>.png          top-down boss sprite (longest side 360 px, transparent, front facing DOWN the screen)
   keeper_<id>_portrait.png 3/4 hero portrait for the boss-intro card (320x320, transparent)
-  keeper_<id>.glb          the model, for the Three.js Keeper viewer
+  keeper_<id>.glb          the model with its animation loop baked in, for the Three.js Keeper viewer
 With --anim, writes anim/keeper_<id>_fNN.png instead: FRAMES top-down frames of one seamless loop, drawn
 at the static sprite's pixels-per-unit on a larger canvas centred on the same point (pack_anim.py crops and
 packs them into the game's sprite sheets). The static outputs are not touched in this mode.
@@ -28,7 +29,8 @@ import ships                                      # noqa: E402  (shared material
 sys.argv = _argv
 
 ANIM = "--anim" in sys.argv
-_args = [a for a in sys.argv if a != "--anim"]
+GLB_ONLY = "--glb" in sys.argv                   # only the animated GLBs for the Keeper Codex, no renders
+_args = [a for a in sys.argv if a not in ("--anim", "--glb")]
 OUT = _args[1] if len(_args) > 1 else "."
 SAMPLES = int(_args[2]) if len(_args) > 2 else 64
 ONLY_ACT = _args[3] if len(_args) > 3 else None   # "1".."4" renders one act, or a Keeper id; default: all
@@ -163,7 +165,7 @@ def mark(name):
 
 def parts():
     """name -> objects created under that mark (objects made before the first mark are the fixed body)."""
-    out, snaps = {}, _MARKS + [("", set(bpy.data.objects))]
+    out, snaps = {}, [("", set())] + _MARKS + [("", set(bpy.data.objects))]   # scenes start empty (ships.reset)
     for (name, before), (_, after) in zip(snaps, snaps[1:]):
         out.setdefault(name, []).extend(o for o in after - before)
     return out
@@ -959,16 +961,102 @@ def bounds():
     return lo, hi
 
 
-def merge_for_export():
-    """Join every part into one mesh (one glTF primitive per material) so the Three.js viewer
-    draws each Keeper in ~10 calls instead of one per part (threejs-aaa-graphics-builder budget)."""
-    meshes = [o for o in bpy.context.scene.objects if o.type == "MESH"]
-    bpy.ops.object.select_all(action="DESELECT")
-    for o in meshes:
-        o.select_set(True)
-    bpy.context.view_layer.objects.active = meshes[0]
-    bpy.ops.object.convert(target="MESH")      # bake bevels and parent transforms
-    bpy.ops.object.join()
+LOOP = 32          # glTF frames per animation loop; the Codex plays them at 32 fps, one loop a second like the game
+WAVE_KEYS = 8      # Apep's coil wave is not rigid, so it ships as this many morph targets cross-faded round the loop
+
+
+def bake_parts(P):
+    """Bake modifiers and parenting, then join each part into one mesh (one glTF primitive per material), so the
+    viewer draws a Keeper in a few dozen calls instead of one per primitive (threejs-aaa-graphics-builder budget).
+    The join keeps the part's first object as origin, so the animators' pivots still hold. Returns name -> [mesh]."""
+    for o in list(bpy.context.scene.objects):
+        if o.parent:
+            mw = o.matrix_world.copy()
+            o.parent = None
+            o.matrix_world = mw
+    out = {}
+    for name, objs in P.items():
+        meshes = [o for o in objs if o.type in ("MESH", "CURVE")]
+        if not meshes:
+            continue
+        bpy.ops.object.select_all(action="DESELECT")
+        for o in meshes:
+            o.select_set(True)
+        bpy.context.view_layer.objects.active = meshes[0]
+        bpy.ops.object.convert(target="MESH")
+        if len(meshes) > 1:
+            bpy.ops.object.join()
+        o = bpy.context.view_layer.objects.active
+        o.name = "part_" + (name or "body")
+        out[name] = [o]
+    for o in [o for o in bpy.context.scene.objects if o.type == "EMPTY"]:   # the ships' grouping roots
+        bpy.data.objects.remove(o)
+    bpy.context.view_layer.update()
+    return out
+
+
+def body_coords(kid, w):
+    """World-space vertices of the fixed body for loop angle w (Apep's coils, rebuilt with the wave)."""
+    P = build_keeper(kid, w)
+    body = bake_parts({"": P[""]})[""][0]
+    return [body.matrix_world @ v.co for v in body.data.vertices]
+
+
+def export_glb(kid, path):
+    """The Keeper as a GLB with one looping animation baked from its animator (the same motion as the game sprites)."""
+    waves = [body_coords(kid, math.tau * k / WAVE_KEYS) for k in range(WAVE_KEYS)] if kid.startswith("apep") else []
+    random.seed(7)
+    P = bake_parts(build_keeper(kid))
+    sc = bpy.context.scene
+    sc.render.fps, sc.frame_start, sc.frame_end = LOOP, 0, LOOP
+    movers = [o for name, objs in P.items() if name for o in objs]
+    base = {o: o.matrix_world.copy() for o in movers}
+    prev = {}
+    for o in movers:
+        o.rotation_mode = "QUATERNION"
+    for f in range(LOOP + 1):
+        for o in movers:
+            o.matrix_world = base[o]
+        bpy.context.view_layer.update()
+        ANIMS[kid](P, math.tau * f / LOOP)
+        bpy.context.view_layer.update()
+        for o in movers:
+            q = o.rotation_quaternion.copy()
+            if o in prev and prev[o].dot(q) < 0:          # keep quaternions on one hemisphere so slerp never flips
+                q.negate()
+                o.rotation_quaternion = q
+            prev[o] = q
+            for path_ in ("location", "rotation_quaternion", "scale"):
+                o.keyframe_insert(path_, frame=f)
+    body = P[""][0]
+    if waves:
+        bpy.ops.object.select_all(action="DESELECT")
+        body.select_set(True)
+        bpy.context.view_layer.objects.active = body
+        bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+        if any(len(c) != len(body.data.vertices) for c in waves):
+            print("WARNING", kid, "wave meshes differ in topology; coils exported without the wave")
+        else:
+            body.shape_key_add(name="rest", from_mix=False)
+            keys = []
+            for k, coords in enumerate(waves):
+                key = body.shape_key_add(name=f"wave{k}", from_mix=False)
+                for v, c in zip(key.data, coords):
+                    v.co = c
+                keys.append(key)
+            for f in range(LOOP + 1):                      # cross-fade wave k -> k+1 round the loop
+                u = WAVE_KEYS * f / LOOP
+                k0, t = int(u) % WAVE_KEYS, u - int(u)
+                for k, key in enumerate(keys):
+                    key.value = (1 - t) if k == k0 else t if k == (k0 + 1) % WAVE_KEYS else 0.0
+                    key.keyframe_insert("value", frame=f)
+    for a in bpy.data.actions:
+        for fc in a.fcurves:
+            for kp in fc.keyframe_points:
+                kp.interpolation = "LINEAR"
+    bpy.ops.export_scene.gltf(filepath=path, export_format="GLB", export_apply=False, export_cameras=False,
+                              export_lights=False, export_animations=True, export_animation_mode="ACTIVE_ACTIONS",
+                              export_morph=True, export_morph_animation=True, export_force_sampling=True)
 
 
 def build_keeper(kid, w=None):
@@ -981,10 +1069,12 @@ def build_keeper(kid, w=None):
     KEEPERS[kid](M)
     WAVE = None
     bpy.context.view_layer.update()
+    P = parts()
     if w is not None:
-        ANIMS[kid](parts(), w)
+        ANIMS[kid](P, w)
         bpy.context.view_layer.update()
     lights()
+    return P
 
 
 def main_anim(kid):
@@ -1012,6 +1102,11 @@ def main():
         for kid in chosen:
             main_anim(kid)
         return
+    if GLB_ONLY:
+        for kid in chosen:
+            export_glb(kid, f"{OUT}/keeper_{kid}.glb")
+            print("exported", kid)
+        return
     for kid, build in KEEPERS.items():
         if kid not in chosen:
             continue
@@ -1034,9 +1129,7 @@ def main():
         cz = (lo.z + hi.z) / 2                     # aim at mid-height so tall Keepers (Ammit's scales) stay in frame
         port = camera("portrait", loc=(cx + d * 0.55, cy - d * 1.25, d * 0.9 + cz), target=(cx, cy - size.y * 0.12, cz), lens=55)
         render(f"{OUT}/keeper_{kid}_portrait.png", 320, 320, port)
-        merge_for_export()
-        bpy.ops.export_scene.gltf(filepath=f"{OUT}/keeper_{kid}.glb", export_format="GLB",
-                                  export_apply=True, export_cameras=False, export_lights=False)
+        export_glb(kid, f"{OUT}/keeper_{kid}.glb")
         print("built", kid, "size", tuple(round(v, 2) for v in size))
 
 

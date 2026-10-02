@@ -1,0 +1,91 @@
+{
+  "url": "http://127.0.0.1:5188/keepers.html",
+  "mode": "desktop",
+  "state": "keeper-apep_p3",
+  "requestedState": "keeper-apep_p3",
+  "appliedState": "keeper-apep_p3",
+  "runId": "keepers-animated-pass-2",
+  "seed": 42,
+  "screenshotPath": "artifacts/keepers-animated-pass-2/desktop-apep_p3.png",
+  "gpu": {
+    "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+    "vendor": "Google Inc. (Google)",
+    "softwareRendered": true
+  },
+  "result": {
+    "ok": true,
+    "reason": "nonblank",
+    "rect": {
+      "x": 0,
+      "y": 0,
+      "width": 1280,
+      "height": 720
+    },
+    "drawingBuffer": {
+      "width": 1280,
+      "height": 720
+    },
+    "alphaPixels": 4096,
+    "variance": 255,
+    "colorBuckets": 181,
+    "metrics": {
+      "colorBuckets": 344,
+      "colorEntropyBits": 3.53,
+      "edgeDensity": 0.138,
+      "luminance": {
+        "mean": 19.6,
+        "p5": 1.4,
+        "p95": 74.2,
+        "contrast": 72.7
+      },
+      "dominantColorShare": 0.275,
+      "nonBackgroundShare": 0.725
+    },
+    "renderBudget": {
+      "tier": "desktop",
+      "note": "starting-point budget; adjust per game and document overrides",
+      "rows": [
+        {
+          "metric": "calls",
+          "actual": 59,
+          "limit": 300,
+          "ok": true
+        },
+        {
+          "metric": "triangles",
+          "actual": 26690,
+          "limit": 750000,
+          "ok": true
+        },
+        {
+          "metric": "geometries",
+          "actual": 44,
+          "limit": 300,
+          "ok": true
+        },
+        {
+          "metric": "textures",
+          "actual": 20,
+          "limit": 60,
+          "ok": true
+        }
+      ],
+      "withinBudget": true
+    },
+    "diagnostics": {
+      "renderer": {
+        "calls": 59,
+        "triangles": 26690,
+        "geometries": 44,
+        "textures": 20,
+        "postPasses": 1,
+        "dpr": 1
+      },
+      "keeper": "apep_p3"
+    }
+  },
+  "consoleErrors": [],
+  "pageErrors": [],
+  "consoleErrorCount": 0,
+  "pageErrorCount": 0
+}

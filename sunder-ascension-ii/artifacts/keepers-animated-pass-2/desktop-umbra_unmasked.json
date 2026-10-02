@@ -1,0 +1,91 @@
+{
+  "url": "http://127.0.0.1:5188/keepers.html",
+  "mode": "desktop",
+  "state": "keeper-umbra_unmasked",
+  "requestedState": "keeper-umbra_unmasked",
+  "appliedState": "keeper-umbra_unmasked",
+  "runId": "keepers-animated-pass-2",
+  "seed": 42,
+  "screenshotPath": "artifacts/keepers-animated-pass-2/desktop-umbra_unmasked.png",
+  "gpu": {
+    "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+    "vendor": "Google Inc. (Google)",
+    "softwareRendered": true
+  },
+  "result": {
+    "ok": true,
+    "reason": "nonblank",
+    "rect": {
+      "x": 0,
+      "y": 0,
+      "width": 1280,
+      "height": 720
+    },
+    "drawingBuffer": {
+      "width": 1280,
+      "height": 720
+    },
+    "alphaPixels": 4096,
+    "variance": 255,
+    "colorBuckets": 187,
+    "metrics": {
+      "colorBuckets": 330,
+      "colorEntropyBits": 3.47,
+      "edgeDensity": 0.162,
+      "luminance": {
+        "mean": 20.5,
+        "p5": 1.4,
+        "p95": 87.2,
+        "contrast": 85.9
+      },
+      "dominantColorShare": 0.289,
+      "nonBackgroundShare": 0.711
+    },
+    "renderBudget": {
+      "tier": "desktop",
+      "note": "starting-point budget; adjust per game and document overrides",
+      "rows": [
+        {
+          "metric": "calls",
+          "actual": 69,
+          "limit": 300,
+          "ok": true
+        },
+        {
+          "metric": "triangles",
+          "actual": 22876,
+          "limit": 750000,
+          "ok": true
+        },
+        {
+          "metric": "geometries",
+          "actual": 61,
+          "limit": 300,
+          "ok": true
+        },
+        {
+          "metric": "textures",
+          "actual": 17,
+          "limit": 60,
+          "ok": true
+        }
+      ],
+      "withinBudget": true
+    },
+    "diagnostics": {
+      "renderer": {
+        "calls": 69,
+        "triangles": 22876,
+        "geometries": 61,
+        "textures": 17,
+        "postPasses": 1,
+        "dpr": 1
+      },
+      "keeper": "umbra_unmasked"
+    }
+  },
+  "consoleErrors": [],
+  "pageErrors": [],
+  "consoleErrorCount": 0,
+  "pageErrorCount": 0
+}

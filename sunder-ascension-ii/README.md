@@ -9,7 +9,7 @@ original *SUNDER: Ascension — The Nine Bows* (`web/`, `godot/`, `docs/`), whic
 | `web/game.html` | The sequel build: open it in a browser (it loads its art from `web/assets/`) |
 | `web/assets/` | The game's 56 images as WebP: title, hangar, ships, Keeper sprites, animation sheets and portraits, stage backdrops |
 | `web/keepers.html` | Keeper Codex: real-time Three.js viewer of the Keeper models (serve the `web/` folder over HTTP; three.js is self-hosted in `web/vendor/three`, MIT) |
-| `web/models/` | Keeper GLB models exported from Blender, plus portrait thumbnails |
+| `web/models/` | Keeper GLB models exported from Blender, each with its animation loop baked in, plus portrait thumbnails |
 | `web/test_sunder2.js` | Headless test of the 12-Hour campaign against the battle-math law: `node web/test_sunder2.js` |
 | `blender/` | Blender Python scripts that model and render the game art |
 | `art/blender/` | Full-resolution Blender renders (title backdrop, ship sprites, `keepers/` boss sprites and portraits) |
@@ -34,6 +34,7 @@ original *SUNDER: Ascension — The Nine Bows* (`web/`, `godot/`, `docs/`), whic
 - **Animated Keepers:** every Keeper plays an 8-frame Blender animation loop in battle (Wepwawet strides,
   Sobek's tail waves, UMBRA's drones orbit, Nun's spires turn, Sokar beats its wings, the Seraphs sway in their flames,
   the Hittite rotors spin, Ammit's scales rock, the Overlord's armour orbits, UMBRA's mask peels, Apep's coils ripple).
+  The Keeper Codex plays the same loops on the 3D models.
   Kling reveal clips (5 s each, job IDs in `artifacts/game-progress.md`) bring each Keeper to life for trailers.
 - **Stage backdrops for all twelve Hours:** scrolling Blender tiles (`blender/stages.py`) behind play, one per arena.
   Kling stage concepts can be folded in as ground textures (save as `art/kling/stage_<id>.png`, re-run the script).
@@ -48,6 +49,7 @@ python blender/title_scene.py art/blender/title_bg.png 720 1080 128
 python blender/keepers.py art/blender/keepers 128 [1|2|3|4]   # one act or all: sprites, portraits, GLBs (move .glb to web/models/)
 python blender/stages.py art/blender/stages 64 [id ...]       # stage backdrops (all, or e.g. horizon delta)
 python blender/keepers.py /tmp/anim 48 [act|id] --anim         # Keeper animation frames (8 per Keeper)
+python blender/keepers.py web/models 8 [act|id] --glb          # only the animated Codex models
 python3 blender/pack_anim.py /tmp/anim art/blender/keepers/anim web/assets   # pack into sprite sheets (needs Pillow)
 ```
 

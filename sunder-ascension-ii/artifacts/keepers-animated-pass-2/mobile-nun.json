@@ -1,0 +1,91 @@
+{
+  "url": "http://127.0.0.1:5188/keepers.html",
+  "mode": "mobile",
+  "state": "keeper-nun",
+  "requestedState": "keeper-nun",
+  "appliedState": "keeper-nun",
+  "runId": "keepers-animated-pass-2",
+  "seed": 42,
+  "screenshotPath": "artifacts/keepers-animated-pass-2/mobile-nun.png",
+  "gpu": {
+    "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+    "vendor": "Google Inc. (Google)",
+    "softwareRendered": true
+  },
+  "result": {
+    "ok": true,
+    "reason": "nonblank",
+    "rect": {
+      "x": 0,
+      "y": 0,
+      "width": 390,
+      "height": 664
+    },
+    "drawingBuffer": {
+      "width": 585,
+      "height": 996
+    },
+    "alphaPixels": 4111,
+    "variance": 255,
+    "colorBuckets": 298,
+    "metrics": {
+      "colorBuckets": 518,
+      "colorEntropyBits": 4.18,
+      "edgeDensity": 0.255,
+      "luminance": {
+        "mean": 28.5,
+        "p5": 2.4,
+        "p95": 129.3,
+        "contrast": 127
+      },
+      "dominantColorShare": 0.365,
+      "nonBackgroundShare": 0.635
+    },
+    "renderBudget": {
+      "tier": "mobile",
+      "note": "starting-point budget; adjust per game and document overrides",
+      "rows": [
+        {
+          "metric": "calls",
+          "actual": 76,
+          "limit": 150,
+          "ok": true
+        },
+        {
+          "metric": "triangles",
+          "actual": 48090,
+          "limit": 300000,
+          "ok": true
+        },
+        {
+          "metric": "geometries",
+          "actual": 50,
+          "limit": 200,
+          "ok": true
+        },
+        {
+          "metric": "textures",
+          "actual": 17,
+          "limit": 40,
+          "ok": true
+        }
+      ],
+      "withinBudget": true
+    },
+    "diagnostics": {
+      "renderer": {
+        "calls": 76,
+        "triangles": 48090,
+        "geometries": 50,
+        "textures": 17,
+        "postPasses": 1,
+        "dpr": 1.5
+      },
+      "keeper": "nun"
+    }
+  },
+  "consoleErrors": [],
+  "pageErrors": [],
+  "consoleErrorCount": 0,
+  "pageErrorCount": 0
+}

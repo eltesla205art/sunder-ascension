@@ -1,0 +1,135 @@
+{
+ "rows": [
+  {
+   "id": "wepwawet",
+   "movedPct": 1.54,
+   "animation": {
+    "clips": 1,
+    "duration": 1,
+    "time": 0.375
+   },
+   "calls": 96
+  },
+  {
+   "id": "sobek",
+   "movedPct": 0.72,
+   "animation": {
+    "clips": 1,
+    "duration": 1,
+    "time": 0.375
+   },
+   "calls": 138
+  },
+  {
+   "id": "umbra",
+   "movedPct": 0.9,
+   "animation": {
+    "clips": 1,
+    "duration": 1,
+    "time": 0.375
+   },
+   "calls": 63
+  },
+  {
+   "id": "nun",
+   "movedPct": 6.55,
+   "animation": {
+    "clips": 1,
+    "duration": 1,
+    "time": 0.375
+   },
+   "calls": 76
+  },
+  {
+   "id": "sokar",
+   "movedPct": 1.12,
+   "animation": {
+    "clips": 1,
+    "duration": 1,
+    "time": 0.375
+   },
+   "calls": 70
+  },
+  {
+   "id": "seraphs",
+   "movedPct": 1.78,
+   "animation": {
+    "clips": 1,
+    "duration": 1,
+    "time": 0.375
+   },
+   "calls": 68
+  },
+  {
+   "id": "umbra_coiled",
+   "movedPct": 3.77,
+   "animation": {
+    "clips": 1,
+    "duration": 1,
+    "time": 0.375
+   },
+   "calls": 76
+  },
+  {
+   "id": "hittite",
+   "movedPct": 0.42,
+   "animation": {
+    "clips": 1,
+    "duration": 1,
+    "time": 0.375
+   },
+   "calls": 104
+  },
+  {
+   "id": "ammit",
+   "movedPct": 3.83,
+   "animation": {
+    "clips": 1,
+    "duration": 1,
+    "time": 0.375
+   },
+   "calls": 56
+  },
+  {
+   "id": "overlord_echo",
+   "movedPct": 0.96,
+   "animation": {
+    "clips": 1,
+    "duration": 1,
+    "time": 0.375
+   },
+   "calls": 129
+  },
+  {
+   "id": "umbra_unmasked",
+   "movedPct": 1.55,
+   "animation": {
+    "clips": 1,
+    "duration": 1,
+    "time": 0.375
+   },
+   "calls": 69
+  },
+  {
+   "id": "apep",
+   "movedPct": 9.75,
+   "animation": {
+    "clips": 1,
+    "duration": 1,
+    "time": 0.375
+   },
+   "calls": 46
+  },
+  {
+   "id": "apep_p3",
+   "movedPct": 3.96,
+   "animation": {
+    "clips": 1,
+    "duration": 1,
+    "time": 0.375
+   },
+   "calls": 59
+  }
+ ],
+ "errors": []
+}

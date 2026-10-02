@@ -240,7 +240,7 @@ controls.autoRotate = true; controls.autoRotateSpeed = 0.6;
 const loader = new GLTFLoader();
 const cache = new Map();
 const holder = new THREE.Group(); scene.add(holder);
-let current = -1, swapT = 1, emissive = [], paused = false, simTime = 0;
+let current = -1, swapT = 1, emissive = [], mixer = null, paused = false, simTime = 0;
 
 function prepare(gltf){
   const root = gltf.scene;
@@ -251,19 +251,27 @@ function prepare(gltf){
   root.scale.setScalar(s);
   root.position.set(-center.x * s, -box.min.y * s + 0.02, -center.z * s);
   const group = new THREE.Group(); group.add(root);
-  const glows = [];
+  // the Keeper's animation loop, baked in Blender from the same animators as the game sprites
+  const mixer = gltf.animations.length ? new THREE.AnimationMixer(root) : null;
+  for (const clip of gltf.animations) mixer.clipAction(clip).play();
+  const glows = [], seen = new Set();
   root.traverse(o => {
     if (!o.isMesh) return;
     o.castShadow = true; o.receiveShadow = true;
     const m = o.material;
-    if (m && m.emissive && m.emissiveIntensity > 0 && m.emissive.getHex() !== 0){
+    const glowing = m && m.emissive && m.emissiveIntensity > 0 && m.emissive.getHex() !== 0;
+    // light sources (stars, cores, embers) cast no shadow; the animated parts are separate nodes,
+    // so this also keeps the shadow pass inside the mobile draw-call budget
+    if (glowing && !(m.transmission > 0)) o.castShadow = false;
+    if (glowing && !seen.has(m)){
+      seen.add(m);                                 // parts share materials; pulse each one once
       // Cycles emission strengths are far hotter than real-time PBR needs; cap them so bloom stays a finish
       // see-through crystal stacks up under bloom (the Overlord's crown is mostly crystal), so cap it harder
       m.emissiveIntensity = Math.min(m.emissiveIntensity, m.transmission > 0 ? 0.55 : 1.3);
       glows.push({ m, base: m.emissiveIntensity });
     }
   });
-  return { group, glows };
+  return { group, glows, mixer };
 }
 function load(i){
   const k = KEEPERS[i];
@@ -287,7 +295,7 @@ async function show(i){
   current = i;
   const p = await load(i);
   if (current !== i) return;
-  holder.clear(); holder.add(p.group); emissive = p.glows; swapT = 0;
+  holder.clear(); holder.add(p.group); emissive = p.glows; mixer = p.mixer; swapT = 0;
   practical.color.setHex(k.id === 'wepwawet' ? 0xff3fa4 : k.accent);
   $('loading').style.display = 'none';
 }
@@ -328,6 +336,7 @@ function frame(){
     holder.scale.setScalar(0.6 + 0.4 * e);
     holder.position.y = 0.25 + Math.sin(simTime * 1.4) * 0.08;          // hover
     for (const g of emissive) g.m.emissiveIntensity = g.base * (0.75 + 0.35 * Math.sin(simTime * 3.1));
+    if (mixer) mixer.setTime(simTime);                                 // driven by simTime, so seed() and pause hold a pose
     seam.material.color.setHSL(0.92, 1, 0.45 + 0.12 * Math.sin(simTime * 2));
     controls.autoRotate = true;
   } else controls.autoRotate = false;
@@ -337,7 +346,8 @@ function frame(){
   const info = renderer.info;
   window.__THREE_GAME_DIAGNOSTICS__ = { renderer: { calls: info.render.calls, triangles: info.render.triangles,
     geometries: info.memory.geometries, textures: info.memory.textures, postPasses: 1, dpr: renderer.getPixelRatio() },
-    keeper: KEEPERS[current]?.id ?? null };
+    keeper: KEEPERS[current]?.id ?? null,
+    animation: mixer ? { clips: mixer._actions.length, duration: mixer._actions[0].getClip().duration, time: mixer.time } : null };
   requestAnimationFrame(frame);
 }
 
@@ -351,6 +361,7 @@ window.__THREE_GAME_TEST_HOOKS__ = {
   },
   setPausedForScreenshot(p){ paused = !!p; return { paused }; },
   seed(n){ simTime = (n % 100) * 0.1; return { seed: n }; },
+  pose(t){ if (mixer) mixer.setTime(t); return { pose: t }; },   // hold a moment of the Keeper's loop while paused
 };
 
 show(0).catch(err => { $('loading').textContent = 'MODEL FAILED TO LOAD'; console.error(err); });

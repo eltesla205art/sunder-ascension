@@ -32,9 +32,10 @@ Kling result URLs expire after 24 h, and this sandbox cannot download from Kling
 
 ## Done: animated Keepers — Blender 8-frame loops in play, Kling reveal clips (all 12 completed)
 
+## Done: animated Keeper Codex — GLBs carry the same loops (glTF tracks, Apep's wave as morph targets)
+
 ## Next
 - Fold in Kling stage concepts the user sends back (art/kling/stage_<id>.png, re-run stages.py).
-- Optional: animate the Codex GLBs (glTF animation tracks from the same part animators).
 - Optional: send the favourite Kling concepts back into the chat so the models can be matched to them.
 
 ## Act IV Kling jobs (account 49246555, 4 credits each)

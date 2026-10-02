@@ -122,7 +122,6 @@ SUNDER II are the 2D game captures in `act1-bosses/` … `act4-bosses/`.
 ## Still weak
 - Stage backdrops are Blender tiles until Kling concepts are sent back and folded in through `art/kling/`.
 - Sokar's feather blades are thin, so the hawk reads slighter in the low 3/4 Codex view than top-down in the game.
-- The in-game Keepers animate, but the Codex GLBs are still static (hover, turntable and emissive pulse only).
 - Kling concepts could not be inspected or used as image-to-3D input here (CDN blocked); models follow the written brief.
 
 ## Animated Keepers (Blender + Kling)
@@ -145,3 +144,34 @@ SUNDER II are the 2D game captures in `act1-bosses/` … `act4-bosses/`.
 - **Kling:** 12 reveal clips, one per Keeper (5 s, 720p, `kling-video-v3_0_turbo`, 480 credits): image-to-video from the
   concept art for Wepwawet, Sobek, UMBRA, the Overlord's Echo, UMBRA Unmasked and Apep; text-to-video for the other six.
   All 12 completed; job IDs in `game-progress.md`. Links expire in 24 h and can't be downloaded here.
+
+## Animated Keeper Codex (`keepers-evidence.json`, run `keepers-animated-pass-2`)
+- `keepers.py` now exports each GLB with its loop baked in, from the same animators as the game sprites: every animated
+  part becomes one joined mesh node with translation/rotation/scale tracks (32 samples, a 1 s loop, quaternions kept on
+  one hemisphere so they never flip). Apep's coil wave isn't rigid, so its body carries 8 morph targets cross-faded
+  round the loop. `python blender/keepers.py <out> 8 [act|id] --glb` exports only the models.
+- `keepers.html` plays the clip with an `AnimationMixer` driven by the viewer's sim time, so `seed()` and pause still hold a
+  pose; a new `pose(t)` hook freezes any moment of the loop for screenshots, and diagnostics report the clip.
+- Budget: animated parts are separate nodes, so the Overlord's Echo (26 stars) first measured 165 calls on mobile, over the
+  150 budget. Glowing light sources (stars, cores, embers) no longer cast shadows, which brought it to 129.
+- Inspector: all 26 captures (13 × desktop/mobile) PASS; `check_evidence.py`: 26 artifacts confirmed.
+
+| Keeper | calls before (static) | calls now, desktop | mobile | triangles |
+|---|---|---|---|---|
+| Wepwawet | 45 | 96 | 96 | 43,804 |
+| Sobek Reborn | 51 | 138 | 138 | 52,114 |
+| UMBRA | 48 | 63 | 63 | 36,004 |
+| Nun | 45 | 76 | 76 | 48,090 |
+| Sokar | 48 | 70 | 70 | 36,258 |
+| Fire Lake Seraphs | 31 | 68 | 68 | 40,128 |
+| UMBRA, Coiled | 57 | 76 | 76 | 43,964 |
+| Hittite Engine | 45 | 104 | 104 | 50,606 |
+| Ammit | 37 | 56 | 56 | 22,544 |
+| Overlord's Echo | 48 | 129 | 129 | 31,590 |
+| UMBRA, Unmasked | 37 | 69 | 69 | 22,876 |
+| Apep | 39 | 46 | 46 | 22,370 |
+| Apep, final phase | 45 | 59 | 59 | 26,690 |
+
+- Motion check (`keepers-codex-animated/`, `report.json`): each Keeper posed at loop time 0 and 0.375 s from the same paused
+  camera; the frame changes on all 13 (0.4 % of pixels for the Hittite wheels, whose six spokes nearly repeat, up to
+  9.8 % for Apep's coils), one 1 s clip each, no console or page errors.
