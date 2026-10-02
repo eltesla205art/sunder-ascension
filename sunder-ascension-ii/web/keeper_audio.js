@@ -225,7 +225,7 @@ const VOICES = {
 };
 const CUES = ['intro', 'attack', 'phase', 'hurt', 'death'];
 const LIMIT = { attack: 0.45, hurt: 0.1, down: 0.12, wave: 1.5, move: 0.08 };
-const DUCK = { intro: 1, death: 1, phase: 1, start: 1, launch: 1 };   // cues the music steps back for   // seconds between repeats, so a barrage doesn't become noise
+const DUCK = { intro: 1, death: 1, phase: 1, start: 1, launch: 1, begin: 1, dawn: 1, denied: 1 };   // cues the music steps back for   // seconds between repeats, so a barrage doesn't become noise
 // Ambience (registered by stage_audio.js): looping beds plus scattered events. A bed is one held source:
 // w, f, v, one filter (lp/hp/bp in Hz, q), trem = [rate Hz, depth 0..1] on its level, sweep = [rate Hz, Hz] on its filter.
 // An event is { every: [min, max] seconds, layers: [voice layers] }.
@@ -252,7 +252,7 @@ function compile(id){
   return { id, bpm: s.bpm, stepDur: 60 / s.bpm / 2, bass, lead, drums: s.drums, padChord: s.pad ? padChord : null,
     bassType: s.bassType || 'triangle', bassVol: s.bassVol || 0.06, bassLp: s.bassLp || 0, sub: !!s.sub,
     leadType: s.leadType || 'square', leadVol: s.leadVol || 0.03, leadLp: s.leadLp || 0, leadLen: s.leadLen || 0.85,
-    echo: !!s.echo };
+    echo: !!s.echo, padVol: s.padVol || 0.012 };
 }
 const COMPILED = {};
 for (const id in THEMES) COMPILED[id] = compile(id);
@@ -334,7 +334,7 @@ function createEngine(ctx, destination){
     }
     if (th.padChord && i % 8 === 0){
       const root = th.bass[i % th.bass.length] || th.bass.find(n => n);
-      for (const n of th.padChord(root)) note(n, t, sd * 8, 'sawtooth', 0.012, 800, 0.3);
+      for (const n of th.padChord(root)) note(n, t, sd * 8, 'sawtooth', th.padVol, 800, 0.3);
     }
     const k = th.drums[i % th.drums.length];
     if (k === 'k') drum('k', t);
@@ -437,10 +437,10 @@ function createEngine(ctx, destination){
         duck(t, Math.max(...layers.map(L => (L.at || 0) + (L.rep ? (L.rep - 1) * (L.gap || 0) : 0) + L.d)) * 0.7);
       return true;
     },
-    startTheme(id, lvl){
+    startTheme(id, lvl, delay){                     // delay: seconds of silence first (after a fanfare or a cry)
       this.stopTheme();
       const th = COMPILED[id]; if (!th) return false;
-      Object.assign(live, { theme: th, step: 0, nextT: ctx.currentTime + 0.06, layer: lvl || 1 });
+      Object.assign(live, { theme: th, step: 0, nextT: ctx.currentTime + 0.06 + (delay || 0), layer: lvl || 1 });
       pump(); timer();
       return true;
     },

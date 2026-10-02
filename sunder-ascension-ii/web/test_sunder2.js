@@ -242,6 +242,30 @@ test('the title screen and hangar have their own music, ambience and cues', () =
   assert(/<script src="menu_audio.js"><\/script>/.test(html));
 });
 
+test('the story screens and the hour map have their own music, ambience and cues', () => {
+  const KAU = require('./story_audio.js');
+  const { ctx, bad } = fakeAudio();
+  const e = KAU.createEngine(ctx, ctx.destination);
+  const ids = ['story_opening', 'story_map', 'story_briefing', 'story_interlude', 'story_victory', 'story_defeat'];
+  for (const id of ids){
+    assert(e.hasTheme(id), id);
+    for (const lvl of [1, 2, 3]) assert(e.scheduleTheme(id, 8, lvl) > 15, id + ' theme');
+  }
+  for (const id of ['story_opening', 'story_map']) assert(e.hasAmbience(id) && e.scheduleAmbience(id, 30), id + ' ambience');
+  for (const cue of KAU.STORY_CUES){ ctx.currentTime += 4; assert(e.voice('story', cue), 'story ' + cue); }
+  assert(e.startTheme('story_interlude', 1, 2.6) && e.playing === 'story_interlude', 'a theme can wait its turn');
+  e.stopTheme();
+  const leads = Object.values(KAU.COMPILED).map(th => th.lead.join(','));
+  assert.strictEqual(new Set(leads).size, leads.length, 'two themes share a melody');
+  assert.deepStrictEqual(bad.slice(0, 5), [], 'invalid audio values');
+  // the game: each screen's theme, every cue, briefings over the Hour's ambience, the map building by act
+  for (const id of ids) assert(src.includes("music('" + id + "'"), 'game never plays ' + id);
+  for (const cue of KAU.STORY_CUES) assert(src.includes("storyVoice('" + cue + "'"), 'game never plays ' + cue);
+  assert(/KA\.startAmbience\(G\.cfg\.stage\);\s*storyVoice\('briefing'\)/.test(src), 'briefing without the Hour ambience');
+  assert(/<script src="story_audio.js"><\/script>/.test(html));
+  assert.deepStrictEqual([0, 2, 3, 5, 6, 11].map(n => { G.nextStage = n; return g.mapLayer(); }), [1, 1, 2, 2, 3, 3]);
+});
+
 test('sequel never talks to the Part 1 leaderboard', () => {
   assert.strictEqual(g.SUNDER_CONFIG.SUPABASE_URL, '');
   assert.strictEqual(g.SUNDER_CONFIG.SUPABASE_ANON_KEY, '');

@@ -20,6 +20,7 @@
 <script src="keeper_audio.js"></script>
 <script src="stage_audio.js"></script>
 <script src="menu_audio.js"></script>
+<script src="story_audio.js"></script>
 <script>
 'use strict';
 const IS_BROWSER = (typeof window !== 'undefined');
@@ -457,21 +458,24 @@ const MUSIC_PATTERNS = {
     lead:  [69,73,76,81] },
 };
 const Music = { current: null, timer: null, step: 0, nextT: 0 };
-function music(kind){
+function music(kind, delay){
   const k = keeperAudio();
-  // a Keeper's battle theme (keeper_audio.js) or an Hour's stage theme (stage_audio.js)
-  const own = kind.startsWith('keeper_') ? kind.slice(7) : /^(stage|menu)_/.test(kind) ? kind : null;
+  // a Keeper's battle theme (keeper_audio.js), an Hour's stage theme (stage_audio.js),
+  // the title and hangar (menu_audio.js) or a story screen and the hour map (story_audio.js)
+  const own = kind.startsWith('keeper_') ? kind.slice(7) : /^(stage|menu|story)_/.test(kind) ? kind : null;
   if (k && !own) k.stopAmbience();                      // a stage's ambience lasts until its stage is left
-  if (k && kind.startsWith('menu_') && sfxOn) k.startAmbience(kind);   // title and hangar bring their own
+  if (k && /^(menu|story)_/.test(kind) && kind !== 'story_briefing'){   // briefings play the coming Hour's ambience
+    if (sfxOn && k.hasAmbience(kind)) k.startAmbience(kind); else k.stopAmbience();
+  }
   if (!IS_BROWSER || musicMuted) { Music.current = kind; return; }
   if (own){
     if (k && k.hasTheme(own)){
       if (Music.current === kind && k.playing === own) return;
       stopMusicTimer(); Music.current = kind;
-      k.startTheme(own, G.boss ? G.boss.phase : stageLayer());
+      k.startTheme(own, kind === 'story_map' ? mapLayer() : G.boss ? G.boss.phase : stageLayer(), delay);
       return;
     }
-    kind = kind.startsWith('keeper_') ? 'boss' : 'main';
+    kind = kind.startsWith('keeper_') ? 'boss' : kind === 'story_victory' ? 'victory' : 'main';
     if (k) k.stopAmbience();
   }
   if (k) k.stopTheme();
@@ -533,6 +537,14 @@ function shipSound(){
   menuVoice('menu_hangar', 'move');
   if (KA) KA.voice('ship_' + SHIPS[G.shipIndex].id, 'rev', AC.currentTime + 0.22);
 }
+function storyVoice(cue, delay){
+  if (!IS_BROWSER || !sfxOn) return;
+  const k = keeperAudio(); if (!k) return;
+  if (AC.state === 'suspended') AC.resume();
+  k.voice('story', cue, AC.currentTime + 0.01 + (delay || 0));
+}
+// the hour map's theme builds act by act on the road to dawn
+function mapLayer(){ const n = G.nextStage || 0; return n < 3 ? 1 : n < 6 ? 2 : 3; }
 function stageVoice(cue){
   if (!IS_BROWSER || !sfxOn || G.mode === 'swarm' || !G.cfg || !G.cfg.stage) return;
   const k = keeperAudio(); if (!k) return;
@@ -575,7 +587,8 @@ function launchCampaign(){
   G.state = 'OPENING';
   G.banner = OPENING.join('\n') + '\n\n[ Press SPACE / tap to begin ]\n[ ESC / tap lower-left — change ship ]';
   G.bannerVisible = true;
-  music('main');
+  music('story_opening');
+  storyVoice('begin');
 }
 function beginStage(idx){
   G.stageIndex = idx;
@@ -593,7 +606,9 @@ function beginStage(idx){
              '\n\n[ Press SPACE / tap to engage ]';
   G.bannerVisible = true;
   G.state = 'BRIEFING';
-  music('main');
+  music('story_briefing');                        // a watchful drone over the coming Hour's own ambience
+  if (sfxOn && keeperAudio() && G.cfg.stage) KA.startAmbience(G.cfg.stage);
+  storyVoice('briefing');
 }
 function startPlaying(){
   G.state = 'PLAYING';
@@ -648,7 +663,8 @@ function onBossDefeated(){
     G.banner = VICTORY_TEXT.join('\n') + '\n\nFINAL SCORE: ' + G.totalScore +
                '\n\n[ SPACE / tap — record your score ]';
     G.bannerVisible = true;
-    music('victory');
+    music('story_victory', 1.2);                    // dawn breaks; the hero's theme in a major key
+    storyVoice('dawn', 0.6);
   } else {
     // BATTLE MATH #5: resources rise with the danger — +1 life, +1 bomb, +1 shield
     if (G.playerAlive){
@@ -664,10 +680,11 @@ function onBossDefeated(){
                '\n\n+1 LIFE  ·  +1 BOMB  ·  +1 SHIELD\n\nSCORE: ' + G.totalScore +
                '\n\n[ Press SPACE / tap — hour map ]';
     G.bannerVisible = true;
-    // the Hour's fanfare, in silence; the menu music returns on the hour map
+    // the Hour's fanfare, in silence; between acts a bell and the interlude follow; the map has its own theme
     if (KA){ KA.stopTheme(); KA.stopAmbience(); }
     stopMusicTimer(); Music.current = null;
     stageVoice('clear');
+    if (INTERLUDES[nextNum]){ storyVoice('interlude', 2.4); music('story_interlude', 2.6); }
   }
 }
 function onPlayerDied(){
@@ -675,9 +692,11 @@ function onPlayerDied(){
   explode(G.player.x, G.player.y, '#FFD54A', 50, true);
   G.shake = 0.5;
   sfx('bigboom');
-  if (G.bossActive) keeperVoice('phase');                        // the Keeper gloats; then silence
+  if (G.bossActive) keeperVoice('phase');                        // the Keeper gloats; then DAWN DENIED
   if (KA){ KA.stopTheme(); KA.stopAmbience(); }
-  Music.current = null;
+  stopMusicTimer(); Music.current = null;
+  storyVoice('denied', 0.6);
+  music('story_defeat', 2.4);
   G.playerAlive = false;
   G.playerVisible = false;
   G.state = 'DEFEAT';
@@ -1157,16 +1176,16 @@ function update(dt){
       }
       break;
     case 'OPENING':
-      if (firePressed){ G.nextStage = 0; G.state = 'MAP'; }   // story mode travels the star map
+      if (firePressed){ G.nextStage = 0; G.state = 'MAP'; music('story_map'); storyVoice('map'); }   // story mode travels the star map
       break;
     case 'MAP':
-      if (firePressed) beginStage(G.nextStage);
+      if (firePressed){ storyVoice('gate'); beginStage(G.nextStage); }
       break;
     case 'BRIEFING':
       if (firePressed) startPlaying();
       break;
     case 'STAGE_CLEAR':
-      if (firePressed){ G.nextStage = G.stageIndex + 1; G.state = 'MAP'; music('main'); }
+      if (firePressed){ G.nextStage = G.stageIndex + 1; G.state = 'MAP'; music('story_map'); storyVoice('map'); }
       break;
     case 'VICTORY':
       if (firePressed){ startEnterScore(); }
@@ -2142,7 +2161,7 @@ if (!IS_BROWSER && typeof module !== 'undefined' && module.exports){
   module.exports = { G, input, update, resetGame, beginStage, startPlaying, launchCampaign,
     bossTakeDamage, playerTakeDamage, spawnEnemy, spawnEnemyAt, spawnScoutWave, spawnBomberWave,
     useBomb, collectPowerup, goToTitle, goToHangar, startSwarm, startEnterScore, commitScore,
-    loadScores, bossThreshold, stageLayer, SUNDER_CONFIG, INTERLUDES, LB_CHARS, SVGS, SHIPS, STAGES, W, H };
+    loadScores, bossThreshold, stageLayer, mapLayer, SUNDER_CONFIG, INTERLUDES, LB_CHARS, SVGS, SHIPS, STAGES, W, H };
 }
 </script>
 </body>

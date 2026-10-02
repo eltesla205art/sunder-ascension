@@ -235,3 +235,23 @@ SUNDER II are the 2D game captures in `act1-bosses/` … `act4-bosses/`.
   the music. Previews and levels: `menu-audio/`.
 - `test_sunder2.js` 13/13 — new check runs both themes, ambiences, every cue and all three ship engines against the strict
   stand-in AudioContext, keeps all 27 melodies distinct, and checks the game wiring and the audio wake-up.
+
+## Story screens and hour map sound (`web/story_audio.js`)
+- Fourth pack on the same engine, which gained delayed theme starts (so music can wait for a fanfare or a cry) and
+  per-theme pad levels. Six themes: opening crawl (D Phrygian-dominant lament, one drum per bar), hour map (Dorian
+  journey; layer 1 in Act I, 2 in Act II, 3 in Acts III–IV), briefing (low Phrygian drone), interlude (the hero's theme
+  remembered), victory (the hero's theme in A major), defeat (a falling lament). Ambience for the crawl (wind in the
+  void, distant bell) and the map (starfield, gate hum, comm blips). Seven cues: begin (gong), map, gate, briefing
+  (transmission + stinger), interlude (bell), dawn (sunrise chord and bells), denied.
+- Game flow: launch → crawl theme + gong; SPACE → hour map theme + whoosh; SPACE on a gate → gate chime, briefing drone
+  over the Hour's own ambience, which carries straight into play; a Keeper beaten at the end of an act → clear fanfare,
+  then the bell and the interlude 2.6 s later; back to the map, now a layer higher; Apep beaten → death cry, sunrise,
+  victory theme; defeat → gloat, the fall, the lament 2.4 s later; retry → the crawl again. Replaces Part 1's `main`
+  loop and `victory` sting on these screens (they remain as fallbacks without the engine).
+- Chromium: that whole route driven through the game's own state machine — theme, ambience and music state right at
+  every step, no page or console errors. Each scene rendered offline as 20 s and recorded (`story-audio/`): no clipping.
+  A first pass found the opening, interlude and defeat themes 6–14 dB quieter than the rest; raised them, and measured
+  over a full loop all six now sit within 1.1 dB of each other and of the stage themes (−34.3 to −35.8 dB RMS).
+- `test_sunder2.js` 14/14 — new check runs the six themes, two ambiences and seven cues against the strict stand-in
+  AudioContext, the delayed start, distinct melodies across all 33 themes, the game wiring (briefing over the Hour's
+  ambience) and the map building 1 → 2 → 3 by act.
