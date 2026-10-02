@@ -38,6 +38,8 @@ Kling result URLs expire after 24 h, and this sandbox cannot download from Kling
 
 ## Done: stage sound — a theme, an ambience and four cues for every Hour (stage_audio.js)
 
+## Done: title screen and hangar sound — themes, ambiences, interface cues, ship engines (menu_audio.js)
+
 ## Next
 - Fold in Kling stage concepts the user sends back (art/kling/stage_<id>.png, re-run stages.py).
 - Optional: send the favourite Kling concepts back into the chat so the models can be matched to them.

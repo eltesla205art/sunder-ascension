@@ -218,3 +218,20 @@ SUNDER II are the 2D game captures in `act1-bosses/` … `act4-bosses/`.
 - `test_sunder2.js` 12/12 — new check runs every Hour's theme (all layers), 30 s of ambience and all four cues against
   the strict stand-in AudioContext, ambience replace/stop, distinct melodies across all 25 themes, the game's calls,
   and that stage layers climb 1 → 2 → 3 in thirds.
+
+## Title screen and hangar sound (`web/menu_audio.js`)
+- Third pack on the same engine. Title: the hero's theme at 84 bpm with pads and echo, over wind at the crystal gate,
+  a two-tone portal hum and ember crackles with the odd crystal chime; `start` surges the gate open (filtered noise
+  swell into an A-major chord and chime), `leaderboard` chimes. Hangar: a minor groove at 112 bpm over machine hum,
+  vents and mains hum, with clanks, PA chimes, hydraulics and a distant drill; `move` (servo + lock), `mode`, `back`,
+  `launch` (rising roar into a thump), and an engine `rev` for each ship. Engine: `start` and `launch` now duck the music.
+- Game: the title's theme and ambience start on load and are heard from the first key or tap (the page now wakes audio
+  on the first pointerdown or keydown); start → hangar theme + the selected ship revving; ship change → bay servo then
+  that ship's engine; mode switch (keys and touch buttons) → its blip; launch → launch roar + ship rev, then the story
+  music; ESC back to the hangar or title restores their themes. Without the engine the old blip still plays.
+- Chromium, real keyboard and mouse input: loaded (context suspended, title theme queued) → first click (running) →
+  SPACE hangar → next ship → mode ×2 → SPACE launch (OPENING, story music) → ESC hangar → ESC title; theme, ambience and
+  music state right at every step, no page or console errors. Offline 20 s renders: no clipping; ambience 13–15 dB under
+  the music. Previews and levels: `menu-audio/`.
+- `test_sunder2.js` 13/13 — new check runs both themes, ambiences, every cue and all three ship engines against the strict
+  stand-in AudioContext, keeps all 27 melodies distinct, and checks the game wiring and the audio wake-up.

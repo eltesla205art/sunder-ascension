@@ -220,6 +220,28 @@ test('every Hour has its own theme, ambience and stage cues, and they synthesise
   assert.deepStrictEqual(layers, [1, 2, 3, 3]);
 });
 
+test('the title screen and hangar have their own music, ambience and cues', () => {
+  const KAU = require('./menu_audio.js');
+  const { ctx, bad } = fakeAudio();
+  const e = KAU.createEngine(ctx, ctx.destination);
+  for (const id of ['menu_title', 'menu_hangar']){
+    assert(e.hasTheme(id) && e.hasAmbience(id), id);
+    for (const lvl of [1, 2, 3]) assert(e.scheduleTheme(id, 8, lvl) > 20, id + ' theme');
+    assert(e.scheduleAmbience(id, 30), id + ' ambience');
+    for (const cue of KAU.MENU_CUES[id]){ ctx.currentTime += 2; assert(e.voice(id, cue), id + ' ' + cue); }
+  }
+  for (const s of SHIPS){ ctx.currentTime += 1; assert(e.voice('ship_' + s.id, 'rev'), s.id + ' has no engine sound'); }
+  const leads = Object.values(KAU.COMPILED).map(th => th.lead.join(','));
+  assert.strictEqual(new Set(leads).size, leads.length, 'two themes share a melody');
+  assert.deepStrictEqual(bad.slice(0, 5), [], 'invalid audio values');
+  // the game plays them: title and hangar themes, each cue, a ship's engine on every change, audio woken on first input
+  assert(/music\(G\.state === 'TITLE' \? 'menu_title' : 'main'\)/.test(src) && (src.match(/music\('menu_hangar'\)/g) || []).length >= 2);
+  for (const id of ['menu_title', 'menu_hangar']) for (const cue of KAU.MENU_CUES[id])
+    assert(src.includes("menuVoice('" + id + "', '" + cue + "')"), 'game never plays ' + id + ' ' + cue);
+  assert((src.match(/shipSound\(\)/g) || []).length >= 3 && /addEventListener\('pointerdown', wakeAudio\)/.test(src));
+  assert(/<script src="menu_audio.js"><\/script>/.test(html));
+});
+
 test('sequel never talks to the Part 1 leaderboard', () => {
   assert.strictEqual(g.SUNDER_CONFIG.SUPABASE_URL, '');
   assert.strictEqual(g.SUNDER_CONFIG.SUPABASE_ANON_KEY, '');

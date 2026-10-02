@@ -19,6 +19,7 @@
 </div>
 <script src="keeper_audio.js"></script>
 <script src="stage_audio.js"></script>
+<script src="menu_audio.js"></script>
 <script>
 'use strict';
 const IS_BROWSER = (typeof window !== 'undefined');
@@ -396,7 +397,7 @@ function resetGame(toTitle) {
     G.banner = OPENING.join('\n') + '\n\n[ Press SPACE / tap to begin ]\n[ ESC / tap lower-left — change ship ]';
     G.bannerVisible = true;
   }
-  music('main');
+  music(G.state === 'TITLE' ? 'menu_title' : 'main');
 }
 
 /* ============================== STARFIELD (3-layer parallax, Cosmic Strike update) ============================== */
@@ -459,8 +460,9 @@ const Music = { current: null, timer: null, step: 0, nextT: 0 };
 function music(kind){
   const k = keeperAudio();
   // a Keeper's battle theme (keeper_audio.js) or an Hour's stage theme (stage_audio.js)
-  const own = kind.startsWith('keeper_') ? kind.slice(7) : kind.startsWith('stage_') ? kind : null;
+  const own = kind.startsWith('keeper_') ? kind.slice(7) : /^(stage|menu)_/.test(kind) ? kind : null;
   if (k && !own) k.stopAmbience();                      // a stage's ambience lasts until its stage is left
+  if (k && kind.startsWith('menu_') && sfxOn) k.startAmbience(kind);   // title and hangar bring their own
   if (!IS_BROWSER || musicMuted) { Music.current = kind; return; }
   if (own){
     if (k && k.hasTheme(own)){
@@ -470,6 +472,7 @@ function music(kind){
       return;
     }
     kind = kind.startsWith('keeper_') ? 'boss' : 'main';
+    if (k) k.stopAmbience();
   }
   if (k) k.stopTheme();
   if (Music.current === kind && Music.timer) return;
@@ -519,6 +522,17 @@ function keeperAudio(){
   return KA;
 }
 function keeperId(){ return G.cfg && G.cfg.art ? G.cfg.art.replace(/^keeper_/, '') : ''; }
+function menuVoice(id, cue){
+  if (!IS_BROWSER || !sfxOn) return;
+  const k = keeperAudio(); if (!k){ sfx('select'); return; }   // without the engine, the old blip
+  if (AC.state === 'suspended') AC.resume();
+  k.voice(id, cue);
+}
+// changing ship: the bay turns, then that ship's engine answers
+function shipSound(){
+  menuVoice('menu_hangar', 'move');
+  if (KA) KA.voice('ship_' + SHIPS[G.shipIndex].id, 'rev', AC.currentTime + 0.22);
+}
 function stageVoice(cue){
   if (!IS_BROWSER || !sfxOn || G.mode === 'swarm' || !G.cfg || !G.cfg.stage) return;
   const k = keeperAudio(); if (!k) return;
@@ -1128,14 +1142,19 @@ function update(dt){
 
   switch (G.state){
     case 'TITLE':
-      if (firePressed){ G.state = 'SHIP_SELECT'; sfx('select'); music('main'); }
-      if (leadPressed){ fetchScoresRemote(); G.state = 'LEADERBOARD'; }
+      if (firePressed){ G.state = 'SHIP_SELECT'; menuVoice('menu_title', 'start'); music('menu_hangar');
+        if (KA) KA.voice('ship_' + SHIPS[G.shipIndex].id, 'rev', AC.currentTime + 0.9); }
+      if (leadPressed){ fetchScoresRemote(); G.state = 'LEADERBOARD'; menuVoice('menu_title', 'leaderboard'); }
       break;
     case 'SHIP_SELECT':
-      if (leftPressed){ G.shipIndex = (G.shipIndex - 1 + SHIPS.length) % SHIPS.length; sfx('select'); }
-      if (rightPressed){ G.shipIndex = (G.shipIndex + 1) % SHIPS.length; sfx('select'); }
-      if (upPressed || downPressed){ G.modeSel = 1 - G.modeSel; sfx('select'); }
-      if (firePressed){ if (G.modeSel === 1) startSwarm(); else launchCampaign(); }
+      if (leftPressed){ G.shipIndex = (G.shipIndex - 1 + SHIPS.length) % SHIPS.length; shipSound(); }
+      if (rightPressed){ G.shipIndex = (G.shipIndex + 1) % SHIPS.length; shipSound(); }
+      if (upPressed || downPressed){ G.modeSel = 1 - G.modeSel; menuVoice('menu_hangar', 'mode'); }
+      if (firePressed){
+        menuVoice('menu_hangar', 'launch');
+        if (KA) KA.voice('ship_' + SHIPS[G.shipIndex].id, 'rev');
+        if (G.modeSel === 1) startSwarm(); else launchCampaign();
+      }
       break;
     case 'OPENING':
       if (firePressed){ G.nextStage = 0; G.state = 'MAP'; }   // story mode travels the star map
@@ -1212,12 +1231,14 @@ function resetRun(){
 function goToTitle(){
   resetRun();
   G.state = 'TITLE';
+  music('menu_title');
 }
 function goToHangar(){
   // back to ship select (playtest correction: pick a different starship)
   resetRun();
   G.state = 'SHIP_SELECT';
-  sfx('select');
+  menuVoice('menu_hangar', 'back');
+  music('menu_hangar');
 }
 
 /* ============================== SWARM MODE ============================== */
@@ -1989,6 +2010,10 @@ if (IS_BROWSER){
     'ArrowUp':'up','KeyW':'up','ArrowDown':'down','KeyS':'down',
     'Space':'fire','KeyX':'bomb','KeyM':'muteToggle','KeyP':'pauseToggle','KeyL':'lead'
   };
+  // browsers hold audio until the first key or tap; wake it then, so the title's music and ambience come in
+  const wakeAudio = () => { const a = ac(); if (a && a.state === 'suspended') a.resume(); };
+  window.addEventListener('pointerdown', wakeAudio);
+  window.addEventListener('keydown', wakeAudio);
   window.addEventListener('keydown', e => {
     if (e.code === 'Escape'){
       if (G.paused){ goToHangar(); }
@@ -2027,10 +2052,10 @@ if (IS_BROWSER){
       if (Math.hypot(p.x-selLeftBtn.x, p.y-selLeftBtn.y) < selLeftBtn.r + 12) pulse('left');
       else if (Math.hypot(p.x-selRightBtn.x, p.y-selRightBtn.y) < selRightBtn.r + 12) pulse('right');
       else if (p.x >= storyBtn.x && p.x <= storyBtn.x + storyBtn.w && p.y >= storyBtn.y - 6 && p.y <= storyBtn.y + storyBtn.h + 6){
-        if (G.modeSel !== 0){ G.modeSel = 0; sfx('select'); }
+        if (G.modeSel !== 0){ G.modeSel = 0; menuVoice('menu_hangar', 'mode'); }
       }
       else if (p.x >= swarmBtn.x && p.x <= swarmBtn.x + swarmBtn.w && p.y >= swarmBtn.y - 6 && p.y <= swarmBtn.y + swarmBtn.h + 6){
-        if (G.modeSel !== 1){ G.modeSel = 1; sfx('select'); }
+        if (G.modeSel !== 1){ G.modeSel = 1; menuVoice('menu_hangar', 'mode'); }
       }
       else if (p.x >= launchBtn.x - 10 && p.x <= launchBtn.x + launchBtn.w + 10 &&
                p.y >= launchBtn.y - 10 && p.y <= launchBtn.y + launchBtn.h + 10) pulse('fire');

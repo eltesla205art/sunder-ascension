@@ -224,7 +224,8 @@ const VOICES = {
   },
 };
 const CUES = ['intro', 'attack', 'phase', 'hurt', 'death'];
-const LIMIT = { attack: 0.45, hurt: 0.1, down: 0.12, wave: 1.5 };   // seconds between repeats, so a barrage doesn't become noise
+const LIMIT = { attack: 0.45, hurt: 0.1, down: 0.12, wave: 1.5, move: 0.08 };
+const DUCK = { intro: 1, death: 1, phase: 1, start: 1, launch: 1 };   // cues the music steps back for   // seconds between repeats, so a barrage doesn't become noise
 // Ambience (registered by stage_audio.js): looping beds plus scattered events. A bed is one held source:
 // w, f, v, one filter (lp/hp/bp in Hz, q), trem = [rate Hz, depth 0..1] on its level, sweep = [rate Hz, Hz] on its filter.
 // An event is { every: [min, max] seconds, layers: [voice layers] }.
@@ -432,7 +433,7 @@ function createEngine(ctx, destination){
       if (LIMIT[cue] && last[key] !== undefined && t - last[key] < LIMIT[cue]) return false;
       last[key] = t;
       for (const L of layers) layer(L, t, sfxBus);
-      if (cue === 'intro' || cue === 'death' || cue === 'phase')
+      if (DUCK[cue])
         duck(t, Math.max(...layers.map(L => (L.at || 0) + (L.rep ? (L.rep - 1) * (L.gap || 0) : 0) + L.d)) * 0.7);
       return true;
     },
