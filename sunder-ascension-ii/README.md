@@ -8,7 +8,8 @@ original *SUNDER: Ascension — The Nine Bows* (`web/`, `godot/`, `docs/`), whic
 | `DESIGN.md` | Storyline, gameplay ideas, PS5-style UI direction, prompt pack |
 | `web/game.html` | The sequel build: open it in a browser (it loads its art from `web/assets/`) |
 | `web/assets/` | The game's 56 images as WebP: title, hangar, ships, Keeper sprites, animation sheets and portraits, stage backdrops |
-| `web/keeper_audio.js` | Every Keeper's battle theme and voice, synthesised live with Web Audio (shared by the game and the Codex) |
+| `web/keeper_audio.js` | Every Keeper's battle theme and voice, synthesised live with Web Audio (shared by the game and the Codex), and the audio engine |
+| `web/stage_audio.js` | Every Hour's stage theme, ambience and stage cues (plugs into `keeper_audio.js`) |
 | `web/keepers.html` | Keeper Codex: real-time Three.js viewer of the Keeper models (serve the `web/` folder over HTTP; three.js is self-hosted in `web/vendor/three`, MIT) |
 | `web/models/` | Keeper GLB models exported from Blender, each with its animation loop baked in, plus portrait thumbnails |
 | `web/test_sunder2.js` | Headless test of the 12-Hour campaign against the battle-math law: `node web/test_sunder2.js` |
@@ -42,6 +43,12 @@ original *SUNDER: Ascension — The Nine Bows* (`web/`, `godot/`, `docs/`), whic
   theme, and Apep gets a new theme for its final phase. All synthesised in `web/keeper_audio.js`, so there are no audio
   files; M still mutes the music. The Codex has a SOUND toggle (S) that plays each Keeper's theme and intro.
   Listening previews (15 s each): `artifacts/keeper-audio/*.webm`.
+- **Stage sound:** every Hour has its own theme, which builds in thirds as you near its Keeper, and its own ambience
+  under the whole stage, boss fight included: desert wind and rail clanks, floodwater and drips, singing glass, the deep
+  sea, dune gusts, a crackling lava lake, Apep's hiss in the void, storm and thunder over the Iron Sky, a bell in the
+  Judgement Hall, falling stars, the Heart of Atlantis beating, and Apep breathing beneath you. Each Hour also has a
+  start sting, a formation alert, its own texture on every enemy explosion, and a clear fanfare in its key.
+  The Heart of Atlantis plays the hero's theme. Previews (20 s each): `artifacts/stage-audio/*.webm`.
   Kling reveal clips (5 s each, job IDs in `artifacts/game-progress.md`) bring each Keeper to life for trailers.
 - **Stage backdrops for all twelve Hours:** scrolling Blender tiles (`blender/stages.py`) behind play, one per arena.
   Kling stage concepts can be folded in as ground textures (save as `art/kling/stage_<id>.png`, re-run the script).
@@ -65,7 +72,7 @@ To view the Keeper Codex locally: `cd web && python3 -m http.server 5188`, then 
 The game loads compressed WebP copies of these renders from `web/assets/` (same name as the art key, e.g.
 `keeper_nun.webp`, `stage_delta.webp`). After re-rendering, re-encode to WebP and replace the file there.
 
-**Shipping:** upload the whole `web/` folder — `game.html`, `keeper_audio.js` and `assets/` must stay side by side.
+**Shipping:** upload the whole `web/` folder — `game.html`, `keeper_audio.js`, `stage_audio.js` and `assets/` must stay side by side.
 The page shows SVG fallbacks for any image that hasn't arrived yet, so a slow connection never blocks play.
 
 Kling subject for the Mk II: **Scarab Warbringer Mk II**, id `322794480306968`.

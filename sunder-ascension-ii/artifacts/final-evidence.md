@@ -195,3 +195,26 @@ SUNDER II are the 2D game captures in `act1-bosses/` … `act4-bosses/`.
   Recorded as Opus previews in `artifacts/keeper-audio/` (`report.json` has per-second levels). Live game: the right theme
   plays from each boss intro (Hours 1, 7, 12 checked), Apep switches to `apep_p3` in its final phase, the theme stops on
   defeat and hands over to the stage-clear / victory music; Codex toggle on/off works; no page or console errors.
+
+## Stage sound (`web/stage_audio.js`)
+- Plugs into the engine in `keeper_audio.js`, which gained `register()`, ambience (looping beds with slow swells and
+  filter sweeps, plus scattered events from a seeded generator) and one shared scheduler. Synthesised live; no files.
+- Each of the 12 Hours: a theme in its act's colour (Act I desert modes, Act II slow and deep, Act III darker,
+  Act IV urgent; the Heart of Atlantis plays the hero's theme), an ambience, and four cues: start (a call in the
+  Hour's key + its texture), wave (formation alert), down (layered on every enemy explosion: sand, splash, glass,
+  bubbles, embers, hiss, metal, stone, crystal, heartbeat), clear (an arpeggio fanfare in the Hour's key).
+- Game flow: engaging an Hour starts its theme and ambience; the theme builds in thirds of the way to the Keeper;
+  the Keeper's theme takes over at its intro while the ambience carries on; at the clear the music and ambience stop
+  for the fanfare, and the menu music returns on the hour map. Defeat goes silent; swarm mode keeps its old music.
+- Layers reworked for both Hours and Keepers so the build is audible: layer 1 holds the lead back, layer 2 brings it in
+  with snare and hats, layer 3 doubles lead and bass an octave up with double-time hats. Measured on the theme alone:
+  +1 to 1.6 dB overall per layer but +7 to 14 dB above 2 kHz from layer 1 to 3 (density and brightness, not volume).
+  Keeper previews in `keeper-audio/` were re-recorded with this.
+- Chromium, each Hour rendered offline as 20 s of play: no clipping; ambience measured alone sits 10+ dB under the
+  music (−37 to −46 dB RMS) after a first pass found the low hums of the Judgement Hall, Sunken Spires, Heart and
+  Apep within a few dB of it and thunder pushing peaks to −0.6 dBFS (beds and thunder turned down). Previews and
+  levels: `stage-audio/`. Live game: theme, ambience and music state checked at every step from engaging Hour 4 to the
+  hour map, plus defeat in Hour 8 and swarm mode; no page or console errors.
+- `test_sunder2.js` 12/12 — new check runs every Hour's theme (all layers), 30 s of ambience and all four cues against
+  the strict stand-in AudioContext, ambience replace/stop, distinct melodies across all 25 themes, the game's calls,
+  and that stage layers climb 1 → 2 → 3 in thirds.

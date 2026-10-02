@@ -1,10 +1,12 @@
-/* SUNDER: Ascension II — Keeper audio. Every Keeper has its own battle theme and its own voice
-   (intro, attack, phase, hurt, death), synthesised live with Web Audio: no audio files to load.
+/* SUNDER: Ascension II — Keeper audio, and the engine the stage audio (stage_audio.js) plugs into.
+   Every Keeper has its own battle theme and its own voice (intro, attack, phase, hurt, death),
+   synthesised live with Web Audio: no audio files to load.
    Used by game.html (boss fights) and keepers.html (the Keeper Codex). Plain script; also loads in Node for tests.
 
    Themes are written in scale degrees (0 = the key's root; 7 = an octave up in a 7-note scale; '.' = rest), or in
    MIDI notes when `raw` is set. Bass plays from `root`, lead two octaves higher. Layers build with the boss phase:
-   1 = bass, lead and kick; 2 = + snare and hats; 3 = + lead doubled an octave up and double-time hats.
+   1 = bass, kick and the lead held back; 2 = full lead, snare and hats; 3 = + lead and bass doubled an octave up
+   and double-time hats.
    Voice cues are lists of synth layers: w = wave ('sine' 'square' 'sawtooth' 'triangle' 'noise'), f = [Hz from, to],
    d = seconds, v = peak gain, at = delay, a = attack time, lp/hp/bp = filter sweep [Hz from, to], q = filter Q,
    vib = [rate Hz, depth Hz], rep/gap = repeat count and spacing. */
@@ -222,7 +224,11 @@ const VOICES = {
   },
 };
 const CUES = ['intro', 'attack', 'phase', 'hurt', 'death'];
-const LIMIT = { attack: 0.45, hurt: 0.1 };   // seconds between repeats, so a barrage doesn't become noise
+const LIMIT = { attack: 0.45, hurt: 0.1, down: 0.12, wave: 1.5 };   // seconds between repeats, so a barrage doesn't become noise
+// Ambience (registered by stage_audio.js): looping beds plus scattered events. A bed is one held source:
+// w, f, v, one filter (lp/hp/bp in Hz, q), trem = [rate Hz, depth 0..1] on its level, sweep = [rate Hz, Hz] on its filter.
+// An event is { every: [min, max] seconds, layers: [voice layers] }.
+const AMBIENCE = {};
 
 // ------------------------------------------------------------------ compile themes to MIDI
 function degree(rootNote, scale, d){
@@ -249,6 +255,12 @@ function compile(id){
 }
 const COMPILED = {};
 for (const id in THEMES) COMPILED[id] = compile(id);
+// more content (the stages) plugs in here: { themes, voices, ambience }
+function register(pack){
+  for (const id in pack.themes || {}){ THEMES[id] = pack.themes[id]; COMPILED[id] = compile(id); }
+  Object.assign(VOICES, pack.voices || {});
+  Object.assign(AMBIENCE, pack.ambience || {});
+}
 const hz = midi => 440 * Math.pow(2, (midi - 69) / 12);
 
 // ------------------------------------------------------------------ the engine
@@ -259,6 +271,7 @@ function createEngine(ctx, destination){
   master.connect(destination || ctx.destination);
   const musicBus = ctx.createGain(); musicBus.gain.value = 0.85; musicBus.connect(master);
   const sfxBus = ctx.createGain(); sfxBus.gain.value = 1; sfxBus.connect(master);
+  const ambBus = ctx.createGain(); ambBus.gain.value = 0.65; ambBus.connect(master);
   const noise = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 2), ctx.sampleRate);
   { const ch = noise.getChannelData(0); let x = 12345;
     for (let i = 0; i < ch.length; i++){ x = (x * 1103515245 + 12345) % 2147483648; ch[i] = x / 1073741824 - 1; } }
@@ -311,9 +324,10 @@ function createEngine(ctx, destination){
     if (b){
       note(b, t, sd * 0.92, th.bassType, th.bassVol, th.bassLp);
       if (th.sub) note(b - 12, t, sd * 0.95, 'sine', th.bassVol * 0.8);
+      if (lvl >= 3) note(b + 12, t, sd * 0.6, 'square', th.bassVol * 0.3, 1400);
     }
     if (l){
-      note(l, t, sd * th.leadLen, th.leadType, th.leadVol, th.leadLp);
+      note(l, t, sd * th.leadLen, th.leadType, th.leadVol * (lvl >= 2 ? 1 : 0.5), th.leadLp);
       if (th.echo) note(l, t + sd * 1.5, sd * th.leadLen, th.leadType, th.leadVol * 0.35, th.leadLp);
       if (lvl >= 3) note(l + 12, t, sd * th.leadLen * 0.8, 'triangle', th.leadVol * 0.55);
     }
@@ -327,14 +341,76 @@ function createEngine(ctx, destination){
     if (lvl >= 3) drum('h', t + sd / 2, 0.7);
   }
 
+  // ambience: beds run until stopped; events are drawn from a seeded generator so offline renders repeat exactly
+  function rng(seed){ let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+  function startBeds(spec, t){
+    return spec.beds.map(B => {
+      let src;
+      if (B.w === 'noise'){ src = ctx.createBufferSource(); src.buffer = noise; src.loop = true; }
+      else { src = ctx.createOscillator(); src.type = B.w; src.frequency.value = B.f; }
+      const stops = [src];
+      let node = src;
+      const key = B.lp ? 'lp' : B.hp ? 'hp' : B.bp ? 'bp' : null;
+      if (key){
+        const fl = ctx.createBiquadFilter();
+        fl.type = { lp: 'lowpass', hp: 'highpass', bp: 'bandpass' }[key]; fl.frequency.value = B[key]; fl.Q.value = B.q || 0.8;
+        if (B.sweep){
+          const o = ctx.createOscillator(), og = ctx.createGain();
+          o.frequency.value = B.sweep[0]; og.gain.value = B.sweep[1]; o.connect(og); og.connect(fl.frequency); stops.push(o);
+        }
+        node.connect(fl); node = fl;
+      }
+      const env = ctx.createGain();                       // fades the bed in and out
+      env.gain.setValueAtTime(0.0001, t); env.gain.linearRampToValueAtTime(B.v, t + 1.5);
+      node.connect(env); node = env;
+      if (B.trem){                                        // slow swell, after the fade so silence stays silent
+        const tg = ctx.createGain(); tg.gain.value = 1 - B.trem[1] / 2;
+        const o = ctx.createOscillator(), og = ctx.createGain();
+        o.frequency.value = B.trem[0]; og.gain.value = B.trem[1] / 2; o.connect(og); og.connect(tg.gain); stops.push(o);
+        node.connect(tg); node = tg;
+      }
+      node.connect(ambBus);
+      for (const n of stops) n.start(t);
+      return { env, stops };
+    });
+  }
+  function stopBeds(beds, t){
+    for (const b of beds){
+      b.env.gain.cancelScheduledValues(t);
+      b.env.gain.setValueAtTime(Math.max(b.env.gain.value, 0.0001), t);
+      b.env.gain.linearRampToValueAtTime(0.0001, t + 0.8);
+      for (const n of b.stops) n.stop(t + 0.85);
+    }
+  }
+  function eventsUntil(amb, until){
+    amb.spec.events.forEach((E, i) => {
+      while (amb.next[i] < until){
+        for (const L of E.layers) layer(L, amb.next[i], ambBus);
+        amb.next[i] += E.every[0] + amb.rand() * (E.every[1] - E.every[0]);
+      }
+    });
+  }
+  function openAmbience(id, t){
+    const spec = AMBIENCE[id]; if (!spec) return null;
+    const rand = rng(id.length * 7919 + 17);
+    return { id, spec, rand, beds: startBeds(spec, t), next: spec.events.map(E => t + 1 + rand() * E.every[1]) };
+  }
+
   const last = {};
-  const live = { theme: null, step: 0, nextT: 0, layer: 1, timer: null };
+  const live = { theme: null, step: 0, nextT: 0, layer: 1, timer: null, amb: null };
   function pump(){
-    const th = live.theme; if (!th) return;
-    while (live.nextT < ctx.currentTime + 0.15){
+    const th = live.theme;
+    if (th) while (live.nextT < ctx.currentTime + 0.15){
       step(th, live.step, live.nextT, live.layer);
       live.step++; live.nextT += th.stepDur;
     }
+    if (live.amb) eventsUntil(live.amb, ctx.currentTime + 0.15);
+  }
+  function timer(){
+    const need = !!(live.theme || live.amb);
+    if (need && !live.timer && typeof setInterval === 'function') live.timer = setInterval(pump, 25);
+    if (!need && live.timer){ clearInterval(live.timer); live.timer = null; }
   }
   function duck(t, d){
     musicBus.gain.cancelScheduledValues(t);
@@ -346,7 +422,9 @@ function createEngine(ctx, destination){
   return {
     hasTheme: id => !!COMPILED[id],
     hasVoice: (id, cue) => !!(VOICES[id] && VOICES[id][cue]),
+    hasAmbience: id => !!AMBIENCE[id],
     get playing(){ return live.theme ? live.theme.id : null; },
+    get ambient(){ return live.amb ? live.amb.id : null; },
     voice(id, cue, when){
       const layers = VOICES[id] && VOICES[id][cue];
       if (!layers) return false;
@@ -362,11 +440,18 @@ function createEngine(ctx, destination){
       this.stopTheme();
       const th = COMPILED[id]; if (!th) return false;
       Object.assign(live, { theme: th, step: 0, nextT: ctx.currentTime + 0.06, layer: lvl || 1 });
-      pump();
-      if (typeof setInterval === 'function') live.timer = setInterval(pump, 25);
+      pump(); timer();
       return true;
     },
-    stopTheme(){ if (live.timer) clearInterval(live.timer); live.timer = null; live.theme = null; },
+    stopTheme(){ live.theme = null; timer(); },
+    startAmbience(id){
+      if (live.amb && live.amb.id === id) return true;
+      this.stopAmbience();
+      live.amb = openAmbience(id, ctx.currentTime + 0.02);
+      timer();
+      return !!live.amb;
+    },
+    stopAmbience(){ if (live.amb) stopBeds(live.amb.beds, ctx.currentTime); live.amb = null; timer(); },
     setLayer(n){ live.layer = Math.max(1, Math.min(3, n)); },
     // offline rendering (previews, tests): schedule `seconds` of a theme up front; layer may be a function of time
     scheduleTheme(id, seconds, lvl, start){
@@ -374,11 +459,17 @@ function createEngine(ctx, destination){
       while (t < seconds){ step(th, i++, t, typeof lvl === 'function' ? lvl(t) : (lvl || 1)); t += th.stepDur; }
       return i;
     },
-    musicBus, sfxBus,
+    scheduleAmbience(id, seconds, start){
+      const amb = openAmbience(id, start || 0); if (!amb) return false;
+      eventsUntil(amb, seconds - 1); stopBeds(amb.beds, seconds - 0.9);
+      return true;
+    },
+    musicBus, sfxBus, ambBus,
   };
 }
 
-const API = { THEMES, VOICES, CUES, SCALES, COMPILED, createEngine };
+const API = { THEMES, VOICES, CUES, SCALES, COMPILED, AMBIENCE, LIMIT, createEngine, register,
+  kit: { hiss, chime, thump, degree, hz } };
 root.KeeperAudio = API;
 if (typeof module !== 'undefined' && module.exports) module.exports = API;
 })(typeof window !== 'undefined' ? window : globalThis);

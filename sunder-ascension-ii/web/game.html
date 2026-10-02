@@ -18,6 +18,7 @@
   <div id="foot">WASD/ARROWS move · SPACE fire · X bomb · P pause · M music · touch: drag to fly, tap ☥ bomb, tap ⏸ pause</div>
 </div>
 <script src="keeper_audio.js"></script>
+<script src="stage_audio.js"></script>
 <script>
 'use strict';
 const IS_BROWSER = (typeof window !== 'undefined');
@@ -456,17 +457,19 @@ const MUSIC_PATTERNS = {
 };
 const Music = { current: null, timer: null, step: 0, nextT: 0 };
 function music(kind){
-  if (!IS_BROWSER || musicMuted) { Music.current = kind; return; }
   const k = keeperAudio();
-  if (kind.startsWith('keeper_')){                      // a Keeper's own battle theme (keeper_audio.js)
-    const id = kind.slice(7);
-    if (k && k.hasTheme(id)){
-      if (Music.current === kind && k.playing === id) return;
+  // a Keeper's battle theme (keeper_audio.js) or an Hour's stage theme (stage_audio.js)
+  const own = kind.startsWith('keeper_') ? kind.slice(7) : kind.startsWith('stage_') ? kind : null;
+  if (k && !own) k.stopAmbience();                      // a stage's ambience lasts until its stage is left
+  if (!IS_BROWSER || musicMuted) { Music.current = kind; return; }
+  if (own){
+    if (k && k.hasTheme(own)){
+      if (Music.current === kind && k.playing === own) return;
       stopMusicTimer(); Music.current = kind;
-      k.startTheme(id, G.boss ? G.boss.phase : 1);
+      k.startTheme(own, G.boss ? G.boss.phase : stageLayer());
       return;
     }
-    kind = 'boss';
+    kind = kind.startsWith('keeper_') ? 'boss' : 'main';
   }
   if (k) k.stopTheme();
   if (Music.current === kind && Music.timer) return;
@@ -516,6 +519,14 @@ function keeperAudio(){
   return KA;
 }
 function keeperId(){ return G.cfg && G.cfg.art ? G.cfg.art.replace(/^keeper_/, '') : ''; }
+function stageVoice(cue){
+  if (!IS_BROWSER || !sfxOn || G.mode === 'swarm' || !G.cfg || !G.cfg.stage) return;
+  const k = keeperAudio(); if (!k) return;
+  if (AC.state === 'suspended') AC.resume();
+  k.voice(G.cfg.stage, cue);
+}
+// an Hour's theme builds in thirds as the stage nears its Keeper
+function stageLayer(){ return G.cfg ? Math.min(3, 1 + Math.floor(3 * G.stageScore / bossThreshold(G.cfg))) : 1; }
 function keeperVoice(cue){
   if (!IS_BROWSER || !sfxOn || G.mode === 'swarm') return;
   const k = keeperAudio(); if (!k) return;
@@ -576,6 +587,11 @@ function startPlaying(){
   G.spawnTimer = 0.6;
   G.waveTimer = 4.0;     // scripted scout formation (wave-manager timeline)
   G.bomberTimer = 9.0;   // heavy bomber waves
+  if (G.mode !== 'swarm' && G.cfg.stage){             // the Hour's theme, its ambience and the gate opening
+    music(G.cfg.stage);
+    if (sfxOn && keeperAudio()) KA.startAmbience(G.cfg.stage);
+    stageVoice('start');
+  }
 }
 function startBossIntro(){
   G.bossActive = true;
@@ -634,7 +650,10 @@ function onBossDefeated(){
                '\n\n+1 LIFE  ·  +1 BOMB  ·  +1 SHIELD\n\nSCORE: ' + G.totalScore +
                '\n\n[ Press SPACE / tap — hour map ]';
     G.bannerVisible = true;
-    music('main');
+    // the Hour's fanfare, in silence; the menu music returns on the hour map
+    if (KA){ KA.stopTheme(); KA.stopAmbience(); }
+    stopMusicTimer(); Music.current = null;
+    stageVoice('clear');
   }
 }
 function onPlayerDied(){
@@ -642,7 +661,9 @@ function onPlayerDied(){
   explode(G.player.x, G.player.y, '#FFD54A', 50, true);
   G.shake = 0.5;
   sfx('bigboom');
-  if (G.bossActive){ keeperVoice('phase'); if (KA) KA.stopTheme(); Music.current = null; }   // the Keeper gloats; silence
+  if (G.bossActive) keeperVoice('phase');                        // the Keeper gloats; then silence
+  if (KA){ KA.stopTheme(); KA.stopAmbience(); }
+  Music.current = null;
   G.playerAlive = false;
   G.playerVisible = false;
   G.state = 'DEFEAT';
@@ -691,6 +712,7 @@ function enemyKilled(e){
   explode(e.x, e.y, G.cfg.tint, e.kind === 'bomber' ? 26 : 14, e.kind === 'bomber');
   G.shake = Math.max(G.shake, e.kind === 'bomber' ? 0.18 : 0.07);   // kill juice
   sfx('boom');
+  stageVoice('down');
   if (Math.random() < e.dropChance){
     const roll = Math.random();
     const kind = roll < 0.28 ? 'red' : (roll < 0.52 ? 'blue' : (roll < 0.68 ? 'power' :
@@ -1125,7 +1147,7 @@ function update(dt){
       if (firePressed) startPlaying();
       break;
     case 'STAGE_CLEAR':
-      if (firePressed){ G.nextStage = G.stageIndex + 1; G.state = 'MAP'; }
+      if (firePressed){ G.nextStage = G.stageIndex + 1; G.state = 'MAP'; music('main'); }
       break;
     case 'VICTORY':
       if (firePressed){ startEnterScore(); }
@@ -1162,12 +1184,13 @@ function update(dt){
       } else if (!G.bossActive){
         if (G.stageScore >= bossThreshold(G.cfg)) startBossIntro();   // BATTLE MATH #4: 1.6x longer stages
         else {
+          if (KA && KA.playing === G.cfg.stage) KA.setLayer(stageLayer());
           G.spawnTimer -= dt;
           if (G.spawnTimer <= 0){ spawnEnemy(); G.spawnTimer = G.cfg.spawn_interval; }
           G.waveTimer -= dt;
-          if (G.waveTimer <= 0){ spawnScoutWave(); G.waveTimer = 6.5 + Math.random()*2; }
+          if (G.waveTimer <= 0){ spawnScoutWave(); G.waveTimer = 6.5 + Math.random()*2; stageVoice('wave'); }
           G.bomberTimer -= dt;
-          if (G.bomberTimer <= 0){ spawnBomberWave(); G.bomberTimer = 10 + Math.random()*3; }
+          if (G.bomberTimer <= 0){ spawnBomberWave(); G.bomberTimer = 10 + Math.random()*3; stageVoice('wave'); }
         }
       }
       break;
@@ -2094,7 +2117,7 @@ if (!IS_BROWSER && typeof module !== 'undefined' && module.exports){
   module.exports = { G, input, update, resetGame, beginStage, startPlaying, launchCampaign,
     bossTakeDamage, playerTakeDamage, spawnEnemy, spawnEnemyAt, spawnScoutWave, spawnBomberWave,
     useBomb, collectPowerup, goToTitle, goToHangar, startSwarm, startEnterScore, commitScore,
-    loadScores, bossThreshold, SUNDER_CONFIG, INTERLUDES, LB_CHARS, SVGS, SHIPS, STAGES, W, H };
+    loadScores, bossThreshold, stageLayer, SUNDER_CONFIG, INTERLUDES, LB_CHARS, SVGS, SHIPS, STAGES, W, H };
 }
 </script>
 </body>

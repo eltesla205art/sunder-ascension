@@ -17,6 +17,27 @@ let passed = 0;
 function test(name, fn){ fn(); passed++; console.log('ok  -', name); }
 function run(sec){ for (let i = 0; i < sec * 60; i++) g.update(1/60); }
 
+// a strict stand-in for AudioContext: records every node and rejects values a browser would reject
+function fakeAudio(){
+  const bad = [];
+  let sources = 0;
+  const param = (name, v = 0) => ({ value: v,
+    setValueAtTime(x, t){ if (!isFinite(x) || !(t >= 0)) bad.push(name + ' set ' + x + '@' + t); },
+    linearRampToValueAtTime(x, t){ if (!isFinite(x) || !(t >= 0)) bad.push(name + ' lin ' + x); },
+    exponentialRampToValueAtTime(x, t){ if (!(x > 0) || !isFinite(x) || !(t >= 0)) bad.push(name + ' exp ' + x); },
+    cancelScheduledValues(){} });
+  const node = extra => Object.assign({ connect(){}, start(t){ sources++; if (!(t >= 0)) bad.push('start ' + t); },
+    stop(t){ if (!(t >= 0)) bad.push('stop ' + t); } }, extra);
+  const ctx = { currentTime: 0, sampleRate: 44100, destination: {},
+    createGain: () => node({ gain: param('gain', 1) }),
+    createOscillator: () => node({ type: 'sine', frequency: param('freq', 440) }),
+    createBufferSource: () => node({}),
+    createBiquadFilter: () => node({ type: 'lowpass', Q: param('Q'), frequency: param('filter') }),
+    createDynamicsCompressor: () => node({ threshold: param('th'), knee: param('kn'), ratio: param('ra'), attack: param('at'), release: param('re') }),
+    createBuffer: (c, n) => ({ getChannelData: () => new Float32Array(n) }) };
+  return { ctx, bad, count: () => sources };
+}
+
 test('12 Hours, 4 acts, numbered 1..12', () => {
   assert.strictEqual(STAGES.length, 12);
   STAGES.forEach((s, i) => assert.strictEqual(s.num, i + 1));
@@ -146,22 +167,7 @@ test('every Keeper has a Blender animation sheet of whole frames', () => {
 
 test('every Keeper has its own theme and voice, and they synthesise cleanly', () => {
   const KAU = require('./keeper_audio.js');
-  // a strict stand-in for AudioContext: records every node and rejects values a browser would reject
-  const bad = [];
-  let sources = 0;
-  const param = (name, v = 0) => ({ value: v,
-    setValueAtTime(x, t){ if (!isFinite(x) || !(t >= 0)) bad.push(name + ' set ' + x + '@' + t); },
-    linearRampToValueAtTime(x, t){ if (!isFinite(x) || !(t >= 0)) bad.push(name + ' lin ' + x); },
-    exponentialRampToValueAtTime(x, t){ if (!(x > 0) || !isFinite(x) || !(t >= 0)) bad.push(name + ' exp ' + x); },
-    cancelScheduledValues(){} });
-  const node = extra => Object.assign({ connect(){}, start(t){ sources++; if (!(t >= 0)) bad.push('start ' + t); }, stop(){} }, extra);
-  const ctx = { currentTime: 0, sampleRate: 44100, destination: {},
-    createGain: () => node({ gain: param('gain', 1) }),
-    createOscillator: () => node({ type: 'sine', frequency: param('freq', 440) }),
-    createBufferSource: () => node({}),
-    createBiquadFilter: () => node({ type: 'lowpass', Q: param('Q'), frequency: param('filter') }),
-    createDynamicsCompressor: () => node({ threshold: param('th'), knee: param('kn'), ratio: param('ra'), attack: param('at'), release: param('re') }),
-    createBuffer: (c, n) => ({ getChannelData: () => new Float32Array(n) }) };
+  const { ctx, bad, count } = fakeAudio();
   const e = KAU.createEngine(ctx, ctx.destination);
   const ids = [...new Set(STAGES.map(st => st.art.replace(/^keeper_/, '')))];
   assert.strictEqual(ids.length, 12, 'twelve Keepers');
@@ -180,10 +186,38 @@ test('every Keeper has its own theme and voice, and they synthesise cleanly', ()
   const themes = Object.values(KAU.COMPILED).map(th => th.lead.join(','));
   assert.strictEqual(new Set(themes).size, themes.length, 'two Keepers share a melody');
   assert.deepStrictEqual(bad.slice(0, 5), [], 'invalid audio values');
-  assert(sources > 2000, 'only ' + sources + ' sounds scheduled');
+  assert(count() > 2000, 'only ' + count() + ' sounds scheduled');
   // and the game calls each cue at its moment, and the Keeper's theme at the boss intro
   for (const cue of KAU.CUES) assert(new RegExp("keeperVoice\\('" + cue + "'\\)").test(src), 'game never plays ' + cue);
   assert(/music\('keeper_' \+ keeperId\(\)\)/.test(src) && /<script src="keeper_audio.js"><\/script>/.test(html));
+});
+
+test('every Hour has its own theme, ambience and stage cues, and they synthesise cleanly', () => {
+  const KAU = require('./stage_audio.js');
+  const { ctx, bad, count } = fakeAudio();
+  const e = KAU.createEngine(ctx, ctx.destination);
+  const ids = STAGES.map(st => st.stage);
+  assert.strictEqual(new Set(ids).size, 12);
+  for (const id of ids){
+    assert(e.hasTheme(id) && e.hasAmbience(id), id + ' has no theme or ambience');
+    for (const lvl of [1, 2, 3]) assert(e.scheduleTheme(id, 8, lvl) > 20, id + ' theme');
+    assert(e.scheduleAmbience(id, 30), id + ' ambience');
+    for (const cue of KAU.STAGE_CUES){ ctx.currentTime += 2; assert(e.voice(id, cue), id + ' ' + cue); }
+  }
+  // live ambience: one at a time, replaced and stopped cleanly
+  e.startAmbience(ids[0]); assert.strictEqual(e.ambient, ids[0]);
+  e.startAmbience(ids[1]); assert.strictEqual(e.ambient, ids[1]);
+  e.stopAmbience(); assert.strictEqual(e.ambient, null);
+  const leads = Object.values(KAU.COMPILED).map(th => th.lead.join(','));
+  assert.strictEqual(new Set(leads).size, leads.length, 'two themes share a melody');
+  assert.deepStrictEqual(bad.slice(0, 5), [], 'invalid audio values');
+  assert(count() > 2000, 'only ' + count() + ' stage sounds scheduled');
+  for (const cue of KAU.STAGE_CUES) assert(new RegExp("stageVoice\\('" + cue + "'\\)").test(src), 'game never plays ' + cue);
+  assert(/KA\.startAmbience\(G\.cfg\.stage\)/.test(src) && /<script src="stage_audio.js"><\/script>/.test(html));
+  // stage layers climb in thirds toward the Keeper
+  G.shipIndex = 0; g.launchCampaign(); g.beginStage(0); g.startPlaying();
+  const layers = [0, 0.34, 0.67, 0.99].map(f => { G.stageScore = Math.floor(f * g.bossThreshold(G.cfg)); return g.stageLayer(); });
+  assert.deepStrictEqual(layers, [1, 2, 3, 3]);
 });
 
 test('sequel never talks to the Part 1 leaderboard', () => {
