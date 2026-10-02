@@ -41,6 +41,10 @@ header .act{font:500 11px/1 var(--head);letter-spacing:.24em;color:var(--muted)}
 #cards button.act-start{margin-left:18px;position:relative}
 #cards button.act-start::before{content:'';position:absolute;left:-17px;top:12%;bottom:12%;border-left:1px solid var(--gold-soft)}
 #hint{position:fixed;right:16px;top:calc(max(16px,env(safe-area-inset-top)) + 22px);font:500 10px/1.6 var(--head);letter-spacing:.18em;color:var(--muted);text-align:right;pointer-events:none}
+#sound{all:unset;position:fixed;right:16px;top:calc(max(16px,env(safe-area-inset-top)) + 46px);cursor:pointer;padding:7px 12px;
+  font:600 10px/1 var(--head);letter-spacing:.2em;color:var(--muted);border:var(--hair);border-radius:999px;background:var(--glass);backdrop-filter:blur(8px)}
+#sound[aria-pressed="true"]{color:var(--cyan);border-color:var(--cyan);box-shadow:0 0 18px rgba(140,217,255,.3)}
+#sound:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 #loading{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);font:500 12px var(--head);letter-spacing:.3em;color:var(--muted)}
 @media (max-width:760px){
   #info{top:auto;left:16px;right:16px;width:auto;bottom:154px;padding:14px 16px}
@@ -48,8 +52,10 @@ header .act{font:500 11px/1 var(--head);letter-spacing:.24em;color:var(--muted)}
   #cards{gap:8px;left:0;right:0;transform:none;overflow-x:auto;padding:10px 16px 4px;scroll-snap-type:x mandatory;scrollbar-width:none}
   #cards button{flex:0 0 84px;width:84px;padding:6px;scroll-snap-align:center} #hint{display:none}
   header .act{display:none}
+  #sound{top:calc(max(16px,env(safe-area-inset-top)) + 26px)}
 }
 </style>
+<script src="./keeper_audio.js"></script>
 <script type="importmap">
 { "imports": { "three": "./vendor/three/build/three.module.min.js", "three/addons/": "./vendor/three/examples/jsm/" } }
 </script>
@@ -66,7 +72,8 @@ header .act{font:500 11px/1 var(--head);letter-spacing:.24em;color:var(--muted)}
   <dl><dt>HULL</dt><dd id="k-hull"></dd><dt>ATTACKS</dt><dd id="k-patterns"></dd><dt>ARENA</dt><dd id="k-arena"></dd></dl>
 </section>
 <nav id="cards" role="tablist" aria-label="Choose a Keeper"></nav>
-<div id="hint">← → CHOOSE · DRAG TO ORBIT · SCROLL TO ZOOM</div>
+<div id="hint">← → CHOOSE · DRAG TO ORBIT · SCROLL TO ZOOM · S SOUND</div>
+<button id="sound" aria-pressed="false" title="Each Keeper's battle theme and voice (S)">♪ SOUND OFF</button>
 <div id="loading">SUMMONING…</div>
 
 <script type="module">
@@ -297,6 +304,7 @@ async function show(i){
   if (current !== i) return;
   holder.clear(); holder.add(p.group); emissive = p.glows; mixer = p.mixer; swapT = 0;
   practical.color.setHex(k.id === 'wepwawet' ? 0xff3fa4 : k.accent);
+  keeperSound(k.id);
   $('loading').style.display = 'none';
 }
 
@@ -309,7 +317,29 @@ KEEPERS.forEach((k, i) => {
   if (i > 0 && KEEPERS[i - 1].act !== k.act) b.classList.add('act-start');
   cards.appendChild(b);
 });
+// ---------------------------------------------------------------- sound: the Keeper's theme and voice (keeper_audio.js)
+let audio = null, soundOn = false;
+function keeperSound(id){
+  if (!soundOn || !audio) return;
+  audio.startTheme(id, 2);
+  audio.voice(id.replace(/_p3$/, ''), 'intro');
+}
+function setSound(on){
+  soundOn = on;
+  if (on && !audio && window.KeeperAudio){
+    try { const ac = new (window.AudioContext || window.webkitAudioContext)(); audio = window.KeeperAudio.createEngine(ac, ac.destination); audio.ctx = ac; }
+    catch (e) { soundOn = false; }
+  }
+  const b = $('sound');
+  b.setAttribute('aria-pressed', String(soundOn)); b.textContent = soundOn ? '♪ SOUND ON' : '♪ SOUND OFF';
+  if (!audio) return;
+  if (soundOn){ audio.ctx.resume(); if (current >= 0) keeperSound(KEEPERS[current].id); }
+  else audio.stopTheme();
+}
+$('sound').addEventListener('click', () => setSound(!soundOn));
+
 addEventListener('keydown', e => {
+  if (e.key === 's' || e.key === 'S') setSound(!soundOn);
   if (e.key === 'ArrowRight') show(current + 1);
   if (e.key === 'ArrowLeft') show(current - 1);
 });
@@ -346,7 +376,7 @@ function frame(){
   const info = renderer.info;
   window.__THREE_GAME_DIAGNOSTICS__ = { renderer: { calls: info.render.calls, triangles: info.render.triangles,
     geometries: info.memory.geometries, textures: info.memory.textures, postPasses: 1, dpr: renderer.getPixelRatio() },
-    keeper: KEEPERS[current]?.id ?? null,
+    keeper: KEEPERS[current]?.id ?? null, sound: { on: soundOn, theme: audio ? audio.playing : null },
     animation: mixer ? { clips: mixer._actions.length, duration: mixer._actions[0].getClip().duration, time: mixer.time } : null };
   requestAnimationFrame(frame);
 }

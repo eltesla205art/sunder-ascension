@@ -8,6 +8,7 @@ original *SUNDER: Ascension — The Nine Bows* (`web/`, `godot/`, `docs/`), whic
 | `DESIGN.md` | Storyline, gameplay ideas, PS5-style UI direction, prompt pack |
 | `web/game.html` | The sequel build: open it in a browser (it loads its art from `web/assets/`) |
 | `web/assets/` | The game's 56 images as WebP: title, hangar, ships, Keeper sprites, animation sheets and portraits, stage backdrops |
+| `web/keeper_audio.js` | Every Keeper's battle theme and voice, synthesised live with Web Audio (shared by the game and the Codex) |
 | `web/keepers.html` | Keeper Codex: real-time Three.js viewer of the Keeper models (serve the `web/` folder over HTTP; three.js is self-hosted in `web/vendor/three`, MIT) |
 | `web/models/` | Keeper GLB models exported from Blender, each with its animation loop baked in, plus portrait thumbnails |
 | `web/test_sunder2.js` | Headless test of the 12-Hour campaign against the battle-math law: `node web/test_sunder2.js` |
@@ -35,6 +36,12 @@ original *SUNDER: Ascension — The Nine Bows* (`web/`, `godot/`, `docs/`), whic
   Sobek's tail waves, UMBRA's drones orbit, Nun's spires turn, Sokar beats its wings, the Seraphs sway in their flames,
   the Hittite rotors spin, Ammit's scales rock, the Overlord's armour orbits, UMBRA's mask peels, Apep's coils ripple).
   The Keeper Codex plays the same loops on the 3D models.
+- **Keeper sound:** each Keeper has its own battle theme that builds with its phase (bass and lead, then drums,
+  then the lead doubled), and its own voice: an intro roar, an attack cue, a phase stinger, a hurt sound and a death cry.
+  UMBRA plays the hero's theme upside down, UMBRA Unmasked plays it straight, the Overlord's Echo echoes Part 1's boss
+  theme, and Apep gets a new theme for its final phase. All synthesised in `web/keeper_audio.js`, so there are no audio
+  files; M still mutes the music. The Codex has a SOUND toggle (S) that plays each Keeper's theme and intro.
+  Listening previews (15 s each): `artifacts/keeper-audio/*.webm`.
   Kling reveal clips (5 s each, job IDs in `artifacts/game-progress.md`) bring each Keeper to life for trailers.
 - **Stage backdrops for all twelve Hours:** scrolling Blender tiles (`blender/stages.py`) behind play, one per arena.
   Kling stage concepts can be folded in as ground textures (save as `art/kling/stage_<id>.png`, re-run the script).
@@ -58,7 +65,7 @@ To view the Keeper Codex locally: `cd web && python3 -m http.server 5188`, then 
 The game loads compressed WebP copies of these renders from `web/assets/` (same name as the art key, e.g.
 `keeper_nun.webp`, `stage_delta.webp`). After re-rendering, re-encode to WebP and replace the file there.
 
-**Shipping:** upload the whole `web/` folder — `game.html` and `assets/` must stay side by side.
+**Shipping:** upload the whole `web/` folder — `game.html`, `keeper_audio.js` and `assets/` must stay side by side.
 The page shows SVG fallbacks for any image that hasn't arrived yet, so a slow connection never blocks play.
 
 Kling subject for the Mk II: **Scarab Warbringer Mk II**, id `322794480306968`.

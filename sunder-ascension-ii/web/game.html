@@ -17,6 +17,7 @@
   <canvas id="game" width="480" height="720"></canvas>
   <div id="foot">WASD/ARROWS move · SPACE fire · X bomb · P pause · M music · touch: drag to fly, tap ☥ bomb, tap ⏸ pause</div>
 </div>
+<script src="keeper_audio.js"></script>
 <script>
 'use strict';
 const IS_BROWSER = (typeof window !== 'undefined');
@@ -456,6 +457,18 @@ const MUSIC_PATTERNS = {
 const Music = { current: null, timer: null, step: 0, nextT: 0 };
 function music(kind){
   if (!IS_BROWSER || musicMuted) { Music.current = kind; return; }
+  const k = keeperAudio();
+  if (kind.startsWith('keeper_')){                      // a Keeper's own battle theme (keeper_audio.js)
+    const id = kind.slice(7);
+    if (k && k.hasTheme(id)){
+      if (Music.current === kind && k.playing === id) return;
+      stopMusicTimer(); Music.current = kind;
+      k.startTheme(id, G.boss ? G.boss.phase : 1);
+      return;
+    }
+    kind = 'boss';
+  }
+  if (k) k.stopTheme();
   if (Music.current === kind && Music.timer) return;
   Music.current = kind;
   const a = ac(); if (!a) return;
@@ -490,8 +503,24 @@ function scheduleNote(a, midi, t, dur, type, vol){
 function stopMusicTimer(){ if (Music.timer){ clearInterval(Music.timer); Music.timer = null; } }
 function toggleMute(){
   musicMuted = !musicMuted;
-  if (musicMuted) stopMusicTimer();
+  if (musicMuted){ stopMusicTimer(); if (KA) KA.stopTheme(); }
   else { const cur = Music.current; Music.current = null; music(cur || 'main'); }
+}
+
+/* Keeper audio (keeper_audio.js): every Keeper has its own battle theme, which builds with its phase,
+   and its own voice: intro, attack, phase change, hurt and death. Not used in swarm mode (no Keepers). */
+let KA = null;
+function keeperAudio(){
+  if (!IS_BROWSER || typeof KeeperAudio === 'undefined') return null;
+  if (!KA){ const a = ac(); if (!a) return null; KA = KeeperAudio.createEngine(a, a.destination); }
+  return KA;
+}
+function keeperId(){ return G.cfg && G.cfg.art ? G.cfg.art.replace(/^keeper_/, '') : ''; }
+function keeperVoice(cue){
+  if (!IS_BROWSER || !sfxOn || G.mode === 'swarm') return;
+  const k = keeperAudio(); if (!k) return;
+  if (AC.state === 'suspended') AC.resume();
+  k.voice(keeperId(), cue);
 }
 
 /* ============================== PARTICLES ============================== */
@@ -556,7 +585,8 @@ function startBossIntro(){
   G.enemies.length = 0;
   G.banner = G.cfg.boss_name + '\n\n' + (BOSS_LINES[G.cfg.num] || '');
   G.bannerVisible = true;
-  music('boss');
+  music('keeper_' + keeperId());
+  keeperVoice('intro');
 }
 function spawnBossNow(){
   if (G.state !== 'BOSS_INTRO') return;
@@ -578,6 +608,7 @@ function onBossDefeated(){
   explode(b.x, b.y, '#FFD54A', 80, true);
   explode(b.x, b.y, G.cfg.tint, 60, true);
   G.shake = 0.6;
+  keeperVoice('death');
   sfx('bigboom');
   G.boss = null;
   G.bossActive = false;
@@ -611,6 +642,7 @@ function onPlayerDied(){
   explode(G.player.x, G.player.y, '#FFD54A', 50, true);
   G.shake = 0.5;
   sfx('bigboom');
+  if (G.bossActive){ keeperVoice('phase'); if (KA) KA.stopTheme(); Music.current = null; }   // the Keeper gloats; silence
   G.playerAlive = false;
   G.playerVisible = false;
   G.state = 'DEFEAT';
@@ -854,6 +886,7 @@ function bossSpawnBullet(x, y, vx, vy){
   G.eBullets.push({ x, y, vx, vy, r: 6, dmg: (G.mode !== 'swarm' && G.cfg.num >= 7) ? 2 : 1 });
 }
 function bossFirePattern(b){
+  keeperVoice('attack');
   const spawn = (vx, vy) => bossSpawnBullet(b.x, b.y+20, vx, vy);
   const pat = b.patterns.length ? b.patterns[b.patternIdx % b.patterns.length] : 'radial_burst';
   const s = b.bulletSpeed;
@@ -928,6 +961,7 @@ function bossTakeDamage(dmg){
   if (!b || b.entering) return;
   b.hp -= dmg;
   b.flash = 0.1;
+  keeperVoice('hurt');
   if (b.hp <= 0) onBossDefeated();
 }
 function updateBoss(dt){
@@ -942,6 +976,14 @@ function updateBoss(dt){
   }
   const pct = b.hp / b.maxHp;
   b.phase = pct <= 0.33 ? 3 : (pct <= 0.66 ? 2 : 1);
+  if (b.phase !== b.lastPhase){                 // the Keeper's theme builds with each phase; Apep's has a final form
+    if (b.lastPhase && b.phase > b.lastPhase){
+      keeperVoice('phase');
+      if (b.phase === 3 && KA && KA.hasTheme(keeperId() + '_p3')) music('keeper_' + keeperId() + '_p3');
+    }
+    b.lastPhase = b.phase;
+    if (KA) KA.setLayer(b.phase);
+  }
   const sp = b.moveSpeed + b.phase*25;
   // phase 3: rapid-dash strafing (Cosmic Strike boss PHASE_TWO behavior)
   const dashMult = b.phase === 3 ? 1 + Math.abs(Math.cos(b.time*5)) * 1.2 : 1;

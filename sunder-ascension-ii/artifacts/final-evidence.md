@@ -175,3 +175,23 @@ SUNDER II are the 2D game captures in `act1-bosses/` … `act4-bosses/`.
 - Motion check (`keepers-codex-animated/`, `report.json`): each Keeper posed at loop time 0 and 0.375 s from the same paused
   camera; the frame changes on all 13 (0.4 % of pixels for the Hittite wheels, whose six spokes nearly repeat, up to
   9.8 % for Apep's coils), one 1 s clip each, no console or page errors.
+
+## Keeper sound (`web/keeper_audio.js`)
+- One shared module, synthesised live with Web Audio like the rest of the game's sound (no files): 13 themes (12 Keepers +
+  Apep's final phase) and five voice cues for each of the 12 Keepers, 60 in all. Themes are written in scale degrees in
+  each Keeper's mode (Phrygian dominant for the desert of Act I, Dorian for Nun's deep, locrian for Apep, ...); UMBRA plays
+  the hero's Part 1 theme inverted, UMBRA Unmasked plays it as written, and the Overlord's Echo quotes Part 1's boss
+  theme with an echo. Each theme builds with the boss phase: bass, lead and kick; + snare and hats; + the lead doubled
+  an octave up and double-time hats. Voices duck the music while they speak; attack and hurt cues are rate-limited.
+- Game: the boss intro starts the Keeper's theme and its intro voice; firing plays its attack cue, damage its hurt cue,
+  each phase change its stinger (and Apep switches to its final-phase theme); the death cry plays as it falls. If the
+  player dies mid-fight the Keeper gloats and its theme stops. Swarm mode (no Keepers) keeps its old music.
+- Codex: a SOUND toggle (button or S, off by default because browsers block autoplay) plays each Keeper's theme and intro.
+- `test_sunder2.js` 11/11 — new check runs every theme at every layer and every voice against a strict stand-in
+  AudioContext (no NaN, no exponential ramp to 0, which browsers reject), checks melodies are all distinct, the attack
+  cue rate limit, and that the game calls every cue.
+- Chromium: each Keeper rendered offline as a 15 s battle in miniature (intro, theme through phases 1-3, attacks, hurts,
+  phase stingers, death). No clipping on any; peaks −5 to −10 dBFS, levels −24 to −34 dB RMS (Apep loudest, by design).
+  Recorded as Opus previews in `artifacts/keeper-audio/` (`report.json` has per-second levels). Live game: the right theme
+  plays from each boss intro (Hours 1, 7, 12 checked), Apep switches to `apep_p3` in its final phase, the theme stops on
+  defeat and hands over to the stage-clear / victory music; Codex toggle on/off works; no page or console errors.
