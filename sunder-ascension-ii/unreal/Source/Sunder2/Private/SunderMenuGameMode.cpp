@@ -4,16 +4,15 @@
 #include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundBase.h"
-#include "SunderMenuController.h"
+#include "Engine/GameInstance.h"
 #include "SunderMenuHUD.h"
 #include "SunderMusicSubsystem.h"
 #include "SunderStageAudio.h"
+#include "SunderStorySubsystem.h"
 #include "TimerManager.h"
 
 ASunderMenuGameMode::ASunderMenuGameMode()
 {
-	DefaultPawnClass = nullptr;
-	PlayerControllerClass = ASunderMenuController::StaticClass();
 	HUDClass = ASunderMenuHUD::StaticClass();
 }
 
@@ -23,40 +22,25 @@ void ASunderMenuGameMode::BeginPlay()
 	EnterTitle();
 }
 
-float ASunderMenuGameMode::GetScreenTime() const
-{
-	return GetWorld()->GetTimeSeconds() - ScreenOpenedAt;
-}
-
 void ASunderMenuGameMode::EnterTitle()
 {
 	Screen = ESunderMenuScreen::Title;
-	ScreenOpenedAt = GetWorld()->GetTimeSeconds();
-	if (USunderMusicSubsystem* Music = GetWorld()->GetSubsystem<USunderMusicSubsystem>())
+	MarkScreenOpened();
+	if (USunderMusicSubsystem* M = Music())
 	{
-		Music->SetStage(TitleAudio);                         // wind at the gate, the portal's hum, drifting embers
-		Music->PlayStageMusic(MusicLayer);
+		M->SetStage(TitleAudio);                             // wind at the gate, the portal's hum, drifting embers
+		M->PlayStageMusic(MusicLayer);
 	}
 }
 
 void ASunderMenuGameMode::EnterHangar()
 {
 	Screen = ESunderMenuScreen::Hangar;
-	ScreenOpenedAt = GetWorld()->GetTimeSeconds();
-	if (USunderMusicSubsystem* Music = GetWorld()->GetSubsystem<USunderMusicSubsystem>())
+	MarkScreenOpened();
+	if (USunderMusicSubsystem* M = Music())
 	{
-		Music->SetStage(HangarAudio);                        // machinery, vents, clanks, the base PA
-		Music->PlayStageMusic(MusicLayer);
-	}
-}
-
-void ASunderMenuGameMode::PlayCue(USoundBase* Sound, bool bDuck)
-{
-	if (!Sound) { return; }
-	UGameplayStatics::PlaySound2D(this, Sound);
-	if (bDuck)
-	{
-		if (USunderMusicSubsystem* Music = GetWorld()->GetSubsystem<USunderMusicSubsystem>()) { Music->Duck(Sound->GetDuration() * 0.7f); }
+		M->SetStage(HangarAudio);                            // machinery, vents, clanks, the base PA
+		M->PlayStageMusic(MusicLayer);
 	}
 }
 
@@ -82,14 +66,14 @@ void ASunderMenuGameMode::Confirm()
 		break;
 	case ESunderMenuScreen::Hangar:
 		Screen = ESunderMenuScreen::Launching;
-		ScreenOpenedAt = GetWorld()->GetTimeSeconds();
+		MarkScreenOpened();
 		PlayCue(LaunchSound, true);
 		GetWorldTimerManager().ClearTimer(RevTimer);
 		PlayRev();
-		if (USunderMusicSubsystem* Music = GetWorld()->GetSubsystem<USunderMusicSubsystem>())
+		if (USunderMusicSubsystem* M = Music())
 		{
-			Music->StopMusic(LaunchDelay);
-			Music->SetStage(nullptr);                        // the hangar falls quiet behind you
+			M->StopMusic(LaunchDelay);
+			M->SetStage(nullptr);                            // the hangar falls quiet behind you
 		}
 		GetWorldTimerManager().SetTimer(LaunchTimer, this, &ASunderMenuGameMode::OpenArena, FMath::Max(LaunchDelay, 0.01f), false);
 		break;
@@ -104,6 +88,12 @@ void ASunderMenuGameMode::Back()
 	PlayCue(BackSound, false);
 	GetWorldTimerManager().ClearTimer(RevTimer);
 	EnterTitle();
+}
+
+void ASunderMenuGameMode::Navigate(int32 X, int32 Y)
+{
+	if (X != 0) { MoveShip(X); }
+	if (Y != 0) { ToggleMode(); }
 }
 
 void ASunderMenuGameMode::MoveShip(int32 Direction)
@@ -130,5 +120,13 @@ void ASunderMenuGameMode::OpenArena()
 {
 	const FString Ship = Ships.IsValidIndex(ShipIndex) ? Ships[ShipIndex].Id : TEXT("sunborn");
 	const FString Options = FString::Printf(TEXT("Ship=%s?Mode=%s"), *Ship, ModeIndex == 1 ? TEXT("Swarm") : TEXT("Story"));
+	USunderStorySubsystem* Story = GetGameInstance() ? GetGameInstance()->GetSubsystem<USunderStorySubsystem>() : nullptr;
+	if (ModeIndex == 0 && !StoryLevel.IsNone() && StoryData && Story)
+	{
+		Story->StartCampaign(StoryData);                     // the opening crawl, then the hour map
+		UGameplayStatics::OpenLevel(this, StoryLevel, /*bAbsolute*/ true, Options);
+		return;
+	}
+	if (Story) { Story->EndCampaign(); }                     // Swarm: the arena on its own wave set, looping
 	UGameplayStatics::OpenLevel(this, ArenaLevel, /*bAbsolute*/ true, Options);
 }

@@ -2,12 +2,13 @@
 // unreal/Tools/render_web_audio.cjs): the title's slow hero theme over the wind at the crystal gate, the hangar's
 // groove over machinery and the base PA, the interface cues, and each ship's engine revving when you pick it and when
 // you launch. Title → (Start) → Hangar: choose a ship and Story / Swarm → (Launch) → the arena level.
+// Story mode opens the story level (the opening crawl and the hour map) when StoryLevel is set; Swarm flies the arena.
 // BP_SunderMenuGameMode and L_SunderTitle are made by create_menu_level.py. Input: SunderMenuController; drawing:
 // SunderMenuHUD.
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/GameModeBase.h"
+#include "SunderFrontEndGameMode.h"
 #include "SunderMenuGameMode.generated.h"
 
 class USoundBase;
@@ -49,7 +50,7 @@ struct FSunderMenuShip
 };
 
 UCLASS()
-class SUNDER2_API ASunderMenuGameMode : public AGameModeBase
+class SUNDER2_API ASunderMenuGameMode : public ASunderFrontEndGameMode
 {
 	GENERATED_BODY()
 
@@ -97,13 +98,21 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Menu")
 	FName ArenaLevel = TEXT("L_SunderArena");
 
+	/** Story mode launches into this level (L_SunderStory: the opening crawl, then the hour map); None = the arena. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Menu")
+	FName StoryLevel;
+
+	/** The story's words, music and Hours, for starting a campaign (DA_StoryData). */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Menu")
+	TObjectPtr<class USunderStoryData> StoryData;
+
 	/** Seconds from Launch to the level opening (the launch roar plays out). */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Menu")
 	float LaunchDelay = 1.8f;
 
-	// ---- called by SunderMenuController
-	void Confirm();
-	void Back();
+	virtual void Confirm() override;
+	virtual void Back() override;
+	virtual void Navigate(int32 X, int32 Y) override;
 	void MoveShip(int32 Direction);
 	void ToggleMode();
 
@@ -111,19 +120,12 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Menu") int32 GetShipIndex() const { return ShipIndex; }
 	/** 0 = Story, 1 = Swarm. */
 	UFUNCTION(BlueprintPure, Category = "Menu") int32 GetModeIndex() const { return ModeIndex; }
-	/** Seconds since the current screen opened (for fades). */
-	UFUNCTION(BlueprintPure, Category = "Menu") float GetScreenTime() const;
-
-	/** No pawn on the menus: the controller and HUD are all there is. */
-	virtual void RestartPlayer(AController* NewPlayer) override {}
-
 protected:
 	virtual void BeginPlay() override;
 
 private:
 	void EnterTitle();
 	void EnterHangar();
-	void PlayCue(USoundBase* Sound, bool bDuck);
 	void QueueRev(float Delay);
 	void PlayRev();
 	void OpenArena();
@@ -131,7 +133,6 @@ private:
 	ESunderMenuScreen Screen = ESunderMenuScreen::Title;
 	int32 ShipIndex = 0;
 	int32 ModeIndex = 0;
-	float ScreenOpenedAt = 0.f;
 	float LastMoveCue = -100.f;
 	FTimerHandle RevTimer;
 	FTimerHandle LaunchTimer;

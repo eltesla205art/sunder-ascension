@@ -27,7 +27,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sunder")
 	float RestartDelay = 4.f;
 
-	/** After DAWN DENIED, go to this level (the title screen, L_SunderTitle) instead of restarting the arena; None = restart. */
+	/** After DAWN DENIED, go to this level (the title screen, L_SunderTitle) instead of restarting the arena; None = restart.
+	 *  In story mode, DAWN DENIED always goes to the story level instead. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Sunder")
 	FName MenuLevel;
 

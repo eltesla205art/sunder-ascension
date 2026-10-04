@@ -6,6 +6,9 @@
 #include "SunderHUD.h"
 #include "SunderKeeper.h"
 #include "SunderShipPawn.h"
+#include "Engine/GameInstance.h"
+#include "SunderMusicSubsystem.h"
+#include "SunderStorySubsystem.h"
 #include "TimerManager.h"
 
 ASunderGameMode::ASunderGameMode()
@@ -71,5 +74,13 @@ void ASunderGameMode::OnShipDestroyed(ASunderShipPawn* Ship)
 
 void ASunderGameMode::RestartArena()
 {
+	USunderStorySubsystem* Story = GetGameInstance() ? GetGameInstance()->GetSubsystem<USunderStorySubsystem>() : nullptr;
+	if (Story && Story->IsActive())
+	{
+		// DAWN DENIED, in the story: its theme comes in at the weight the fight had reached.
+		const USunderMusicSubsystem* Music = GetWorld()->GetSubsystem<USunderMusicSubsystem>();
+		Story->ReportDefeat(this, Score, ActiveKeeper.IsValid() ? 3 : (Music ? Music->GetLayer() : 1));
+		return;
+	}
 	UGameplayStatics::OpenLevel(this, MenuLevel.IsNone() ? FName(*UGameplayStatics::GetCurrentLevelName(this)) : MenuLevel);
 }

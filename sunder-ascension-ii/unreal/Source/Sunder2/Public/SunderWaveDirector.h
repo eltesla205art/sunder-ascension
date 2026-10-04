@@ -38,6 +38,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Waves")
 	float StartDelay = 1.5f;
 
+	/** Story mode: seconds after the Hour's last wave (its Keeper) before the story screens open. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Waves")
+	float StoryClearDelay = 3.f;
+
 	UPROPERTY(BlueprintAssignable, Category = "Waves")
 	FSunderWaveStarted OnWaveStarted;
 
@@ -64,6 +68,9 @@ private:
 	void StartWave(int32 Index);
 	void BuildSpawns(int32 Index);
 	void PlayWaveAudio(int32 Index);
+	void ReportStoryHourCleared();
+	FTimerHandle StoryTimer;
+	bool bStoryRun = false;
 	int32 StageLayer(int32 Index) const;
 
 	UPROPERTY(Transient)

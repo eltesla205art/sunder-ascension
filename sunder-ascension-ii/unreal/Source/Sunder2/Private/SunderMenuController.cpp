@@ -7,7 +7,7 @@
 #include "Engine/World.h"
 #include "InputAction.h"
 #include "InputMappingContext.h"
-#include "SunderMenuGameMode.h"
+#include "SunderFrontEndGameMode.h"
 
 void ASunderMenuController::SetupInputComponent()
 {
@@ -50,14 +50,14 @@ void ASunderMenuController::BeginPlay()
 	SetShowMouseCursor(false);
 }
 
-ASunderMenuGameMode* ASunderMenuController::Menu() const
+ASunderFrontEndGameMode* ASunderMenuController::Screens() const
 {
-	return GetWorld() ? GetWorld()->GetAuthGameMode<ASunderMenuGameMode>() : nullptr;
+	return GetWorld() ? GetWorld()->GetAuthGameMode<ASunderFrontEndGameMode>() : nullptr;
 }
 
-void ASunderMenuController::OnUp() { if (ASunderMenuGameMode* M = Menu()) { M->ToggleMode(); } }
-void ASunderMenuController::OnDown() { if (ASunderMenuGameMode* M = Menu()) { M->ToggleMode(); } }
-void ASunderMenuController::OnLeft() { if (ASunderMenuGameMode* M = Menu()) { M->MoveShip(-1); } }
-void ASunderMenuController::OnRight() { if (ASunderMenuGameMode* M = Menu()) { M->MoveShip(1); } }
-void ASunderMenuController::OnConfirm() { if (ASunderMenuGameMode* M = Menu()) { M->Confirm(); } }
-void ASunderMenuController::OnBack() { if (ASunderMenuGameMode* M = Menu()) { M->Back(); } }
+void ASunderMenuController::OnUp() { if (ASunderFrontEndGameMode* S = Screens()) { S->Navigate(0, 1); } }
+void ASunderMenuController::OnDown() { if (ASunderFrontEndGameMode* S = Screens()) { S->Navigate(0, -1); } }
+void ASunderMenuController::OnLeft() { if (ASunderFrontEndGameMode* S = Screens()) { S->Navigate(-1, 0); } }
+void ASunderMenuController::OnRight() { if (ASunderFrontEndGameMode* S = Screens()) { S->Navigate(1, 0); } }
+void ASunderMenuController::OnConfirm() { if (ASunderFrontEndGameMode* S = Screens()) { S->Confirm(); } }
+void ASunderMenuController::OnBack() { if (ASunderFrontEndGameMode* S = Screens()) { S->Back(); } }

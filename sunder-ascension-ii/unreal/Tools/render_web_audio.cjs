@@ -1,7 +1,8 @@
-// SUNDER: Ascension II — render the web game's synthesised audio (web/keeper_audio.js, stage_audio.js, menu_audio.js) to WAV
+// SUNDER: Ascension II — render the web game's synthesised audio (web/keeper_audio.js, stage_audio.js, menu_audio.js,
+// story_audio.js) to WAV
 // for Unreal, so both versions sound the same.
 //
-//   node unreal/Tools/render_web_audio.cjs [keepers|stages|menus|all] [out_root] [gain]
+//   node unreal/Tools/render_web_audio.cjs [keepers|stages|menus|story|all] [out_root] [gain]
 //   (defaults: all, unreal/Content/Audio, 1.6; needs Playwright with Chromium: npm i -g playwright)
 //
 // keepers → Audio/Keepers: Music/MUS_Keeper_<Name>_L1..3 (each theme in three layers) and
@@ -10,6 +11,8 @@
 //           Cues/SFX_Stage_<Name>_Start/Wave/Down/Clear
 // menus   → Audio/Menus:   Music/MUS_Menu_Title|Hangar_L1..3, Ambience/AMB_Menu_Title|Hangar,
 //           Cues/SFX_Menu_Title_Start/Leaderboard, SFX_Menu_Hangar_Move/Mode/Back/Launch, SFX_Ship_<Ship>_Rev
+// story   → Audio/Story:   Music/MUS_Story_Opening|Map|Briefing|Interlude|Victory|Defeat_L1..3,
+//           Ambience/AMB_Story_Opening|Map, Cues/SFX_Story_Begin/Map/Gate/Briefing/Interlude/Dawn/Denied
 // Music loops are exactly one loop, cut from the second pass of two so notes ringing over the loop point are already
 // at its start: seamless, and the three layers of a theme are the same length so they play in step and crossfade.
 // Ambience is a 24 s loop (22.05 kHz) of the beds and their scattered events, its seam hidden with an equal-power
@@ -33,9 +36,10 @@ const WEB = path.join(HERE, '..', '..', 'web');
 const ENGINE = fs.readFileSync(path.join(WEB, 'keeper_audio.js'), 'utf8');
 const STAGES = fs.readFileSync(path.join(WEB, 'stage_audio.js'), 'utf8');
 const MENUS = fs.readFileSync(path.join(WEB, 'menu_audio.js'), 'utf8');
-if (!['keepers', 'stages', 'menus', 'all'].includes(PACK)) { console.error('pack must be keepers, stages, menus or all'); process.exit(2); }
+const STORY = fs.readFileSync(path.join(WEB, 'story_audio.js'), 'utf8');
+if (!['keepers', 'stages', 'menus', 'story', 'all'].includes(PACK)) { console.error('pack must be keepers, stages, menus, story or all'); process.exit(2); }
 
-const camel = id => id.replace(/^(stage|menu|ship)_/, '').split('_').map(p => p[0].toUpperCase() + p.slice(1)).join('');
+const camel = id => id === 'story' ? '' : id.replace(/^(stage|menu|ship|story)_/, '').split('_').map(p => p[0].toUpperCase() + p.slice(1)).join('');
 
 function wav(samples, rate){
   const data = Buffer.alloc(samples.length * 2);
@@ -58,12 +62,14 @@ function wav(samples, rate){
   await page.addScriptTag({ content: ENGINE });
   await page.addScriptTag({ content: STAGES });
   await page.addScriptTag({ content: MENUS });
+  await page.addScriptTag({ content: STORY });
 
   const plan = await page.evaluate(({ ambLoop }) => {
     const K = window.KeeperAudio;
     const gcd = (a, b) => b ? gcd(b, a % b) : a, lcm = (a, b) => a * b / gcd(a, b);
     // every id belongs to one pack: stage_*, menu_* / ship_*, or a Keeper
-    const packOf = id => /^stage_/.test(id) ? 'stages' : /^(menu|ship)_/.test(id) ? 'menus' : 'keepers';
+    const packOf = id => /^stage_/.test(id) ? 'stages' : /^(menu|ship)_/.test(id) ? 'menus'
+      : /^story(_|$)/.test(id) ? 'story' : 'keepers';
     const themes = Object.keys(K.COMPILED).map(id => {
       const t = K.COMPILED[id];
       const steps = lcm(lcm(t.bass.length, t.lead.length), t.drums.length);
@@ -140,26 +146,27 @@ function wav(samples, rate){
 
   const report = { gain: GAIN, music: [], voices: [], ambience: [] };
   const wanted = item => PACK === 'all' || PACK === item.pack;
-  const dir = item => path.join(ROOT, { keepers: 'Keepers', stages: 'Stages', menus: 'Menus' }[item.pack]);
-  const prefix = item => item.id.startsWith('ship_') ? 'Ship' : { keepers: 'Keeper', stages: 'Stage', menus: 'Menu' }[item.pack];
+  const dir = item => path.join(ROOT, { keepers: 'Keepers', stages: 'Stages', menus: 'Menus', story: 'Story' }[item.pack]);
+  const prefix = item => item.id.startsWith('ship_') ? 'Ship' : { keepers: 'Keeper', stages: 'Stage', menus: 'Menu', story: 'Story' }[item.pack];
+  const join = (...parts) => parts.filter(Boolean).join('_');
   const title = s => s[0].toUpperCase() + s.slice(1);
   for (const t of plan.themes.filter(wanted)){
     for (const lvl of [1, 2, 3]){
       const r = await render('theme', { id: t.id, loop: t.loop, lvl }, RATE);
-      const name = `MUS_${prefix(t)}_${camel(t.id)}_L${lvl}`;
+      const name = join('MUS', prefix(t), camel(t.id), 'L' + lvl);
       save(path.join(dir(t), 'Music', name + '.wav'), r, RATE);
       report.music.push({ name, bpm: t.bpm, steps: t.steps, seconds: +r.seconds.toFixed(4), peak: +r.peak.toFixed(3) });
     }
   }
   for (const v of plan.voices.filter(wanted)){
     const r = await render('voice', v, RATE);
-    const name = `SFX_${prefix(v)}_${camel(v.id)}_${title(v.cue)}`;
+    const name = join('SFX', prefix(v), camel(v.id), title(v.cue));
     save(path.join(dir(v), v.pack === 'keepers' ? 'Voices' : 'Cues', name + '.wav'), r, RATE);
     report.voices.push({ name, seconds: +r.seconds.toFixed(3), peak: +r.peak.toFixed(3) });
   }
   for (const a of plan.ambience.filter(wanted)){
     const r = await render('ambience', a, AMB_RATE);
-    const name = `AMB_${prefix(a)}_${camel(a.id)}`;
+    const name = join('AMB', prefix(a), camel(a.id));
     save(path.join(dir(a), 'Ambience', name + '.wav'), r, AMB_RATE);
     report.ambience.push({ name, seconds: +r.seconds.toFixed(3), peak: +r.peak.toFixed(3) });
   }

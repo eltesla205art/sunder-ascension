@@ -7,6 +7,9 @@
 #include "SunderKeeper.h"
 #include "SunderMusicSubsystem.h"
 #include "SunderStageAudio.h"
+#include "SunderStorySubsystem.h"
+#include "Engine/GameInstance.h"
+#include "TimerManager.h"
 #include "SunderWaveSet.h"
 
 ASunderWaveDirector::ASunderWaveDirector()
@@ -19,6 +22,12 @@ void ASunderWaveDirector::BeginPlay()
 {
 	Super::BeginPlay();
 	ArenaCenter.Z = GetActorLocation().Z;                    // spawn on this actor's plane (place it at the ship's height)
+	// Story mode: fly the campaign's current Hour (its enemy waves, then its Keeper, in its own sound) instead.
+	USunderStorySubsystem* Story = GetGameInstance() ? GetGameInstance()->GetSubsystem<USunderStorySubsystem>() : nullptr;
+	if (Story && Story->IsActive())
+	{
+		if (USunderWaveSet* HourSet = Story->MakeHourWaveSet(this)) { WaveSet = HourSet; bStoryRun = true; }
+	}
 	WaitTimer = StartDelay;
 	bBetweenWaves = true;
 	if (!WaveSet) { UE_LOG(LogTemp, Warning, TEXT("SunderWaveDirector %s has no WaveSet."), *GetName()); }
@@ -90,6 +99,16 @@ void ASunderWaveDirector::StartWave(int32 Index)
 	if (ASunderGameMode* Mode = GetWorld()->GetAuthGameMode<ASunderGameMode>()) { Mode->AnnounceWave(WavesStarted, Label); }
 }
 
+void ASunderWaveDirector::ReportStoryHourCleared()
+{
+	const ASunderGameMode* Mode = GetWorld()->GetAuthGameMode<ASunderGameMode>();
+	if (Mode && Mode->IsGameOver()) { return; }              // DAWN DENIED got there first
+	if (USunderStorySubsystem* Story = GetGameInstance() ? GetGameInstance()->GetSubsystem<USunderStorySubsystem>() : nullptr)
+	{
+		Story->ReportHourCleared(this, Mode ? Mode->GetScore() : 0);
+	}
+}
+
 int32 ASunderWaveDirector::StageLayer(int32 Index) const
 {
 	// Like the web game: the theme builds in thirds as the stage nears its Keeper (here: through its enemy waves).
@@ -132,7 +151,13 @@ void ASunderWaveDirector::Tick(float DeltaTime)
 		int32 Next = WaveIndex + 1;
 		if (Next >= WaveSet->Waves.Num())
 		{
-			if (!WaveSet->bLoop) { bFinished = true; return; }
+			if (!WaveSet->bLoop)
+			{
+				bFinished = true;
+				// The Hour is survived: let its fanfare (the stage's Clear cue) ring, then on to the story screens.
+				if (bStoryRun) { GetWorldTimerManager().SetTimer(StoryTimer, this, &ASunderWaveDirector::ReportStoryHourCleared, StoryClearDelay, false); }
+				return;
+			}
 			Next = 0;
 			++LoopCount;
 		}
