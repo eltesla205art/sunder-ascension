@@ -177,7 +177,15 @@ void ASunderWaveDirector::Tick(float DeltaTime)
 		Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 		if (ASunderEnemy* Enemy = GetWorld()->SpawnActor<ASunderEnemy>(Spawn.EnemyClass, Spawn.Location, FRotator::ZeroRotator, Params))
 		{
-			Enemy->Setup(ArenaCenter, ArenaHalfExtents, HealthScale, SpeedScale, FireScale);
+			if (Enemy->IsA<ASunderKeeper>())
+			{
+				Enemy->Setup(ArenaCenter, ArenaHalfExtents, HealthScale, SpeedScale, FireScale);   // a Keeper's numbers are its own
+			}
+			else
+			{
+				Enemy->Setup(ArenaCenter, ArenaHalfExtents, HealthScale * WaveSet->HealthScale, SpeedScale * WaveSet->SpeedScale,
+					FireScale * WaveSet->FireRateScale, WaveSet->ShotSpeedScale, WaveSet->ScoreScale);
+			}
 			Alive.Add(Enemy);
 		}
 	}

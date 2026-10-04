@@ -16,8 +16,9 @@ Reads:
 Does:
   1. imports the sound into /Game/Sunder/Audio/Story and the art into /Game/Sunder/UI/Stages and /Keepers;
   2. makes DA_StoryAudio_Opening and DA_StoryAudio_Map (theme + ambience);
-  3. makes DA_StoryData: the words, the twelve Hours (each with its DA_StageAudio_*, BP_Keeper_*, backdrop, portrait),
-     DA_TestWaves as the enemy waves of every Hour, and the story screens' music and cues;
+  3. makes DA_StoryData: the words, the twelve Hours (each with its DA_StageAudio_*, BP_Keeper_*, DA_Waves_HourNN_*
+     from create_hour_waves.py, backdrop, portrait), DA_TestWaves for any Hour without its own waves, and the story
+     screens' music and cues;
   4. makes BP_SunderStoryGameMode and the level L_SunderStory;
   5. points the hangar's Story mode at it (BP_SunderMenuGameMode → Story Level, Story Data).
 
@@ -217,6 +218,9 @@ def build_hour(h):
         hour.set_editor_property("keeper", EAL.load_blueprint_class(keeper_bp))
     else:
         MANUAL.append("Hour {}: no {} (run create_keepers.py, then this again)".format(h["num"], keeper_bp))
+    waves = asset(WAVE_DIR + "/Hours", "DA_Waves_Hour{:02d}_{}".format(h["num"], camel(h["stage"])))
+    if waves is not None:                                     # create_hour_waves.py; it fills these in if run later
+        hour.set_editor_property("waves", waves)
     backdrop = asset(STAGE_ART_DIR, "T_Stage_" + camel(h["stage"]))
     if backdrop is not None:
         hour.set_editor_property("backdrop", backdrop)
@@ -336,8 +340,8 @@ def main():
             step("L_SunderStory", build_level, mode)
         step("BP_SunderMenuGameMode: Story mode → L_SunderStory", hook_hangar, data)
 
-    MANUAL.append("Every Hour flies DA_TestWaves before its Keeper: give DA_StoryData's Hours their own wave sets "
-                  "when the stages are designed (SunderStoryData.EnemyWaves is shared for now)")
+    if not any(asset(WAVE_DIR + "/Hours", "DA_Waves_Hour{:02d}_{}".format(h["num"], camel(h["stage"]))) for h in story["hours"]):
+        MANUAL.append("Run create_hour_waves.py for each Hour's own waves (until then every Hour flies DA_TestWaves)")
     log("---- done ({}) ----".format(len(DONE)))
     for label in DONE:
         log("  ok  " + label)

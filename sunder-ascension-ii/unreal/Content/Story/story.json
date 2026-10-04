@@ -50,7 +50,17 @@
    "quote": "\"The west is where the sun dies. Tonight it did not come back.\"",
    "brief": "The first gate stands open on the western horizon. Wepwawet, Opener of Ways, guards the threshold with jackal war-walkers and crystal armor columns.",
    "clear": "The western gate falls open. One hour survived. The sun is still missing.",
-   "interlude": ""
+   "interlude": "",
+   "tuning": {
+    "enemy_health": 2,
+    "enemy_speed": 110,
+    "enemy_fire_interval": 1.9,
+    "enemy_move": "dive",
+    "enemy_bullet_speed": 210,
+    "enemy_points": 100,
+    "spawn_interval": 1.2,
+    "score_to_boss": 3200
+   }
   },
   {
    "num": 2,
@@ -63,7 +73,17 @@
    "quote": "\"The Nile has flooded the wrong world.\"",
    "brief": "The Duat's fields lie drowned. Sobek Reborn rises from the black water — a crocodile dreadnought that fans its fire across the marsh.",
    "clear": "The flood draws back into the dark. Two hours down.",
-   "interlude": ""
+   "interlude": "",
+   "tuning": {
+    "enemy_health": 3,
+    "enemy_speed": 121,
+    "enemy_fire_interval": 1.75,
+    "enemy_move": "weave",
+    "enemy_bullet_speed": 225,
+    "enemy_points": 110,
+    "spawn_interval": 1.13,
+    "score_to_boss": 3840
+   }
   },
   {
    "num": 3,
@@ -76,7 +96,17 @@
    "quote": "\"Every mirror lies. This one fires back.\"",
    "brief": "A glass desert reflects two ships. One of them is not yours. UMBRA flies your Thunder's shape in crystal — and knows every move you know.",
    "clear": "UMBRA breaks off and vanishes into its reflection. It will be back.",
-   "interlude": "— ACT II: MIDNIGHT — THE DROWNED HEART —\n\nThree gates open, and the Duat drops away beneath you. Down in the dark, the spires of Atlantis are burning — dragged into the underworld, never drowned at all. SEKHET-9 comes online for the first time in ten thousand years: \"Heir. I was built to guard the Heart. I failed. Help me find it.\""
+   "interlude": "— ACT II: MIDNIGHT — THE DROWNED HEART —\n\nThree gates open, and the Duat drops away beneath you. Down in the dark, the spires of Atlantis are burning — dragged into the underworld, never drowned at all. SEKHET-9 comes online for the first time in ten thousand years: \"Heir. I was built to guard the Heart. I failed. Help me find it.\"",
+   "tuning": {
+    "enemy_health": 3,
+    "enemy_speed": 148,
+    "enemy_fire_interval": 1.61,
+    "enemy_move": "rush",
+    "enemy_bullet_speed": 239,
+    "enemy_points": 130,
+    "spawn_interval": 1.05,
+    "score_to_boss": 4640
+   }
   },
   {
    "num": 4,
@@ -89,7 +119,17 @@
    "quote": "\"Atlantis is not drowned. It has been pulled down here, still burning.\"",
    "brief": "The sunken spires of Atlantis glow beneath you. Nun, the Primeval Deep, rolls through them in closing rings. SEKHET-9 is picking up the Heart's signal.",
    "clear": "The spires go quiet. SEKHET-9: \"The Heart is real. And it is close.\"",
-   "interlude": ""
+   "interlude": "",
+   "tuning": {
+    "enemy_health": 3,
+    "enemy_speed": 170,
+    "enemy_fire_interval": 1.48,
+    "enemy_move": "zigzag",
+    "enemy_bullet_speed": 252,
+    "enemy_points": 140,
+    "spawn_interval": 0.99,
+    "score_to_boss": 5280
+   }
   },
   {
    "num": 5,
@@ -102,7 +142,17 @@
    "quote": "\"The sand here does not lie still. It hunts.\"",
    "brief": "Sokar's sand-sea shifts with every dune. The Hawk of the Hidden Sand strikes in crosses of fire from the dark. Keep moving.",
    "clear": "The sand lies still at last. Five hours. The night is half gone.",
-   "interlude": ""
+   "interlude": "",
+   "tuning": {
+    "enemy_health": 4,
+    "enemy_speed": 152,
+    "enemy_fire_interval": 1.41,
+    "enemy_move": "dive",
+    "enemy_bullet_speed": 259,
+    "enemy_points": 160,
+    "spawn_interval": 0.95,
+    "score_to_boss": 5920
+   }
   },
   {
    "num": 6,
@@ -115,7 +165,17 @@
    "quote": "\"The Lake of Fire burns the unworthy. Be worthy.\"",
    "brief": "Four Seraphs guard the burning lake, spinning their fire in spirals. Break them before the lake takes the sky.",
    "clear": "The Seraphs burn out. Six gates open. Apep turns its head toward you.",
-   "interlude": "— ACT III: THE DEEP NIGHT — SHADOW OF THE HEIR —\n\nSix gates open. Apep's coils now fill the sky from edge to edge, and every crystal turns to watch you pass. UMBRA has learned your every move. From here on, the night fights back twice as hard."
+   "interlude": "— ACT III: THE DEEP NIGHT — SHADOW OF THE HEIR —\n\nSix gates open. Apep's coils now fill the sky from edge to edge, and every crystal turns to watch you pass. UMBRA has learned your every move. From here on, the night fights back twice as hard.",
+   "tuning": {
+    "enemy_health": 5,
+    "enemy_speed": 137,
+    "enemy_fire_interval": 1.34,
+    "enemy_move": "circle",
+    "enemy_bullet_speed": 266,
+    "enemy_points": 190,
+    "spawn_interval": 0.92,
+    "score_to_boss": 6880
+   }
   },
   {
    "num": 7,
@@ -128,7 +188,17 @@
    "quote": "\"It knows your name now. It uses it.\"",
    "brief": "Apep's coils fill the horizon behind the seventh gate. UMBRA returns, faster, colder — and its fire now cuts twice as deep. So does everything here.",
    "clear": "UMBRA falls back again — wounded this time. Seven hours.",
-   "interlude": ""
+   "interlude": "",
+   "tuning": {
+    "enemy_health": 6,
+    "enemy_speed": 141,
+    "enemy_fire_interval": 1.26,
+    "enemy_move": "evade",
+    "enemy_bullet_speed": 275,
+    "enemy_points": 210,
+    "spawn_interval": 0.88,
+    "score_to_boss": 7840
+   }
   },
   {
    "num": 8,
@@ -141,7 +211,17 @@
    "quote": "\"Iron does not bleed. It remembered you anyway.\"",
    "brief": "The Hittite Engine — rebuilt from a bow you broke — hangs in an iron sky. Walls of fire. Rings of steel. It has waited ten thousand years to settle the score.",
    "clear": "The Engine falls out of the iron sky. Eight gates. The old war is over.",
-   "interlude": ""
+   "interlude": "",
+   "tuning": {
+    "enemy_health": 6,
+    "enemy_speed": 159,
+    "enemy_fire_interval": 1.18,
+    "enemy_move": "formation",
+    "enemy_bullet_speed": 286,
+    "enemy_points": 220,
+    "spawn_interval": 0.84,
+    "score_to_boss": 8800
+   }
   },
   {
    "num": 9,
@@ -154,7 +234,17 @@
    "quote": "\"Your heart will be weighed against a feather.\"",
    "brief": "Ammit, Devourer of Hearts, presides over the Judgement Hall. Fight clean, fight fast: the scales are watching your score.",
    "clear": "The feather does not tip. You are found worthy. Nine hours.",
-   "interlude": "— ACT IV: DAWN OR NOTHING — THE LAST SUNRISE —\n\nNine gates open. Three hours to dawn. Far below, the Heart of Atlantis is beating louder — and something in the shape of your ship is guarding it. Whatever waits at the bottom of the night, you go through it, or the sun never rises again."
+   "interlude": "— ACT IV: DAWN OR NOTHING — THE LAST SUNRISE —\n\nNine gates open. Three hours to dawn. Far below, the Heart of Atlantis is beating louder — and something in the shape of your ship is guarding it. Whatever waits at the bottom of the night, you go through it, or the sun never rises again.",
+   "tuning": {
+    "enemy_health": 7,
+    "enemy_speed": 152,
+    "enemy_fire_interval": 1.04,
+    "enemy_move": "circle",
+    "enemy_bullet_speed": 297,
+    "enemy_points": 250,
+    "spawn_interval": 0.77,
+    "score_to_boss": 9920
+   }
   },
   {
    "num": 10,
@@ -167,7 +257,17 @@
    "quote": "\"What falls as stars can fall again.\"",
    "brief": "The Overlord's Echo — what is left of the enemy you broke — gathers the falling shards into one last storm. Four hours to dawn.",
    "clear": "The last echo of the Overlord goes silent. Two hours to dawn.",
-   "interlude": ""
+   "interlude": "",
+   "tuning": {
+    "enemy_health": 8,
+    "enemy_speed": 169,
+    "enemy_fire_interval": 0.95,
+    "enemy_move": "zigzag",
+    "enemy_bullet_speed": 311,
+    "enemy_points": 280,
+    "spawn_interval": 0.72,
+    "score_to_boss": 11360
+   }
   },
   {
    "num": 11,
@@ -180,7 +280,17 @@
    "quote": "\"The Heart is close. So is the shadow that guards it.\"",
    "brief": "The Heart of Atlantis beats beneath this gate. UMBRA waits in front of it, mask on, for the last time. Whatever it is, end it here.",
    "clear": "The mask falls. UMBRA was your shadow all along — and now it flies beside you.",
-   "interlude": ""
+   "interlude": "",
+   "tuning": {
+    "enemy_health": 8,
+    "enemy_speed": 182,
+    "enemy_fire_interval": 0.89,
+    "enemy_move": "evade",
+    "enemy_bullet_speed": 323,
+    "enemy_points": 310,
+    "spawn_interval": 0.67,
+    "score_to_boss": 12800
+   }
   },
   {
    "num": 12,
@@ -193,7 +303,17 @@
    "quote": "\"Twelve hours. One serpent. No second sunrise.\"",
    "brief": "APEP rises from the bottom of the Duat to swallow the sun barque. Fly up its coils, into its jaws, to the Heart. Dawn or nothing, ELTESLA.",
    "clear": "",
-   "interlude": ""
+   "interlude": "",
+   "tuning": {
+    "enemy_health": 8,
+    "enemy_speed": 175,
+    "enemy_fire_interval": 0.85,
+    "enemy_move": "zigzag",
+    "enemy_bullet_speed": 330,
+    "enemy_points": 350,
+    "spawn_interval": 0.6,
+    "score_to_boss": 14400
+   }
   }
  ]
 }

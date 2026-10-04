@@ -41,12 +41,17 @@ USunderWaveSet* USunderStorySubsystem::MakeHourWaveSet(UObject* Outer) const
 	const FSunderStoryHour* Hour = GetHour();
 	if (!IsActive() || !Hour) { return nullptr; }
 	USunderWaveSet* Set = NewObject<USunderWaveSet>(Outer);
-	if (Data->EnemyWaves)
+	if (const USunderWaveSet* Source = Hour->Waves ? Hour->Waves.Get() : Data->EnemyWaves.Get())
 	{
-		for (const FSunderWave& Wave : Data->EnemyWaves->Waves)
+		for (const FSunderWave& Wave : Source->Waves)
 		{
 			if (!Wave.Keeper) { Set->Waves.Add(Wave); }           // the story brings its own Keeper
 		}
+		Set->HealthScale = Source->HealthScale;                  // the Hour's difficulty
+		Set->SpeedScale = Source->SpeedScale;
+		Set->FireRateScale = Source->FireRateScale;
+		Set->ShotSpeedScale = Source->ShotSpeedScale;
+		Set->ScoreScale = Source->ScoreScale;
 	}
 	if (Hour->Keeper)
 	{

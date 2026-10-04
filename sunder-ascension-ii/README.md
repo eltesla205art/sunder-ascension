@@ -31,8 +31,9 @@ original *SUNDER: Ascension — The Nine Bows* (`web/`, `godot/`, `docs/`), whic
 | `unreal/Scripts/create_menu_level.py` | Editor Python: the title screen and hangar level (`L_SunderTitle`) with the menu music, ambience, interface cues and ship engines (untested until first run) |
 | `unreal/Content/Audio/Menus/` | The title and hangar themes (three layers each), ambience beds, interface cues and ship engine revs as WAV, rendered from `web/menu_audio.js` |
 | `unreal/Scripts/create_story_level.py` | Editor Python: story mode (`L_SunderStory`): the opening crawl, hour map, briefings, Hour survived, dawn and DAWN DENIED, with their music, ambience and cues, and the twelve Hours wired to their stage sound and Keepers (untested until first run) |
+| `unreal/Scripts/create_hour_waves.py` | Editor Python: a wave set for each of the Twelve Hours from the web game's stage tuning, each ending with its Keeper, for story mode (untested until first run) |
 | `unreal/Content/Audio/Story/` | The story screens' themes (three layers each), the crawl's and the map's ambience, and the story cues as WAV, rendered from `web/story_audio.js` |
-| `unreal/Content/Story/story.json` | The story's words for Unreal, exported from `web/game.html` by `unreal/Tools/export_story_text.cjs` |
+| `unreal/Content/Story/story.json` | The story's words and each Hour's battle tuning for Unreal, exported from `web/game.html` by `unreal/Tools/export_story_text.cjs` |
 | `unreal/Tools/render_web_audio.cjs` | Renders the Keeper, stage, menu and story WAVs from the web game's synth in Chromium (Playwright) |
 | `unreal/Content/Keepers/` | The thirteen Keeper models as FBX for Unreal (one mesh each, plus Apep's final form), from `blender/keepers.py --fbx` |
 | `art/blender/` | Full-resolution Blender renders (title backdrop, ship sprites, `keepers/` boss sprites and portraits) |

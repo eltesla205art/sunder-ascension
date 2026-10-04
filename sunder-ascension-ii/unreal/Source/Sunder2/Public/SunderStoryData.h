@@ -52,6 +52,10 @@ struct FSunderStoryHour
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Hour")
 	TSubclassOf<ASunderKeeper> Keeper;
 
+	/** This Hour's enemy waves and difficulty (DA_Waves_HourNN_*); empty = the story's shared EnemyWaves. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Hour")
+	TObjectPtr<USunderWaveSet> Waves;
+
 	/** The stage's backdrop and the Keeper's portrait, behind the briefing. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Hour")
 	TObjectPtr<UTexture2D> Backdrop;
@@ -78,7 +82,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story")
 	TArray<FSunderStoryHour> Hours;
 
-	/** The enemy waves flown in every Hour before its Keeper (its Keeper wave is added from Hours). */
+	/** The enemy waves for an Hour with no Waves of its own (its Keeper wave is added from Hours). */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story")
 	TObjectPtr<USunderWaveSet> EnemyWaves;
 

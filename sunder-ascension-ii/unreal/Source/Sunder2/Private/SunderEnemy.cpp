@@ -59,7 +59,7 @@ void ASunderEnemy::BeginPlay()
 }
 
 void ASunderEnemy::Setup(const FVector& InArenaCenter, const FVector2D& InArenaHalfExtents, float HealthScale,
-	float SpeedScale, float InFireRateScale)
+	float SpeedScale, float InFireRateScale, float InShotSpeedScale, float ScoreScale)
 {
 	ArenaCenter = InArenaCenter;
 	ArenaHalfExtents = InArenaHalfExtents;
@@ -67,6 +67,8 @@ void ASunderEnemy::Setup(const FVector& InArenaCenter, const FVector2D& InArenaH
 	Health = MaxHealth;
 	Speed *= SpeedScale;
 	FireRateScale = FMath::Max(InFireRateScale, 0.1f);
+	ShotSpeedScale = FMath::Max(InShotSpeedScale, 0.1f);
+	ScoreValue = FMath::RoundToInt(ScoreValue * FMath::Max(ScoreScale, 0.f));
 	SpawnLocation = GetActorLocation();
 }
 
@@ -170,7 +172,9 @@ void ASunderEnemy::FireVolley()
 	const FVector Origin = GetActorLocation();
 	const int32 N = FMath::Max(ShotCount, 1);
 
-	auto Fire = [&](const FVector& Dir) { Pool->Acquire(ShotClass, Origin, Dir, this, this); };
+	// The Hour's bullet speed: the shot's own speed × the wave set's ShotSpeedScale (0 = the shot's own, unscaled).
+	const float ShotSpeed = ShotSpeedScale != 1.f ? ShotClass->GetDefaultObject<ASunderProjectile>()->Speed * ShotSpeedScale : 0.f;
+	auto Fire = [&](const FVector& Dir) { Pool->Acquire(ShotClass, Origin, Dir, this, this, ShotSpeed); };
 
 	switch (FirePattern)
 	{

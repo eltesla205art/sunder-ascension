@@ -96,6 +96,25 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Waves")
 	TObjectPtr<USunderStageAudio> StageAudio;
 
+	// ---- the Hour's difficulty: applied to every enemy of this set (not to its Keeper, whose numbers are its own).
+	// create_hour_waves.py sets them from the web game's stage tuning, relative to Hour 1.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Waves|Difficulty", meta = (ClampMin = "0.1"))
+	float HealthScale = 1.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Waves|Difficulty", meta = (ClampMin = "0.1"))
+	float SpeedScale = 1.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Waves|Difficulty", meta = (ClampMin = "0.1"))
+	float FireRateScale = 1.f;
+
+	/** Enemy bullet speed. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Waves|Difficulty", meta = (ClampMin = "0.1"))
+	float ShotSpeedScale = 1.f;
+
+	/** Points per kill. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Waves|Difficulty", meta = (ClampMin = "0"))
+	float ScoreScale = 1.f;
+
 	/** After the last wave, start again from the first, tougher each time round. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Waves")
 	bool bLoop = true;

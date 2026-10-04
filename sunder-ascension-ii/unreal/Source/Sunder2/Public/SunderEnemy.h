@@ -136,7 +136,8 @@ public:
 	float SpreadAngle = 50.f;
 
 	/** Called by the wave director right after spawning: the arena to fly in, and this loop's difficulty. */
-	void Setup(const FVector& InArenaCenter, const FVector2D& InArenaHalfExtents, float HealthScale, float SpeedScale, float FireRateScale);
+	void Setup(const FVector& InArenaCenter, const FVector2D& InArenaHalfExtents, float HealthScale, float SpeedScale, float FireRateScale,
+		float InShotSpeedScale = 1.f, float ScoreScale = 1.f);
 
 	UFUNCTION(BlueprintPure, Category = "Enemy")
 	float GetHealth() const { return Health; }
@@ -171,6 +172,7 @@ protected:
 	float Age = 0.f;
 	float FireCooldown = 0.f;
 	float FireRateScale = 1.f;
+	float ShotSpeedScale = 1.f;
 	float HitFlash = 0.f;
 	float ZigzagTimer = 0.f;
 	float ZigzagSign = 1.f;

@@ -21,12 +21,12 @@ C++ side of [`../WEAPON_VFX.md`](../WEAPON_VFX.md) and [`../KEEPER_VFX.md`](../K
 | `SunderMenuGameMode` | The title screen and hangar: Start → choose a ship (A / D) and Story / Swarm (W / S) → Launch: Story opens the story level, Swarm the arena (with `?Ship=` / `?Mode=`), Esc back; plays each screen's theme and ambience, the interface cues, and each ship's engine rev when picked and at launch | — |
 | `SunderMenuController` | Input for every front-end screen, built at runtime with Enhanced Input (keys, D-pad, left stick, A / B / Start) | — |
 | `SunderMenuHUD` | Canvas drawing for the title (title art, name, blinking prompt) and hangar (ship sprites in their colours, mode, hints, launch fade) | — |
-| `SunderStoryData` | Data asset (header only): the story's words (from `web/game.html`), its twelve Hours (name, act, Keeper, briefing, gate-open line, act interlude, stage sound, Keeper Blueprint, backdrop, portrait), the enemy waves, and the story screens' music and cues | — |
+| `SunderStoryData` | Data asset (header only): the story's words (from `web/game.html`), its twelve Hours (name, act, Keeper, briefing, gate-open line, act interlude, stage sound, Keeper Blueprint, own wave set, backdrop, portrait), the enemy waves, and the story screens' music and cues | — |
 | `SunderStorySubsystem` | Game instance subsystem: the campaign across level loads (next Hour, score, which story screen to show); builds the arena's wave set for the current Hour and takes its result | — |
 | `SunderStoryGameMode` | The story screens with the web game's sound and timing: opening crawl (lament + wind), hour map (theme builds act by act), briefing (drone over the Hour's own ambience), Hour survived (bell and interlude theme between acts), dawn, DAWN DENIED | — |
 | `SunderStoryHUD` | Canvas drawing for those screens: the crawl, the hour map's road of twelve gates through four acts, briefings over the Hour's backdrop with its Keeper's portrait, wrapped story text | — |
 | `SunderStageAudio` | Data asset (header only): one Hour's (or menu screen's) theme layers, ambience, and Start / Wave / Down / Clear cues | — |
-| `SunderWaveSet` | Data asset: waves of spawn groups (enemy type, count, timing, formation Column / Line / V / Random / Sides, lane, spacing), an optional Keeper per wave, stage audio for the set (and an optional per-wave switch), loop scaling | — |
+| `SunderWaveSet` | Data asset: waves of spawn groups (enemy type, count, timing, formation Column / Line / V / Random / Sides, lane, spacing), an optional Keeper per wave, stage audio for the set (and an optional per-wave switch), the Hour's difficulty (enemy health, speed, fire rate, bullet speed, points; not its Keeper's), loop scaling | — |
 | `SunderWaveDirector` | Level actor that plays a wave set: schedules formations along the top edge, spawns a wave's Keeper at the top centre, flies the story's current Hour (and reports it survived) in story mode, plays the stage's sound (Start cue and ambience on entering a stage, Wave cues, the theme building a layer each third of the way to the Keeper), waits for each wave to clear, loops tougher | — |
 | `SunderHUD` | Canvas HUD: score, lives, hull bar, wave banner, Keeper title and taunt, boss bar coloured by phase, DAWN DENIED | — |
 
@@ -80,6 +80,11 @@ Projectiles are team-aware: enemy shots only hit the ship, the player's shots ne
    `web/story_audio.js`), the words from [`../Content/Story/story.json`](../Content/Story/story.json)
    (`node unreal/Tools/export_story_text.cjs`, from `web/game.html`) and the Hours' backdrops and Keeper portraits, makes
    `DA_StoryData`, `BP_SunderStoryGameMode` and `L_SunderStory`, and points the hangar's Story mode at it.
+10. [`../Scripts/create_hour_waves.py`](../Scripts/create_hour_waves.py): a wave set for each Hour,
+    `DA_Waves_HourNN_<Stage>`, from the web game's stage tuning in `story.json` (main enemy from the Hour's movement
+    style, its scout lines and bomber runs, a second enemy from its briefing, gunships in later acts; difficulty by the
+    web ratios to Hour 1; long enough for the web Hour's score to its Keeper, longer each act), ending with the Hour's
+    Keeper in its own sound. Gives them to `DA_StoryData`; set `ARENA_HOUR` to fly one in the arena.
 
 ## Hook up
 
