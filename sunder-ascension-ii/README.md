@@ -16,6 +16,7 @@ original *SUNDER: Ascension — The Nine Bows* (`web/`, `godot/`, `docs/`), whic
 | `web/models/` | Keeper GLB models exported from Blender, each with its animation loop baked in, plus portrait thumbnails |
 | `web/test_sunder2.js` | Headless test of the 12-Hour campaign against the battle-math law: `node web/test_sunder2.js` |
 | `blender/` | Blender Python scripts that model and render the game art |
+| `unreal/WEAPON_VFX.md` | UE5 Niagara guide for the planned Unreal version: the trace-driven laser beam, the plasma-burst impact, pooling and budgets (not yet built in-engine) |
 | `art/blender/` | Full-resolution Blender renders (title backdrop, ship sprites, `keepers/` boss sprites and portraits) |
 | `artifacts/` | Progress note, QA evidence (`final-evidence.md`), inspector captures |
 | `art/` | AI concept art: key art A/B, Scarab Warbringer Mk II A/B, Mk II hangar shots A/B |
