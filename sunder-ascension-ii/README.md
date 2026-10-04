@@ -18,7 +18,7 @@ original *SUNDER: Ascension — The Nine Bows* (`web/`, `godot/`, `docs/`), whic
 | `blender/` | Blender Python scripts that model and render the game art |
 | `unreal/WEAPON_VFX.md` | UE5 Niagara guide for the planned Unreal version: the trace-driven laser beam, the plasma-burst impact, pooling and budgets (not yet built in-engine) |
 | `unreal/Scripts/create_weapon_fx_assets.py` | Editor Python: makes the weapon FX master material and instances, Effect Types and empty Niagara systems, then lists what's left to build by hand (untested until first run) |
-| `unreal/Source/` | Drop-in UE5 C++: beam weapon, impact FX, pooled projectiles, the player ship, enemies, wave set and director, the Keeper boss, layered music and stage sound, game mode with score and lives, HUD, target dummy (not compiled yet; install steps inside) |
+| `unreal/Source/` | Drop-in UE5 C++: beam weapon, impact FX, pooled projectiles, the player ship, enemies, wave set and director, the Keeper boss, layered music and stage sound, the title screen and hangar, game mode with score and lives, HUD, target dummy (not compiled yet; install steps inside) |
 | `unreal/Scripts/create_enemies_and_waves.py` | Editor Python: five enemy Blueprints and their shot, a five-wave `DA_TestWaves`, and a wave director in `L_SunderArena` (untested until first run) |
 | `unreal/Scripts/create_arena_level.py` | Editor Python: makes `BP_SunderShip`, `BP_PlasmaShot`, `BP_SunderGameMode` and the top-down test level `L_SunderArena` (needs the C++ compiled; untested until first run) |
 | `unreal/Scripts/create_keepers.py` | Editor Python: imports the Keeper models and makes the twelve `BP_Keeper_*` boss Blueprints, their shots and `DA_KeeperGauntlet` (untested until first run) |
@@ -28,7 +28,9 @@ original *SUNDER: Ascension — The Nine Bows* (`web/`, `godot/`, `docs/`), whic
 | `unreal/Content/Audio/Keepers/` | The Keepers' battle themes (three layers each, seamless loops) and voices as WAV, rendered from `web/keeper_audio.js` |
 | `unreal/Scripts/create_stage_audio.py` | Editor Python: imports the twelve Hours' music, ambience and cues, makes their stage audio assets and gives them to the wave sets (untested until first run) |
 | `unreal/Content/Audio/Stages/` | The Hours' themes (three layers each), ambience beds and cues as WAV, rendered from `web/stage_audio.js` |
-| `unreal/Tools/render_web_audio.cjs` | Renders the Keeper and stage WAVs from the web game's synth in Chromium (Playwright) |
+| `unreal/Scripts/create_menu_level.py` | Editor Python: the title screen and hangar level (`L_SunderTitle`) with the menu music, ambience, interface cues and ship engines (untested until first run) |
+| `unreal/Content/Audio/Menus/` | The title and hangar themes (three layers each), ambience beds, interface cues and ship engine revs as WAV, rendered from `web/menu_audio.js` |
+| `unreal/Tools/render_web_audio.cjs` | Renders the Keeper, stage and menu WAVs from the web game's synth in Chromium (Playwright) |
 | `unreal/Content/Keepers/` | The thirteen Keeper models as FBX for Unreal (one mesh each, plus Apep's final form), from `blender/keepers.py --fbx` |
 | `art/blender/` | Full-resolution Blender renders (title backdrop, ship sprites, `keepers/` boss sprites and portraits) |
 | `artifacts/` | Progress note, QA evidence (`final-evidence.md`), inspector captures |

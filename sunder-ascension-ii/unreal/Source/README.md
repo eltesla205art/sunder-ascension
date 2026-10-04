@@ -1,4 +1,4 @@
-# SUNDER II — drop-in UE5 C++ for the weapons, the ship, enemies, waves, the Keepers, and the music and sound of the stages and Keepers
+# SUNDER II — drop-in UE5 C++ for the weapons, the ship, enemies, waves, the Keepers, the title screen and hangar, and the music and sound of all of them
 
 C++ side of [`../WEAPON_VFX.md`](../WEAPON_VFX.md) and [`../KEEPER_VFX.md`](../KEEPER_VFX.md), plus the ship, enemies, waves, the twelve Keeper bosses, scoring and a HUD for the test arena. Written for UE 5.3+ (5.1 minimum: it uses `UE_SMALL_NUMBER`).
 
@@ -13,11 +13,14 @@ C++ side of [`../WEAPON_VFX.md`](../WEAPON_VFX.md) and [`../KEEPER_VFX.md`](../K
 | `ProjectilePoolSubsystem` | World subsystem: `Acquire` / `Release` / `Prewarm`, per-class free lists | §3.4 |
 | `SunderShipPawn` | The player ship: eight-way movement clamped to the arena, held beam, held twin plasma shots from the pool, a 5-hit hull with blinking invulnerability, death and respawn; input built at runtime with Enhanced Input (no input assets) | — |
 | `SunderTargetDummy` | Drifting target: takes beam and shot damage, swells when hit, bursts with an impact and respawns | — |
-| `SunderGameMode` | Default pawn = the ship; score, 3 lives, respawn after 2 s, DAWN DENIED and a restart when the last life goes; wave banner; tracks the active Keeper | — |
+| `SunderGameMode` | Default pawn = the ship; score, 3 lives, respawn after 2 s, DAWN DENIED and a restart (or back to `MenuLevel`, the title) when the last life goes; wave banner; tracks the active Keeper | — |
 | `SunderEnemy` | Enemy craft: moves Straight / Weave / Dive / Strafe / Zigzag, fires Aimed / Spread / Radial from the pool, rams, flashes when hit, bursts and scores on death; each type is a Blueprint child | — |
 | `SunderKeeper` | Keeper boss (child of `SunderEnemy`): enters invulnerable, fits its model to the screen, strafes; three phases (66% / 33%) that fire faster and dash in phase 3; eight attack patterns ported from the web game (Aimed Volley, Spread Fan, Horizontal Sweep, Radial Burst, Cross Ring, Spiral, Dual Spiral, Wall Barrage) rotating every 3.5 s; optional final-form mesh; a two-second death (shudder, bursts across the body, then the final burst); spawns its Niagara effects (aura, arrival Gate, muzzle flares, phase shockwave, death) and tints its shots, falling back to the plasma impacts for any system not built yet; plays its battle theme (building a layer per phase, Apep's final-form theme in phase 3) and its voice (intro, attack, phase, hurt, death, and a gloat at DAWN DENIED) | Keeper VFX |
 | `SunderMusicSubsystem` | World subsystem: layered music like the web game's: a theme's three same-length loops start together and crossfade by layer; `Duck` steps the music back under a voice; one theme at a time with fades. Also the current stage's sound: its ambience bed (fading between stages), its theme and its rate-limited cues | — |
-| `SunderStageAudio` | Data asset (header only): one Hour's theme layers, ambience, and Start / Wave / Down / Clear cues | — |
+| `SunderMenuGameMode` | The title screen and hangar: Start → choose a ship (A / D) and Story / Swarm (W / S) → Launch into the arena (with `?Ship=` / `?Mode=`), Esc back; plays each screen's theme and ambience, the interface cues, and each ship's engine rev when picked and at launch | — |
+| `SunderMenuController` | Menu input, built at runtime with Enhanced Input (keys, D-pad, left stick, A / B / Start) | — |
+| `SunderMenuHUD` | Canvas drawing for the title (title art, name, blinking prompt) and hangar (ship sprites in their colours, mode, hints, launch fade) | — |
+| `SunderStageAudio` | Data asset (header only): one Hour's (or menu screen's) theme layers, ambience, and Start / Wave / Down / Clear cues | — |
 | `SunderWaveSet` | Data asset: waves of spawn groups (enemy type, count, timing, formation Column / Line / V / Random / Sides, lane, spacing), an optional Keeper per wave, stage audio for the set (and an optional per-wave switch), loop scaling | — |
 | `SunderWaveDirector` | Level actor that plays a wave set: schedules formations along the top edge, spawns a wave's Keeper at the top centre, plays the stage's sound (Start cue and ambience on entering a stage, Wave cues, the theme building a layer each third of the way to the Keeper), waits for each wave to clear, loops tougher | — |
 | `SunderHUD` | Canvas HUD: score, lives, hull bar, wave banner, Keeper title and taunt, boss bar coloured by phase, DAWN DENIED | — |
@@ -27,8 +30,8 @@ Projectiles are team-aware: enemy shots only hit the ship, the player's shots ne
 ## Install
 
 1. Copy `Sunder2/Public/*` and `Sunder2/Private/*` into your game module, e.g. `Source/<YourGame>/Public` and
-   `Source/<YourGame>/Private`. If your module has no Public/Private split, put all twenty-six files in `Source/<YourGame>/`.
-2. Replace `SUNDER2_API` with your module's export macro (`<YOURGAME>_API`) in the fourteen headers.
+   `Source/<YourGame>/Private`. If your module has no Public/Private split, put all thirty-two files in `Source/<YourGame>/`.
+2. Replace `SUNDER2_API` with your module's export macro (`<YOURGAME>_API`) in the seventeen headers.
 3. In `Source/<YourGame>/<YourGame>.Build.cs`, add to `PublicDependencyModuleNames`:
    ```csharp
    "Niagara", "DeveloperSettings", "EnhancedInput", "InputCore"
@@ -63,6 +66,10 @@ Projectiles are team-aware: enemy shots only hit the ship, the player's shots ne
    ambience (12 seamless 24 s beds) and cues (48) from [`../Content/Audio/Stages`](../Content/Audio/Stages), makes
    `DA_StageAudio_<Hour>`, gives `DA_TestWaves` the Horizon and each `DA_KeeperGauntlet` wave its Keeper's Hour.
    Rendered by `node unreal/Tools/render_web_audio.cjs stages` from `web/stage_audio.js`.
+8. [`../Scripts/create_menu_level.py`](../Scripts/create_menu_level.py): the title screen and hangar. Imports the menu
+   music, ambience, cues and ship engines from [`../Content/Audio/Menus`](../Content/Audio/Menus) (`render_web_audio.cjs menus`,
+   from `web/menu_audio.js`) and the title art and ship sprites from `art/blender`, makes `BP_SunderMenuGameMode` and
+   `L_SunderTitle`, and sends the arena back to the title after DAWN DENIED. Open `L_SunderTitle` and press Play.
 
 ## Hook up
 

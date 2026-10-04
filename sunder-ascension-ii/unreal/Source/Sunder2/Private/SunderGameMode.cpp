@@ -71,5 +71,5 @@ void ASunderGameMode::OnShipDestroyed(ASunderShipPawn* Ship)
 
 void ASunderGameMode::RestartArena()
 {
-	UGameplayStatics::OpenLevel(this, FName(*UGameplayStatics::GetCurrentLevelName(this)));
+	UGameplayStatics::OpenLevel(this, MenuLevel.IsNone() ? FName(*UGameplayStatics::GetCurrentLevelName(this)) : MenuLevel);
 }

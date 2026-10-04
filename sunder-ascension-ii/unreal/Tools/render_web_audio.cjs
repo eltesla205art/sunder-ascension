@@ -1,13 +1,15 @@
-// SUNDER: Ascension II — render the web game's synthesised audio (web/keeper_audio.js + web/stage_audio.js) to WAV
+// SUNDER: Ascension II — render the web game's synthesised audio (web/keeper_audio.js, stage_audio.js, menu_audio.js) to WAV
 // for Unreal, so both versions sound the same.
 //
-//   node unreal/Tools/render_web_audio.cjs [keepers|stages|all] [out_root] [gain]
+//   node unreal/Tools/render_web_audio.cjs [keepers|stages|menus|all] [out_root] [gain]
 //   (defaults: all, unreal/Content/Audio, 1.6; needs Playwright with Chromium: npm i -g playwright)
 //
 // keepers → Audio/Keepers: Music/MUS_Keeper_<Name>_L1..3 (each theme in three layers) and
 //           Voices/SFX_Keeper_<Name>_Intro/Attack/Phase/Hurt/Death
 // stages  → Audio/Stages:  Music/MUS_Stage_<Name>_L1..3, Ambience/AMB_Stage_<Name> and
 //           Cues/SFX_Stage_<Name>_Start/Wave/Down/Clear
+// menus   → Audio/Menus:   Music/MUS_Menu_Title|Hangar_L1..3, Ambience/AMB_Menu_Title|Hangar,
+//           Cues/SFX_Menu_Title_Start/Leaderboard, SFX_Menu_Hangar_Move/Mode/Back/Launch, SFX_Ship_<Ship>_Rev
 // Music loops are exactly one loop, cut from the second pass of two so notes ringing over the loop point are already
 // at its start: seamless, and the three layers of a theme are the same length so they play in step and crossfade.
 // Ambience is a 24 s loop (22.05 kHz) of the beds and their scattered events, its seam hidden with an equal-power
@@ -30,9 +32,10 @@ const RATE = 32000, AMB_RATE = 22050, AMB_LOOP = 24, AMB_FADE = 3, AMB_WARMUP = 
 const WEB = path.join(HERE, '..', '..', 'web');
 const ENGINE = fs.readFileSync(path.join(WEB, 'keeper_audio.js'), 'utf8');
 const STAGES = fs.readFileSync(path.join(WEB, 'stage_audio.js'), 'utf8');
-if (!['keepers', 'stages', 'all'].includes(PACK)) { console.error('pack must be keepers, stages or all'); process.exit(2); }
+const MENUS = fs.readFileSync(path.join(WEB, 'menu_audio.js'), 'utf8');
+if (!['keepers', 'stages', 'menus', 'all'].includes(PACK)) { console.error('pack must be keepers, stages, menus or all'); process.exit(2); }
 
-const camel = id => id.replace(/^stage_/, '').split('_').map(p => p[0].toUpperCase() + p.slice(1)).join('');
+const camel = id => id.replace(/^(stage|menu|ship)_/, '').split('_').map(p => p[0].toUpperCase() + p.slice(1)).join('');
 
 function wav(samples, rate){
   const data = Buffer.alloc(samples.length * 2);
@@ -54,30 +57,33 @@ function wav(samples, rate){
   await page.setContent('<html><body></body></html>');
   await page.addScriptTag({ content: ENGINE });
   await page.addScriptTag({ content: STAGES });
+  await page.addScriptTag({ content: MENUS });
 
   const plan = await page.evaluate(({ ambLoop }) => {
     const K = window.KeeperAudio;
     const gcd = (a, b) => b ? gcd(b, a % b) : a, lcm = (a, b) => a * b / gcd(a, b);
-    const isStage = id => id.startsWith('stage_');
+    // every id belongs to one pack: stage_*, menu_* / ship_*, or a Keeper
+    const packOf = id => /^stage_/.test(id) ? 'stages' : /^(menu|ship)_/.test(id) ? 'menus' : 'keepers';
     const themes = Object.keys(K.COMPILED).map(id => {
       const t = K.COMPILED[id];
       const steps = lcm(lcm(t.bass.length, t.lead.length), t.drums.length);
-      return { id, stage: isStage(id), steps, loop: steps * t.stepDur, bpm: t.bpm };
+      return { id, pack: packOf(id), steps, loop: steps * t.stepDur, bpm: t.bpm };
     });
     const voices = [];
     for (const id in K.VOICES) {
-      const cues = isStage(id) ? ['start', 'wave', 'down', 'clear'] : K.CUES;
+      const pack = packOf(id);
+      const cues = pack === 'keepers' ? K.CUES : Object.keys(K.VOICES[id]);
       for (const cue of cues) {
         const layers = K.VOICES[id][cue]; if (!layers) continue;
         const end = Math.max(...layers.map(L => (L.at || 0) + (L.rep ? (L.rep - 1) * (L.gap || 0) : 0) + L.d));
-        voices.push({ id, stage: isStage(id), cue, end });
+        voices.push({ id, pack, cue, end });
       }
     }
-    const ambience = Object.keys(K.AMBIENCE).filter(isStage).map(id => {
+    const ambience = Object.keys(K.AMBIENCE).filter(id => packOf(id) !== 'keepers').map(id => {
       // a steady pulse (every [p, p]) must land on the loop point, or the crossfade doubles a beat
       const fixed = K.AMBIENCE[id].events.filter(E => E.every[0] === E.every[1]).map(E => E.every[0]);
       const loop = fixed.length ? Math.round(ambLoop / fixed[0]) * fixed[0] : ambLoop;
-      return { id, stage: true, loop };
+      return { id, pack: packOf(id), loop };
     });
     return { themes, voices, ambience };
   }, { ambLoop: AMB_LOOP });
@@ -133,9 +139,9 @@ function wav(samples, rate){
   };
 
   const report = { gain: GAIN, music: [], voices: [], ambience: [] };
-  const wanted = item => PACK === 'all' || (PACK === 'stages') === item.stage;
-  const dir = item => path.join(ROOT, item.stage ? 'Stages' : 'Keepers');
-  const prefix = item => item.stage ? 'Stage' : 'Keeper';
+  const wanted = item => PACK === 'all' || PACK === item.pack;
+  const dir = item => path.join(ROOT, { keepers: 'Keepers', stages: 'Stages', menus: 'Menus' }[item.pack]);
+  const prefix = item => item.id.startsWith('ship_') ? 'Ship' : { keepers: 'Keeper', stages: 'Stage', menus: 'Menu' }[item.pack];
   const title = s => s[0].toUpperCase() + s.slice(1);
   for (const t of plan.themes.filter(wanted)){
     for (const lvl of [1, 2, 3]){
@@ -148,12 +154,12 @@ function wav(samples, rate){
   for (const v of plan.voices.filter(wanted)){
     const r = await render('voice', v, RATE);
     const name = `SFX_${prefix(v)}_${camel(v.id)}_${title(v.cue)}`;
-    save(path.join(dir(v), v.stage ? 'Cues' : 'Voices', name + '.wav'), r, RATE);
+    save(path.join(dir(v), v.pack === 'keepers' ? 'Voices' : 'Cues', name + '.wav'), r, RATE);
     report.voices.push({ name, seconds: +r.seconds.toFixed(3), peak: +r.peak.toFixed(3) });
   }
   for (const a of plan.ambience.filter(wanted)){
     const r = await render('ambience', a, AMB_RATE);
-    const name = `AMB_Stage_${camel(a.id)}`;
+    const name = `AMB_${prefix(a)}_${camel(a.id)}`;
     save(path.join(dir(a), 'Ambience', name + '.wav'), r, AMB_RATE);
     report.ambience.push({ name, seconds: +r.seconds.toFixed(3), peak: +r.peak.toFixed(3) });
   }
