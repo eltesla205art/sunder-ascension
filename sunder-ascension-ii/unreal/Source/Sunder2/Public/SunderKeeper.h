@@ -1,13 +1,18 @@
 // SUNDER: Ascension II — a Keeper: the boss of an Hour. Ported from the web game's boss logic: it descends into the top
 // band (untouchable while it enters), strafes side to side, cycles its Hour's attack patterns every few seconds, and
 // grows faster and angrier at 66 % and 33 % hull. In phase 3 it dashes, and a Keeper with a PhaseThreeMesh changes form
-// (Apep opens its jaws). Announces itself with its taunt, shows a boss bar, and bursts hugely when beaten.
+// (Apep opens its jaws). Announces itself with its taunt, shows a boss bar, and when beaten it shudders and cracks apart
+// for a couple of seconds before it bursts. Its Niagara effects (aura, arrival gate, muzzle flares, phase shockwave,
+// death) are all optional: see unreal/KEEPER_VFX.md. Without them it falls back to the shared plasma impacts.
 // Each Keeper is a Blueprint child made by create_keepers.py with its Hour's numbers from the web game.
 #pragma once
 
 #include "CoreMinimal.h"
 #include "SunderEnemy.h"
 #include "SunderKeeper.generated.h"
+
+class UNiagaraComponent;
+class UNiagaraSystem;
 
 /** The web game's boss attack patterns. */
 UENUM(BlueprintType)
@@ -70,6 +75,48 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Keeper|Look")
 	TObjectPtr<UStaticMesh> PhaseThreeMesh;
 
+	// ---- effects (KEEPER_VFX.md). Each gets User.KeeperColor, User.AccentColor, User.Size (body radius in units),
+	// User.Phase and User.Duration; all are pooled except the aura, which lives on the Keeper.
+
+	/** Looping glow that rides on the Keeper; User.Phase rises with each phase and is 4 while it dies. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Keeper|FX")
+	TObjectPtr<UNiagaraComponent> Aura;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Keeper|FX")
+	TObjectPtr<UNiagaraSystem> AuraFX;
+
+	/** The Gate opening where the Keeper will hold; User.Duration = seconds until it arrives there. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Keeper|FX")
+	TObjectPtr<UNiagaraSystem> ArrivalFX;
+
+	/** A flare at the muzzle on every volley (User.Size × 1), and a bigger one when the attack pattern changes (× 2). */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Keeper|FX")
+	TObjectPtr<UNiagaraSystem> MuzzleFX;
+
+	/** The hull cracking at 66 % and 33 %; User.Phase is the phase it has just entered. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Keeper|FX")
+	TObjectPtr<UNiagaraSystem> PhaseShiftFX;
+
+	/** The whole death: rumble and cracks for User.Duration seconds, then the final burst. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Keeper|FX")
+	TObjectPtr<UNiagaraSystem> DeathFX;
+
+	/** This Keeper's glow (HDR): its Hour's colour. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Keeper|FX")
+	FLinearColor KeeperColor = FLinearColor(3.4f, 1.3f, 0.45f, 1.f);
+
+	/** Second colour: crystal, fire, heart, void (HDR). */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Keeper|FX")
+	FLinearColor AccentColor = FLinearColor(4.0f, 0.6f, 2.6f, 1.f);
+
+	/** Colour each shot (its trail's User.ShotColor and its impact) with KeeperColor. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Keeper|FX")
+	bool bTintShots = true;
+
+	/** Seconds it shudders and cracks apart before the final burst (0 = burst at once). */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Keeper|FX", meta = (ClampMin = "0"))
+	float DeathDuration = 2.2f;
+
 	UFUNCTION(BlueprintPure, Category = "Keeper")
 	int32 GetPhase() const { return Phase; }
 
@@ -78,6 +125,9 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Keeper")
 	bool IsEntering() const { return bEntering; }
+
+	UFUNCTION(BlueprintPure, Category = "Keeper")
+	bool IsDying() const { return bDying; }
 
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator,
 		AActor* DamageCauser) override;
@@ -94,6 +144,13 @@ private:
 	void FitToScreen(UStaticMesh* ForMesh);
 	void FirePattern(ESunderBossPattern Pattern);
 	void Shoot(const FVector& Direction, float SpeedScale = 1.f);
+	void ShootFrom(const FVector& Origin, const FVector& Direction, float SpeedScale);
+	float BodyRadius() const { return HitRadius / 0.32f; }
+	FVector MuzzleLocation() const { return GetActorLocation() - FVector(60.f, 0.f, 0.f); }
+	UNiagaraComponent* SpawnFX(UNiagaraSystem* System, const FVector& Location, float Scale = 1.f, float Duration = 0.f);
+	void SetFXParams(UNiagaraComponent* FX, float Scale, float Duration) const;
+	void TickDying(float DeltaTime);
+	void FinishDying(bool bAwardScore);
 	FVector WebDirection(float WebAngleRadians) const;
 
 	FVector BaseMeshScale = FVector::OneVector;
@@ -104,4 +161,10 @@ private:
 	int32 PatternIndex = 0;
 	int32 Phase = 1;
 	bool bEntering = true;
+	bool bArrivalShown = false;
+	bool bDying = false;
+	float DyingTime = 0.f;
+	float NextDeathPop = 0.f;
+	int32 DeathPops = 0;
+	FVector MeshRest = FVector::ZeroVector;
 };

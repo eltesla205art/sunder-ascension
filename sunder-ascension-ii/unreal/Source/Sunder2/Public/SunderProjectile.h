@@ -50,6 +50,10 @@ public:
 	/** Called by the pool: place, aim and launch. Direction is flattened onto the XY play plane. */
 	void Fire(const FVector& Location, const FVector& Direction, AActor* InOwner, APawn* InInstigator, float SpeedOverride = 0.f);
 
+	/** Recolour this shot (impact and trail, via the trail's User.ShotColor); the pool resets it when the shot is parked. */
+	UFUNCTION(BlueprintCallable, Category = "Projectile")
+	void SetShotColor(const FLinearColor& Color);
+
 	/** Called by the pool: hide, stop and park. */
 	void Park();
 

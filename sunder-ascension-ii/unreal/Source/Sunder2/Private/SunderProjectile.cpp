@@ -75,9 +75,16 @@ void ASunderProjectile::Fire(const FVector& Location, const FVector& Direction, 
 	GetWorldTimerManager().SetTimer(LifetimeTimer, this, &ASunderProjectile::Expire, MaxLifetime, false);
 }
 
+void ASunderProjectile::SetShotColor(const FLinearColor& Color)
+{
+	PlasmaColor = Color;
+	Trail->SetVariableLinearColor(TEXT("ShotColor"), Color);
+}
+
 void ASunderProjectile::Park()
 {
 	bParked = true;
+	PlasmaColor = GetClass()->GetDefaultObject<ASunderProjectile>()->PlasmaColor;   // back to the Blueprint's colour
 	GetWorldTimerManager().ClearTimer(LifetimeTimer);
 	Movement->StopMovementImmediately();
 	Movement->SetComponentTickEnabled(false);

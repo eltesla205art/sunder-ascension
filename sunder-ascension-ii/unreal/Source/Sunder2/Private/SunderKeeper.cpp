@@ -7,8 +7,12 @@
 #include "Engine/StaticMesh.h"
 #include "Engine/World.h"
 #include "ImpactFXSubsystem.h"
+#include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraSystem.h"
 #include "ProjectilePoolSubsystem.h"
 #include "SunderGameMode.h"
+#include "SunderProjectile.h"
 
 ASunderKeeper::ASunderKeeper()
 {
@@ -22,6 +26,10 @@ ASunderKeeper::ASunderKeeper()
 	BodyScale = FVector(1.f);
 	DeathColor = FLinearColor(3.0f, 2.1f, 0.6f, 1.f);
 	Patterns = { ESunderBossPattern::AimedVolley };
+
+	Aura = CreateDefaultSubobject<UNiagaraComponent>(TEXT("Aura"));
+	Aura->SetupAttachment(Collision);                        // on the root, so the mesh's hit swell doesn't scale it
+	Aura->SetAutoActivate(false);
 }
 
 void ASunderKeeper::OnConstruction(const FTransform& Transform)
@@ -52,6 +60,36 @@ void ASunderKeeper::BeginPlay()
 	{
 		Mode->AnnounceKeeper(this, FString::Printf(TEXT("HOUR %d  ·  %s"), Hour, *KeeperName), Taunt);
 	}
+	if (AuraFX && AuraFX->GetEmitterHandles().Num() > 0)
+	{
+		Aura->SetAsset(AuraFX);
+		SetFXParams(Aura, 1.f, 0.f);
+		Aura->SetTranslucentSortPriority(5);                     // behind the shots and impacts
+		Aura->Activate(true);
+	}
+}
+
+void ASunderKeeper::SetFXParams(UNiagaraComponent* FX, float Scale, float Duration) const
+{
+	FX->SetVariableLinearColor(TEXT("KeeperColor"), KeeperColor);
+	FX->SetVariableLinearColor(TEXT("AccentColor"), AccentColor);
+	FX->SetVariableFloat(TEXT("Size"), BodyRadius() * Scale);
+	FX->SetVariableFloat(TEXT("Phase"), bDying ? 4.f : (float)Phase);
+	FX->SetVariableFloat(TEXT("Duration"), Duration);
+}
+
+UNiagaraComponent* ASunderKeeper::SpawnFX(UNiagaraSystem* System, const FVector& Location, float Scale, float Duration)
+{
+	if (!System || System->GetEmitterHandles().Num() == 0) { return nullptr; }   // unset, or not built yet: use the fallbacks
+	// Pooled: back to the pool by itself when its emitters finish, even after the Keeper is gone.
+	UNiagaraComponent* FX = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), System, Location, FRotator::ZeroRotator,
+		FVector(1.f), /*bAutoDestroy*/ false, /*bAutoActivate*/ true, ENCPoolMethod::AutoRelease, /*bPreCullCheck*/ false);
+	if (FX)
+	{
+		SetFXParams(FX, Scale, Duration);
+		FX->SetTranslucentSortPriority(15);
+	}
+	return FX;
 }
 
 FVector ASunderKeeper::WebDirection(float A) const
@@ -64,6 +102,7 @@ void ASunderKeeper::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	if (bDead) { return; }
+	if (bDying) { TickDying(DeltaTime); return; }
 	BossTime += DeltaTime;
 	// Keepers keep their own materials, so the hit flash is a quick swell instead of a colour change.
 	Mesh->SetRelativeScale3D(BaseMeshScale * (1.f + 0.05f * HitFlash));
@@ -71,8 +110,15 @@ void ASunderKeeper::Tick(float DeltaTime)
 
 void ASunderKeeper::Move(float DeltaTime)
 {
+	if (bDying) { return; }
 	FVector P = GetActorLocation();
 	const float HoldX = ArenaCenter.X + ArenaHalfExtents.X * (1.f - 2.f * HoldDepth);
+	if (bEntering && !bArrivalShown)
+	{
+		// The Gate opens where it will hold (here, not in BeginPlay: the arena is only known after Setup).
+		bArrivalShown = true;
+		SpawnFX(ArrivalFX, FVector(HoldX, P.Y, P.Z), 1.f, FMath::Max(P.X - HoldX, 0.f) / FMath::Max(EnterSpeed, 1.f));
+	}
 	if (bEntering)
 	{
 		P.X -= EnterSpeed * DeltaTime;
@@ -91,25 +137,32 @@ void ASunderKeeper::Move(float DeltaTime)
 
 void ASunderKeeper::TryFire(float DeltaTime)
 {
-	if (bEntering || !ShotClass || Patterns.Num() == 0) { return; }
+	if (bEntering || bDying || !ShotClass || Patterns.Num() == 0) { return; }
 	PatternClock += DeltaTime;
 	if (PatternClock >= PatternSwitchTime)
 	{
 		PatternClock = 0.f;
 		PatternIndex = (PatternIndex + 1) % Patterns.Num();
+		if (Patterns.Num() > 1) { SpawnFX(MuzzleFX, MuzzleLocation(), 2.f); }   // a new attack: a bigger flare
 	}
 	FireCooldown -= DeltaTime;
 	if (FireCooldown > 0.f) { return; }
 	FirePattern(Patterns[PatternIndex % Patterns.Num()]);
+	SpawnFX(MuzzleFX, MuzzleLocation(), 1.f);
 	FireCooldown = FireInterval * (1.f - Phase * 0.12f) / FireRateScale;   // each phase fires faster
 }
 
 void ASunderKeeper::Shoot(const FVector& Direction, float SpeedScale)
 {
+	ShootFrom(MuzzleLocation(), Direction, SpeedScale);
+}
+
+void ASunderKeeper::ShootFrom(const FVector& Origin, const FVector& Direction, float SpeedScale)
+{
 	if (UProjectilePoolSubsystem* Pool = GetWorld()->GetSubsystem<UProjectilePoolSubsystem>())
 	{
-		const FVector Origin = GetActorLocation() - FVector(60.f, 0.f, 0.f);
-		Pool->Acquire(ShotClass, Origin, Direction, this, this, BulletSpeed * SpeedScale);
+		ASunderProjectile* Shot = Pool->Acquire(ShotClass, Origin, Direction, this, this, BulletSpeed * SpeedScale);
+		if (Shot && bTintShots) { Shot->SetShotColor(KeeperColor); }
 	}
 }
 
@@ -165,15 +218,13 @@ void ASunderKeeper::FirePattern(ESunderBossPattern Pattern)
 		break;
 	case ESunderBossPattern::WallBarrage:
 	{
-		UProjectilePoolSubsystem* Pool = GetWorld()->GetSubsystem<UProjectilePoolSubsystem>();
-		if (!Pool) { break; }
 		const int32 Gap = FMath::RandRange(0, 5);
 		for (int32 i = 0; i < 8; ++i)
 		{
 			if (i == Gap || i == Gap + 1) { continue; }          // the way through
 			const float Across = (60.f + i * 50.f - 240.f) / 240.f;   // the web game's columns across its 480-px canvas
 			const FVector From(GetActorLocation().X - 60.f, ArenaCenter.Y + Across * ArenaHalfExtents.Y * 0.95f, GetActorLocation().Z);
-			Pool->Acquire(ShotClass, From, FVector::BackwardVector, this, this, BulletSpeed);
+			ShootFrom(From, FVector::BackwardVector, 1.f);
 		}
 		break;
 	}
@@ -184,20 +235,29 @@ float ASunderKeeper::TakeDamage(float DamageAmount, FDamageEvent const& DamageEv
 {
 	if (bEntering) { return 0.f; }                           // untouchable until it has taken its position
 	const float Applied = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
-	if (bDead) { return Applied; }
+	if (bDead || bDying) { return Applied; }
 	const float Fraction = GetHealthFraction();
 	const int32 NewPhase = Fraction <= 0.33f ? 3 : (Fraction <= 0.66f ? 2 : 1);
 	if (NewPhase > Phase)
 	{
 		Phase = NewPhase;
-		if (UImpactFXSubsystem* Impacts = GetWorld()->GetSubsystem<UImpactFXSubsystem>())
-		{
-			Impacts->QueueImpact(GetActorLocation(), FVector::BackwardVector, DeathColor);   // it cracks
-		}
-		if (Phase == 3 && PhaseThreeMesh)
+		const bool bNewForm = Phase == 3 && PhaseThreeMesh;
+		if (bNewForm)
 		{
 			Mesh->SetStaticMesh(PhaseThreeMesh);                 // the final form
 			FitToScreen(PhaseThreeMesh);
+		}
+		if (Aura->IsActive())
+		{
+			Aura->SetVariableFloat(TEXT("Phase"), (float)Phase);
+			Aura->SetVariableFloat(TEXT("Size"), BodyRadius());
+		}
+		if (!SpawnFX(PhaseShiftFX, GetActorLocation(), bNewForm ? 1.6f : 1.f))
+		{
+			if (UImpactFXSubsystem* Impacts = GetWorld()->GetSubsystem<UImpactFXSubsystem>())
+			{
+				Impacts->QueueImpact(GetActorLocation(), FVector::BackwardVector, DeathColor);   // it cracks
+			}
 		}
 	}
 	return Applied;
@@ -205,19 +265,62 @@ float ASunderKeeper::TakeDamage(float DamageAmount, FDamageEvent const& DamageEv
 
 void ASunderKeeper::Die(bool bAwardScore)
 {
-	if (bDead) { return; }
-	if (UImpactFXSubsystem* Impacts = GetWorld()->GetSubsystem<UImpactFXSubsystem>())
+	if (bDead || bDying) { return; }
+	if (!bAwardScore || DeathDuration <= 0.f)
 	{
-		// A burst across the whole body: spread out so they don't merge into one.
-		const float R = HitRadius * 1.6f;
-		for (int32 i = 0; i < 7; ++i)
+		FinishDying(bAwardScore);
+		return;
+	}
+	// Beaten: stop, shudder and crack apart for DeathDuration, then burst (TickDying → FinishDying).
+	bDying = true;
+	DyingTime = 0.f;
+	NextDeathPop = 0.f;
+	SetActorEnableCollision(false);                          // no more hits, no ramming, the beam passes through
+	MeshRest = Mesh->GetRelativeLocation();
+	if (Aura->IsActive()) { Aura->SetVariableFloat(TEXT("Phase"), 4.f); }
+	SpawnFX(DeathFX, GetActorLocation(), 1.f, DeathDuration);
+}
+
+void ASunderKeeper::TickDying(float DeltaTime)
+{
+	DyingTime += DeltaTime;
+	const float T = FMath::Clamp(DyingTime / DeathDuration, 0.f, 1.f);
+	// A shudder that grows, and a slow swell as it comes apart.
+	const float Shake = 6.f + 22.f * T;
+	Mesh->SetRelativeLocation(MeshRest + FVector(FMath::FRandRange(-Shake, Shake), FMath::FRandRange(-Shake, Shake), 0.f));
+	Mesh->SetRelativeScale3D(BaseMeshScale * (1.f + 0.08f * T));
+	// Bursts popping across the body, faster and faster, in its two colours.
+	if (DyingTime >= NextDeathPop)
+	{
+		if (UImpactFXSubsystem* Impacts = GetWorld()->GetSubsystem<UImpactFXSubsystem>())
 		{
-			const float A = UE_TWO_PI * i / 7;
-			const FVector Offset = i == 0 ? FVector::ZeroVector : FVector(FMath::Cos(A) * R, FMath::Sin(A) * R, 0.f);
-			Impacts->QueueImpact(GetActorLocation() + Offset, FVector::BackwardVector, DeathColor);
-			Impacts->QueueImpact(GetActorLocation() + Offset, FVector::BackwardVector, DeathColor);
+			const FVector2D Spot = FMath::RandPointInCircle(BodyRadius() * 0.8f);
+			Impacts->QueueImpact(GetActorLocation() + FVector(Spot.X, Spot.Y, 0.f), FVector::BackwardVector,
+				(DeathPops++ % 2 == 0) ? KeeperColor : AccentColor);
+		}
+		NextDeathPop = DyingTime + FMath::Lerp(0.22f, 0.05f, T);
+	}
+	if (DyingTime >= DeathDuration) { FinishDying(true); }
+}
+
+void ASunderKeeper::FinishDying(bool bAwardScore)
+{
+	if (bAwardScore)
+	{
+		if (UImpactFXSubsystem* Impacts = GetWorld()->GetSubsystem<UImpactFXSubsystem>())
+		{
+			// The final burst across the whole body: spread out so they don't merge into one.
+			const float R = HitRadius * 1.6f;
+			for (int32 i = 0; i < 7; ++i)
+			{
+				const float A = UE_TWO_PI * i / 7;
+				const FVector Offset = i == 0 ? FVector::ZeroVector : FVector(FMath::Cos(A) * R, FMath::Sin(A) * R, 0.f);
+				Impacts->QueueImpact(GetActorLocation() + Offset, FVector::BackwardVector, DeathColor);
+				Impacts->QueueImpact(GetActorLocation() + Offset, FVector::BackwardVector, i % 2 ? KeeperColor : AccentColor);
+			}
 		}
 	}
+	bDying = false;
 	if (ASunderGameMode* Mode = GetWorld()->GetAuthGameMode<ASunderGameMode>()) { Mode->ClearKeeper(this); }
 	Super::Die(bAwardScore);
 }

@@ -1,6 +1,6 @@
 # SUNDER II — drop-in UE5 C++ for the weapons, the ship, enemies, waves and the Keepers
 
-C++ side of [`../WEAPON_VFX.md`](../WEAPON_VFX.md), plus the ship, enemies, waves, the twelve Keeper bosses, scoring and a HUD for the test arena. Written for UE 5.3+ (5.1 minimum: it uses `UE_SMALL_NUMBER`).
+C++ side of [`../WEAPON_VFX.md`](../WEAPON_VFX.md) and [`../KEEPER_VFX.md`](../KEEPER_VFX.md), plus the ship, enemies, waves, the twelve Keeper bosses, scoring and a HUD for the test arena. Written for UE 5.3+ (5.1 minimum: it uses `UE_SMALL_NUMBER`).
 
 > **Status:** written without an Unreal install, so **not compiled yet**. Expect to fix small API differences on the
 > first build; the comments say what each piece is for, so fixes stay local.
@@ -9,13 +9,13 @@ C++ side of [`../WEAPON_VFX.md`](../WEAPON_VFX.md), plus the ship, enemies, wave
 |---|---|---|
 | `BeamWeaponComponent` | Actor component: persistent beam, sphere trace each frame, sets `BeamStart`/`BeamEnd`/`bHit`/`HitNormal`/`Intensity` on `NS_Laser_Beam`, ramps in and out, interval damage | §1.6 |
 | `ImpactFXSubsystem` (+ `UImpactFXSettings`) | World subsystem: `QueueImpact`, merges hits on the same spot, caps full effects per frame, spawns pooled (`AutoRelease`) | §3.2 |
-| `SunderProjectile` | Pooled plasma shot: overlap → queue impact, apply damage, return to the pool; times out off-screen | §3.4 |
+| `SunderProjectile` | Pooled plasma shot: overlap → queue impact, apply damage, return to the pool; times out off-screen; `SetShotColor` recolours one shot | §3.4 |
 | `ProjectilePoolSubsystem` | World subsystem: `Acquire` / `Release` / `Prewarm`, per-class free lists | §3.4 |
 | `SunderShipPawn` | The player ship: eight-way movement clamped to the arena, held beam, held twin plasma shots from the pool, a 5-hit hull with blinking invulnerability, death and respawn; input built at runtime with Enhanced Input (no input assets) | — |
 | `SunderTargetDummy` | Drifting target: takes beam and shot damage, swells when hit, bursts with an impact and respawns | — |
 | `SunderGameMode` | Default pawn = the ship; score, 3 lives, respawn after 2 s, DAWN DENIED and a restart when the last life goes; wave banner; tracks the active Keeper | — |
 | `SunderEnemy` | Enemy craft: moves Straight / Weave / Dive / Strafe / Zigzag, fires Aimed / Spread / Radial from the pool, rams, flashes when hit, bursts and scores on death; each type is a Blueprint child | — |
-| `SunderKeeper` | Keeper boss (child of `SunderEnemy`): enters invulnerable, fits its model to the screen, strafes; three phases (66% / 33%) that fire faster and dash in phase 3; eight attack patterns ported from the web game (Aimed Volley, Spread Fan, Horizontal Sweep, Radial Burst, Cross Ring, Spiral, Dual Spiral, Wall Barrage) rotating every 3.5 s; optional final-form mesh; a long burst on death | — |
+| `SunderKeeper` | Keeper boss (child of `SunderEnemy`): enters invulnerable, fits its model to the screen, strafes; three phases (66% / 33%) that fire faster and dash in phase 3; eight attack patterns ported from the web game (Aimed Volley, Spread Fan, Horizontal Sweep, Radial Burst, Cross Ring, Spiral, Dual Spiral, Wall Barrage) rotating every 3.5 s; optional final-form mesh; a two-second death (shudder, bursts across the body, then the final burst); spawns its Niagara effects (aura, arrival Gate, muzzle flares, phase shockwave, death) and tints its shots, falling back to the plasma impacts for any system not built yet | Keeper VFX |
 | `SunderWaveSet` | Data asset: waves of spawn groups (enemy type, count, timing, formation Column / Line / V / Random / Sides, lane, spacing), an optional Keeper per wave, loop scaling | — |
 | `SunderWaveDirector` | Level actor that plays a wave set: schedules formations along the top edge, spawns a wave's Keeper at the top centre, waits for each wave to clear, loops tougher | — |
 | `SunderHUD` | Canvas HUD: score, lives, hull bar, wave banner, Keeper title and taunt, boss bar coloured by phase, DAWN DENIED | — |
@@ -49,6 +49,9 @@ Projectiles are team-aware: enemy shots only hit the ship, the player's shots ne
    [`../Content/Keepers`](../Content/Keepers) (FBX, one mesh each), makes `BP_KeeperShot` / `BP_KeeperShotHeavy` (2 damage from
    Hour 7), the twelve `BP_Keeper_*` Blueprints with the web game's numbers, `DA_KeeperGauntlet` (all twelve in order),
    and adds Wepwawet to the end of `DA_TestWaves`. Set `USE_GAUNTLET_IN_ARENA = True` to play the gauntlet in the arena.
+5. [`../Scripts/create_keeper_fx_assets.py`](../Scripts/create_keeper_fx_assets.py): Keeper materials, Effect Types and
+   empty `NS_Keeper_*` systems, wired onto the twelve Keepers with each one's colours, and `NS_Keeper_Shot` on the Keeper
+   shots; build the emitters by hand from [`../KEEPER_VFX.md`](../KEEPER_VFX.md).
 
 ## Hook up
 

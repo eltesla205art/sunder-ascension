@@ -22,6 +22,8 @@ original *SUNDER: Ascension — The Nine Bows* (`web/`, `godot/`, `docs/`), whic
 | `unreal/Scripts/create_enemies_and_waves.py` | Editor Python: five enemy Blueprints and their shot, a five-wave `DA_TestWaves`, and a wave director in `L_SunderArena` (untested until first run) |
 | `unreal/Scripts/create_arena_level.py` | Editor Python: makes `BP_SunderShip`, `BP_PlasmaShot`, `BP_SunderGameMode` and the top-down test level `L_SunderArena` (needs the C++ compiled; untested until first run) |
 | `unreal/Scripts/create_keepers.py` | Editor Python: imports the Keeper models and makes the twelve `BP_Keeper_*` boss Blueprints, their shots and `DA_KeeperGauntlet` (untested until first run) |
+| `unreal/KEEPER_VFX.md` | UE5 Niagara guide for the Keepers: aura, arrival Gate, muzzle flares, phase shockwave, death and shot trails |
+| `unreal/Scripts/create_keeper_fx_assets.py` | Editor Python: Keeper FX materials, Effect Types and empty systems, wired onto the twelve Keeper Blueprints with their colours (untested until first run) |
 | `unreal/Content/Keepers/` | The thirteen Keeper models as FBX for Unreal (one mesh each, plus Apep's final form), from `blender/keepers.py --fbx` |
 | `art/blender/` | Full-resolution Blender renders (title backdrop, ship sprites, `keepers/` boss sprites and portraits) |
 | `artifacts/` | Progress note, QA evidence (`final-evidence.md`), inspector captures |
