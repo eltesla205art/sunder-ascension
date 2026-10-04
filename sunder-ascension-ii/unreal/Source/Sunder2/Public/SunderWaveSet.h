@@ -7,6 +7,7 @@
 #include "SunderWaveSet.generated.h"
 
 class ASunderEnemy;
+class ASunderKeeper;
 
 UENUM(BlueprintType)
 enum class ESunderFormation : uint8
@@ -60,6 +61,10 @@ struct FSunderWave
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wave")
 	TArray<FSunderSpawnGroup> Groups;
+
+	/** A Keeper for this wave: it enters at the top centre when the wave starts (give the wave a long MaxDuration). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wave")
+	TSubclassOf<ASunderKeeper> Keeper;
 
 	/** Wait for every enemy of this wave to be destroyed or gone before the next one (up to MaxDuration). */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wave")

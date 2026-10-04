@@ -4,6 +4,7 @@
 #include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
 #include "SunderHUD.h"
+#include "SunderKeeper.h"
 #include "SunderShipPawn.h"
 #include "TimerManager.h"
 
@@ -31,6 +32,24 @@ void ASunderGameMode::AnnounceWave(int32 Number, const FString& Name)
 	WaveNumber = Number;
 	WaveName = Name;
 	WaveAnnouncedAt = GetWorld()->GetTimeSeconds();
+}
+
+void ASunderGameMode::AnnounceKeeper(ASunderKeeper* Keeper, const FString& Title, const FString& InTaunt)
+{
+	ActiveKeeper = Keeper;
+	KeeperTitle = Title;
+	KeeperTaunt = InTaunt;
+	KeeperAnnouncedAt = GetWorld()->GetTimeSeconds();
+}
+
+ASunderKeeper* ASunderGameMode::GetActiveKeeper() const
+{
+	return ActiveKeeper.Get();
+}
+
+void ASunderGameMode::ClearKeeper(ASunderKeeper* Keeper)
+{
+	if (ActiveKeeper.Get() == Keeper) { ActiveKeeper.Reset(); }
 }
 
 void ASunderGameMode::OnShipDestroyed(ASunderShipPawn* Ship)

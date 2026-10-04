@@ -7,6 +7,7 @@
 #include "SunderGameMode.generated.h"
 
 class ASunderShipPawn;
+class ASunderKeeper;
 
 UCLASS()
 class SUNDER2_API ASunderGameMode : public AGameModeBase
@@ -32,6 +33,17 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Sunder")
 	void AnnounceWave(int32 Number, const FString& Name);
 
+	/** A Keeper has arrived: its banner, its taunt and the boss bar. */
+	void AnnounceKeeper(ASunderKeeper* Keeper, const FString& Title, const FString& KeeperTaunt);
+
+	/** A Keeper is gone: the boss bar goes. */
+	void ClearKeeper(ASunderKeeper* Keeper);
+
+	UFUNCTION(BlueprintPure, Category = "Sunder") ASunderKeeper* GetActiveKeeper() const;   // in the .cpp: needs the full class
+	UFUNCTION(BlueprintPure, Category = "Sunder") FString GetKeeperTitle() const { return KeeperTitle; }
+	UFUNCTION(BlueprintPure, Category = "Sunder") FString GetKeeperTaunt() const { return KeeperTaunt; }
+	UFUNCTION(BlueprintPure, Category = "Sunder") float GetKeeperAnnouncedAt() const { return KeeperAnnouncedAt; }
+
 	/** Called by the ship when its hull is gone. */
 	void OnShipDestroyed(ASunderShipPawn* Ship);
 
@@ -50,6 +62,10 @@ private:
 
 	FTimerHandle RespawnTimer;
 	FTimerHandle RestartTimer;
+	TWeakObjectPtr<ASunderKeeper> ActiveKeeper;
+	FString KeeperTitle;
+	FString KeeperTaunt;
+	float KeeperAnnouncedAt = -100.f;
 	FString WaveName;
 	float WaveAnnouncedAt = -100.f;
 	int32 WaveNumber = 0;

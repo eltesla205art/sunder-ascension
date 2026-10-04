@@ -4,6 +4,7 @@
 #include "Engine/World.h"
 #include "SunderEnemy.h"
 #include "SunderGameMode.h"
+#include "SunderKeeper.h"
 #include "SunderWaveSet.h"
 
 ASunderWaveDirector::ASunderWaveDirector()
@@ -65,6 +66,10 @@ void ASunderWaveDirector::BuildSpawns(int32 Index)
 			Location.Y = FMath::Clamp(Location.Y, ArenaCenter.Y - Width, ArenaCenter.Y + Width);
 			Pending.Add({ Group.Delay + i * Group.Interval, Group.EnemyClass, Location });
 		}
+	}
+	if (Wave.Keeper)
+	{
+		Pending.Add({ 0.f, TSubclassOf<ASunderEnemy>(Wave.Keeper.Get()), FVector(TopX + 200.f, ArenaCenter.Y, ArenaCenter.Z) });
 	}
 	Pending.Sort([](const FPendingSpawn& A, const FPendingSpawn& B) { return A.Time < B.Time; });
 }

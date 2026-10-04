@@ -1,6 +1,6 @@
-# SUNDER II — drop-in UE5 C++ for the weapons, the ship, enemies and waves
+# SUNDER II — drop-in UE5 C++ for the weapons, the ship, enemies, waves and the Keepers
 
-C++ side of [`../WEAPON_VFX.md`](../WEAPON_VFX.md), plus the ship, enemies, waves, scoring and a HUD for the test arena. Written for UE 5.3+ (5.1 minimum: it uses `UE_SMALL_NUMBER`).
+C++ side of [`../WEAPON_VFX.md`](../WEAPON_VFX.md), plus the ship, enemies, waves, the twelve Keeper bosses, scoring and a HUD for the test arena. Written for UE 5.3+ (5.1 minimum: it uses `UE_SMALL_NUMBER`).
 
 > **Status:** written without an Unreal install, so **not compiled yet**. Expect to fix small API differences on the
 > first build; the comments say what each piece is for, so fixes stay local.
@@ -13,19 +13,20 @@ C++ side of [`../WEAPON_VFX.md`](../WEAPON_VFX.md), plus the ship, enemies, wave
 | `ProjectilePoolSubsystem` | World subsystem: `Acquire` / `Release` / `Prewarm`, per-class free lists | §3.4 |
 | `SunderShipPawn` | The player ship: eight-way movement clamped to the arena, held beam, held twin plasma shots from the pool, a 5-hit hull with blinking invulnerability, death and respawn; input built at runtime with Enhanced Input (no input assets) | — |
 | `SunderTargetDummy` | Drifting target: takes beam and shot damage, swells when hit, bursts with an impact and respawns | — |
-| `SunderGameMode` | Default pawn = the ship; score, 3 lives, respawn after 2 s, DAWN DENIED and a restart when the last life goes; wave banner | — |
+| `SunderGameMode` | Default pawn = the ship; score, 3 lives, respawn after 2 s, DAWN DENIED and a restart when the last life goes; wave banner; tracks the active Keeper | — |
 | `SunderEnemy` | Enemy craft: moves Straight / Weave / Dive / Strafe / Zigzag, fires Aimed / Spread / Radial from the pool, rams, flashes when hit, bursts and scores on death; each type is a Blueprint child | — |
-| `SunderWaveSet` | Data asset: waves of spawn groups (enemy type, count, timing, formation Column / Line / V / Random / Sides, lane, spacing), loop scaling | — |
-| `SunderWaveDirector` | Level actor that plays a wave set: schedules formations along the top edge, waits for each wave to clear, loops tougher | — |
-| `SunderHUD` | Canvas HUD: score, lives, hull bar, wave banner, DAWN DENIED | — |
+| `SunderKeeper` | Keeper boss (child of `SunderEnemy`): enters invulnerable, fits its model to the screen, strafes; three phases (66% / 33%) that fire faster and dash in phase 3; eight attack patterns ported from the web game (Aimed Volley, Spread Fan, Horizontal Sweep, Radial Burst, Cross Ring, Spiral, Dual Spiral, Wall Barrage) rotating every 3.5 s; optional final-form mesh; a long burst on death | — |
+| `SunderWaveSet` | Data asset: waves of spawn groups (enemy type, count, timing, formation Column / Line / V / Random / Sides, lane, spacing), an optional Keeper per wave, loop scaling | — |
+| `SunderWaveDirector` | Level actor that plays a wave set: schedules formations along the top edge, spawns a wave's Keeper at the top centre, waits for each wave to clear, loops tougher | — |
+| `SunderHUD` | Canvas HUD: score, lives, hull bar, wave banner, Keeper title and taunt, boss bar coloured by phase, DAWN DENIED | — |
 
 Projectiles are team-aware: enemy shots only hit the ship, the player's shots never do, and shots ignore each other.
 
 ## Install
 
 1. Copy `Sunder2/Public/*` and `Sunder2/Private/*` into your game module, e.g. `Source/<YourGame>/Public` and
-   `Source/<YourGame>/Private`. If your module has no Public/Private split, put all twenty-one files in `Source/<YourGame>/`.
-2. Replace `SUNDER2_API` with your module's export macro (`<YOURGAME>_API`) in the eleven headers.
+   `Source/<YourGame>/Private`. If your module has no Public/Private split, put all twenty-three files in `Source/<YourGame>/`.
+2. Replace `SUNDER2_API` with your module's export macro (`<YOURGAME>_API`) in the twelve headers.
 3. In `Source/<YourGame>/<YourGame>.Build.cs`, add to `PublicDependencyModuleNames`:
    ```csharp
    "Niagara", "DeveloperSettings", "EnhancedInput", "InputCore"
@@ -44,6 +45,10 @@ Projectiles are team-aware: enemy shots only hit the ship, the player's shots ne
 3. [`../Scripts/create_enemies_and_waves.py`](../Scripts/create_enemies_and_waves.py): `BP_EnemyShot`, five enemy Blueprints
    (Scout, Diver, Skimmer, Gunship, Bomber), `DA_TestWaves` (five waves, looping tougher) and a wave director in
    `L_SunderArena`, replacing the target dummies.
+4. [`../Scripts/create_keepers.py`](../Scripts/create_keepers.py): imports the Keeper models from
+   [`../Content/Keepers`](../Content/Keepers) (FBX, one mesh each), makes `BP_KeeperShot` / `BP_KeeperShotHeavy` (2 damage from
+   Hour 7), the twelve `BP_Keeper_*` Blueprints with the web game's numbers, `DA_KeeperGauntlet` (all twelve in order),
+   and adds Wepwawet to the end of `DA_TestWaves`. Set `USE_GAUNTLET_IN_ARENA = True` to play the gauntlet in the arena.
 
 ## Hook up
 
@@ -63,5 +68,7 @@ Projectiles are team-aware: enemy shots only hit the ship, the player's shots ne
 
 1. Beam: stops on an enemy, grows back smoothly when the enemy dies, never lags the ship while strafing.
 2. Impacts: `stat Niagara` stays flat with the §3.6 stress test (60 queued impacts a frame).
-3. Pools: `GetTotalCreated` on the projectile pool and the Niagara Debugger's pooled-component count plateau rather
+3. Keepers: each faces down the screen (else change its Body Rotation yaw), stays invulnerable until it settles,
+   and the boss bar changes colour at 66% and 33%.
+4. Pools: `GetTotalCreated` on the projectile pool and the Niagara Debugger's pooled-component count plateau rather
    than climbing.

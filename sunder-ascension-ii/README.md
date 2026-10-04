@@ -18,9 +18,11 @@ original *SUNDER: Ascension — The Nine Bows* (`web/`, `godot/`, `docs/`), whic
 | `blender/` | Blender Python scripts that model and render the game art |
 | `unreal/WEAPON_VFX.md` | UE5 Niagara guide for the planned Unreal version: the trace-driven laser beam, the plasma-burst impact, pooling and budgets (not yet built in-engine) |
 | `unreal/Scripts/create_weapon_fx_assets.py` | Editor Python: makes the weapon FX master material and instances, Effect Types and empty Niagara systems, then lists what's left to build by hand (untested until first run) |
-| `unreal/Source/` | Drop-in UE5 C++: beam weapon, impact FX, pooled projectiles, the player ship, enemies, wave set and director, game mode with score and lives, HUD, target dummy (not compiled yet; install steps inside) |
+| `unreal/Source/` | Drop-in UE5 C++: beam weapon, impact FX, pooled projectiles, the player ship, enemies, wave set and director, the Keeper boss, game mode with score and lives, HUD, target dummy (not compiled yet; install steps inside) |
 | `unreal/Scripts/create_enemies_and_waves.py` | Editor Python: five enemy Blueprints and their shot, a five-wave `DA_TestWaves`, and a wave director in `L_SunderArena` (untested until first run) |
 | `unreal/Scripts/create_arena_level.py` | Editor Python: makes `BP_SunderShip`, `BP_PlasmaShot`, `BP_SunderGameMode` and the top-down test level `L_SunderArena` (needs the C++ compiled; untested until first run) |
+| `unreal/Scripts/create_keepers.py` | Editor Python: imports the Keeper models and makes the twelve `BP_Keeper_*` boss Blueprints, their shots and `DA_KeeperGauntlet` (untested until first run) |
+| `unreal/Content/Keepers/` | The thirteen Keeper models as FBX for Unreal (one mesh each, plus Apep's final form), from `blender/keepers.py --fbx` |
 | `art/blender/` | Full-resolution Blender renders (title backdrop, ship sprites, `keepers/` boss sprites and portraits) |
 | `artifacts/` | Progress note, QA evidence (`final-evidence.md`), inspector captures |
 | `art/` | AI concept art: key art A/B, Scarab Warbringer Mk II A/B, Mk II hangar shots A/B |
@@ -82,6 +84,7 @@ python blender/keepers.py art/blender/keepers 128 [1|2|3|4]   # one act or all: 
 python blender/stages.py art/blender/stages 64 [id ...]       # stage backdrops (all, or e.g. horizon delta)
 python blender/keepers.py /tmp/anim 48 [act|id] --anim         # Keeper animation frames (8 per Keeper)
 python blender/keepers.py web/models 8 [act|id] --glb          # only the animated Codex models
+python blender/keepers.py unreal/Content/Keepers 8 [act|id] --fbx   # static FBX models for Unreal
 python3 blender/pack_anim.py /tmp/anim art/blender/keepers/anim web/assets   # pack into sprite sheets (needs Pillow)
 ```
 

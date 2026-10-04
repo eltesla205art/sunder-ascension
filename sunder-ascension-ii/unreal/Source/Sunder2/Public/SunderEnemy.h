@@ -70,9 +70,17 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Enemy")
 	int32 ScoreValue = 100;
 
-	/** Damage dealt to the ship by ramming it (the enemy dies too). */
+	/** Damage dealt to the ship by ramming it. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Enemy")
 	float ContactDamage = 1.f;
+
+	/** Small craft break up when they ram the ship; Keepers don't. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Enemy")
+	bool bDiesOnContact = true;
+
+	/** Radius of the hit sphere (shots, the beam and ramming all use it). */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Enemy", meta = (ClampMin = "1"))
+	float HitRadius = 45.f;
 
 	// ---- movement
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Enemy|Movement")
@@ -137,15 +145,15 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
-private:
+protected:
 	UFUNCTION()
 	void OnBodyOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
 		int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
-	void Move(float DeltaTime);
-	void TryFire(float DeltaTime);
+	virtual void Move(float DeltaTime);
+	virtual void TryFire(float DeltaTime);
 	void FireVolley();
-	void Die(bool bAwardScore);
+	virtual void Die(bool bAwardScore);
 	FVector PlayerLocation() const;
 
 	UPROPERTY(Transient)

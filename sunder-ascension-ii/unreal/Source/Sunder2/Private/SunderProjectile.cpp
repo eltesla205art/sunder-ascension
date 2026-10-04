@@ -55,7 +55,7 @@ void ASunderProjectile::BeginPlay()
 	if (bParked) { Park(); }                                         // spawned by the pool: start parked
 }
 
-void ASunderProjectile::Fire(const FVector& Location, const FVector& Direction, AActor* InOwner, APawn* InInstigator)
+void ASunderProjectile::Fire(const FVector& Location, const FVector& Direction, AActor* InOwner, APawn* InInstigator, float SpeedOverride)
 {
 	bParked = false;
 	bFromEnemy = InOwner && InOwner->IsA<ASunderEnemy>();
@@ -67,7 +67,7 @@ void ASunderProjectile::Fire(const FVector& Location, const FVector& Direction, 
 	SetActorEnableCollision(true);
 
 	Movement->SetUpdatedComponent(Collision);
-	Movement->Velocity = Dir * Speed;
+	Movement->Velocity = Dir * (SpeedOverride > 0.f ? SpeedOverride : Speed);
 	Movement->Activate(/*bReset*/ true);
 	Movement->SetComponentTickEnabled(true);
 

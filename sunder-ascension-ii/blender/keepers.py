@@ -3,6 +3,7 @@
     python keepers.py <out_dir> [samples] [act|id]          act = 1..4 or one Keeper id (default: every Keeper)
     python keepers.py <out_dir> [samples] [act|id] --anim   animation frames instead (see below)
     python keepers.py <out_dir> [samples] [act|id] --glb    only the animated GLBs
+    python keepers.py <out_dir> [samples] [act|id] --fbx    static one-mesh FBXs for Unreal (SM_Keeper_<Id>.fbx)
 
 For each Keeper writes:
   keeper_<id>.png          top-down boss sprite (longest side 360 px, transparent, front facing DOWN the screen)
@@ -30,7 +31,8 @@ sys.argv = _argv
 
 ANIM = "--anim" in sys.argv
 GLB_ONLY = "--glb" in sys.argv                   # only the animated GLBs for the Keeper Codex, no renders
-_args = [a for a in sys.argv if a not in ("--anim", "--glb")]
+FBX_ONLY = "--fbx" in sys.argv                   # only static one-mesh FBXs for the Unreal version
+_args = [a for a in sys.argv if a not in ("--anim", "--glb", "--fbx")]
 OUT = _args[1] if len(_args) > 1 else "."
 SAMPLES = int(_args[2]) if len(_args) > 2 else 64
 ONLY_ACT = _args[3] if len(_args) > 3 else None   # "1".."4" renders one act, or a Keeper id; default: all
@@ -995,6 +997,30 @@ def bake_parts(P):
     return out
 
 
+def unreal_name(kid):
+    return "SM_Keeper_" + "".join(part.capitalize() for part in kid.split("_"))
+
+
+def export_fbx(kid, path):
+    """The Keeper in its static pose as ONE mesh (one section per material), for Unreal's FBX importer.
+    1 Blender unit = 1 m = 100 Unreal units, so Keepers arrive about 500–800 units across."""
+    random.seed(7)
+    P = bake_parts(build_keeper(kid))
+    meshes = [o for objs in P.values() for o in objs]
+    bpy.ops.object.select_all(action="DESELECT")
+    for o in meshes:
+        o.select_set(True)
+    bpy.context.view_layer.objects.active = meshes[0]
+    if len(meshes) > 1:
+        bpy.ops.object.join()
+    mesh = bpy.context.view_layer.objects.active
+    bpy.ops.object.transform_apply(location=False, rotation=True, scale=True)
+    mesh.name = unreal_name(kid)
+    bpy.ops.export_scene.fbx(filepath=path, use_selection=True, object_types={"MESH"}, apply_unit_scale=True,
+                             apply_scale_options="FBX_SCALE_UNITS", mesh_smooth_type="FACE", use_mesh_modifiers=True,
+                             bake_anim=False, add_leaf_bones=False)
+
+
 def body_coords(kid, w):
     """World-space vertices of the fixed body for loop angle w (Apep's coils, rebuilt with the wave)."""
     P = build_keeper(kid, w)
@@ -1101,6 +1127,11 @@ def main():
     if ANIM:
         for kid in chosen:
             main_anim(kid)
+        return
+    if FBX_ONLY:
+        for kid in chosen:
+            export_fbx(kid, "{}/{}.fbx".format(OUT, unreal_name(kid)))
+            print("exported", unreal_name(kid))
         return
     if GLB_ONLY:
         for kid in chosen:

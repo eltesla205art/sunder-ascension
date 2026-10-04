@@ -48,7 +48,7 @@ public:
 	FLinearColor PlasmaColor = FLinearColor(4.0f, 0.6f, 2.6f, 1.f);
 
 	/** Called by the pool: place, aim and launch. Direction is flattened onto the XY play plane. */
-	void Fire(const FVector& Location, const FVector& Direction, AActor* InOwner, APawn* InInstigator);
+	void Fire(const FVector& Location, const FVector& Direction, AActor* InOwner, APawn* InInstigator, float SpeedOverride = 0.f);
 
 	/** Called by the pool: hide, stop and park. */
 	void Park();

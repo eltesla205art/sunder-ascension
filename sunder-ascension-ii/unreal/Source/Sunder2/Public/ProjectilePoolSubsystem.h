@@ -23,10 +23,11 @@ class SUNDER2_API UProjectilePoolSubsystem : public UWorldSubsystem
 	GENERATED_BODY()
 
 public:
-	/** Fire a projectile of this class from Location along Direction, reusing a parked one when there is one. */
+	/** Fire a projectile of this class from Location along Direction, reusing a parked one when there is one.
+	 *  SpeedOverride > 0 replaces the class's Speed for this shot (Keepers fire at their Hour's bullet speed). */
 	UFUNCTION(BlueprintCallable, Category = "Sunder|Projectiles", meta = (DeterminesOutputType = "ProjectileClass"))
 	ASunderProjectile* Acquire(TSubclassOf<ASunderProjectile> ProjectileClass, FVector Location, FVector Direction,
-		AActor* Owner, APawn* Instigator);
+		AActor* Owner, APawn* Instigator, float SpeedOverride = 0.f);
 
 	/** Park a projectile and keep it for reuse. Safe to call twice. */
 	UFUNCTION(BlueprintCallable, Category = "Sunder|Projectiles")

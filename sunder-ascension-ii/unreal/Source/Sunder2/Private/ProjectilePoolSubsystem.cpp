@@ -23,7 +23,7 @@ ASunderProjectile* UProjectilePoolSubsystem::SpawnParked(TSubclassOf<ASunderProj
 }
 
 ASunderProjectile* UProjectilePoolSubsystem::Acquire(TSubclassOf<ASunderProjectile> ProjectileClass, FVector Location,
-	FVector Direction, AActor* Owner, APawn* Instigator)
+	FVector Direction, AActor* Owner, APawn* Instigator, float SpeedOverride)
 {
 	if (!ProjectileClass) { return nullptr; }
 	ASunderProjectile* Projectile = nullptr;
@@ -36,7 +36,7 @@ ASunderProjectile* UProjectilePoolSubsystem::Acquire(TSubclassOf<ASunderProjecti
 		}
 	}
 	if (!Projectile) { Projectile = SpawnParked(ProjectileClass); }  // pool ran dry: grow (Prewarm to avoid this)
-	if (Projectile) { Projectile->Fire(Location, Direction, Owner, Instigator); }
+	if (Projectile) { Projectile->Fire(Location, Direction, Owner, Instigator, SpeedOverride); }
 	return Projectile;
 }
 

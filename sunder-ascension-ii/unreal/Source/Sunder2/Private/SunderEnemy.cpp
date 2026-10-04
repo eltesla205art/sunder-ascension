@@ -43,6 +43,7 @@ void ASunderEnemy::OnConstruction(const FTransform& Transform)
 	if (BodyMesh) { Mesh->SetStaticMesh(BodyMesh); }
 	Mesh->SetRelativeScale3D(BodyScale);
 	Mesh->SetRelativeRotation(BodyRotation);
+	Collision->SetSphereRadius(HitRadius);
 }
 
 void ASunderEnemy::BeginPlay()
@@ -211,7 +212,7 @@ void ASunderEnemy::OnBodyOverlap(UPrimitiveComponent* OverlappedComp, AActor* Ot
 	ASunderShipPawn* Ship = Cast<ASunderShipPawn>(OtherActor);
 	if (bDead || !Ship || !Ship->IsAlive()) { return; }
 	UGameplayStatics::ApplyDamage(Ship, ContactDamage, nullptr, this, UDamageType::StaticClass());
-	Die(true);                                                // rammed: it breaks up on the hull
+	if (bDiesOnContact) { Die(true); }                        // small craft break up on the hull
 }
 
 void ASunderEnemy::Die(bool bAwardScore)
