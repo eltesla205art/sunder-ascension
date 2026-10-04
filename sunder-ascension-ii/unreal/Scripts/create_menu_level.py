@@ -281,7 +281,7 @@ def main():
 
     MANUAL.extend([
         "Project Settings → Maps & Modes: Game Default Map (and Editor Startup Map) = L_SunderTitle",
-        "The arena doesn't read ?Ship= / ?Mode= yet: every launch flies BP_SunderShip",
+        "Ships fly as placeholder cones scaled per ship until their meshes are imported into BP_SunderShip",
     ])
     log("---- done ({}) ----".format(len(DONE)))
     for label in DONE:

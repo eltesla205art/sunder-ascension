@@ -28,6 +28,8 @@ void ASunderWaveDirector::BeginPlay()
 	{
 		if (USunderWaveSet* HourSet = Story->MakeHourWaveSet(this)) { WaveSet = HourSet; bStoryRun = true; }
 	}
+	// Swarm (chosen in the hangar): this set's waves without their Keepers, looping, faster and faster.
+	if (const ASunderGameMode* Mode = GetWorld()->GetAuthGameMode<ASunderGameMode>(); Mode && !bStoryRun) { bSwarm = Mode->IsSwarm(); }
 	WaitTimer = StartDelay;
 	bBetweenWaves = true;
 	if (!WaveSet) { UE_LOG(LogTemp, Warning, TEXT("SunderWaveDirector %s has no WaveSet."), *GetName()); }
@@ -75,7 +77,7 @@ void ASunderWaveDirector::BuildSpawns(int32 Index)
 				break;
 			}
 			Location.Y = FMath::Clamp(Location.Y, ArenaCenter.Y - Width, ArenaCenter.Y + Width);
-			Pending.Add({ Group.Delay + i * Group.Interval, Group.EnemyClass, Location });
+			Pending.Add({ (Group.Delay + i * Group.Interval) * Pace(), Group.EnemyClass, Location });
 		}
 	}
 	if (Wave.Keeper)
@@ -107,6 +109,11 @@ void ASunderWaveDirector::ReportStoryHourCleared()
 	{
 		Story->ReportHourCleared(this, Mode ? Mode->GetScore() : 0);
 	}
+}
+
+float ASunderWaveDirector::Pace() const
+{
+	return bSwarm ? FMath::Max(SwarmPaceFloor, FMath::Pow(SwarmPaceRate, SwarmTime)) : 1.f;
 }
 
 int32 ASunderWaveDirector::StageLayer(int32 Index) const
@@ -144,22 +151,30 @@ void ASunderWaveDirector::Tick(float DeltaTime)
 	if (!WaveSet || WaveSet->Waves.Num() == 0 || bFinished) { return; }
 	if (const ASunderGameMode* Mode = GetWorld()->GetAuthGameMode<ASunderGameMode>()) { if (Mode->IsGameOver()) { return; } }
 
+	if (bSwarm) { SwarmTime += DeltaTime; }                 // the pace quickens between waves too
+
 	if (bBetweenWaves)
 	{
 		WaitTimer -= DeltaTime;
 		if (WaitTimer > 0.f) { return; }
 		int32 Next = WaveIndex + 1;
-		if (Next >= WaveSet->Waves.Num())
+		for (int32 Tries = 0; ; ++Tries)
 		{
-			if (!WaveSet->bLoop)
+			if (Next >= WaveSet->Waves.Num())
 			{
-				bFinished = true;
-				// The Hour is survived: let its fanfare (the stage's Clear cue) ring, then on to the story screens.
-				if (bStoryRun) { GetWorldTimerManager().SetTimer(StoryTimer, this, &ASunderWaveDirector::ReportStoryHourCleared, StoryClearDelay, false); }
-				return;
+				if (!WaveSet->bLoop && !bSwarm)
+				{
+					bFinished = true;
+					// The Hour is survived: let its fanfare (the stage's Clear cue) ring, then on to the story screens.
+					if (bStoryRun) { GetWorldTimerManager().SetTimer(StoryTimer, this, &ASunderWaveDirector::ReportStoryHourCleared, StoryClearDelay, false); }
+					return;
+				}
+				Next = 0;
+				++LoopCount;
 			}
-			Next = 0;
-			++LoopCount;
+			if (!bSwarm || !WaveSet->Waves[Next].Keeper) { break; }
+			if (Tries > WaveSet->Waves.Num()) { bFinished = true; return; }   // a set of nothing but Keepers: no Swarm in it
+			++Next;                                                            // Swarm: no Keepers
 		}
 		StartWave(Next);
 		return;
@@ -197,6 +212,6 @@ void ASunderWaveDirector::Tick(float DeltaTime)
 	if (bAllOut || WaveTime >= Wave.MaxDuration)
 	{
 		bBetweenWaves = true;
-		WaitTimer = Wave.BreakAfter;
+		WaitTimer = Wave.BreakAfter * Pace();
 	}
 }

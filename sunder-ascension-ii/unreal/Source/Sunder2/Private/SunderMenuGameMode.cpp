@@ -9,6 +9,7 @@
 #include "SunderMusicSubsystem.h"
 #include "SunderStageAudio.h"
 #include "SunderStorySubsystem.h"
+#include "SunderLoadoutSubsystem.h"
 #include "TimerManager.h"
 
 ASunderMenuGameMode::ASunderMenuGameMode()
@@ -120,6 +121,10 @@ void ASunderMenuGameMode::OpenArena()
 {
 	const FString Ship = Ships.IsValidIndex(ShipIndex) ? Ships[ShipIndex].Id : TEXT("sunborn");
 	const FString Options = FString::Printf(TEXT("Ship=%s?Mode=%s"), *Ship, ModeIndex == 1 ? TEXT("Swarm") : TEXT("Story"));
+	if (USunderLoadoutSubsystem* Loadout = GetGameInstance() ? GetGameInstance()->GetSubsystem<USunderLoadoutSubsystem>() : nullptr)
+	{
+		Loadout->Choose(Ship, ModeIndex == 1 ? ESunderPlayMode::Swarm : ESunderPlayMode::Story);   // through the story level too
+	}
 	USunderStorySubsystem* Story = GetGameInstance() ? GetGameInstance()->GetSubsystem<USunderStorySubsystem>() : nullptr;
 	if (ModeIndex == 0 && !StoryLevel.IsNone() && StoryData && Story)
 	{

@@ -9,18 +9,72 @@
 #include "Engine/GameInstance.h"
 #include "SunderMusicSubsystem.h"
 #include "SunderStorySubsystem.h"
+#include "SunderLoadoutSubsystem.h"
 #include "TimerManager.h"
 
 ASunderGameMode::ASunderGameMode()
 {
 	DefaultPawnClass = ASunderShipPawn::StaticClass();       // BP_SunderGameMode points this at BP_SunderShip
 	HUDClass = ASunderHUD::StaticClass();
+
+	// The web game's ships (web/game.html SHIPS) at power level 1, scaled to the Unreal ship's units: the Sunborn is the
+	// baseline (950 speed, 5 hull, 0.09 s twin shots of 10 at 2200); the others keep the web game's ratios to it.
+	auto Ship = [this](const TCHAR* Id, const TCHAR* Name, ESunderShotStyle Style, float Speed, float Hull, float Interval,
+		float Damage, float ShotSpeed, float ShotScale, const FLinearColor& Color, const FLinearColor& Tint, float Body)
+	{
+		FSunderShipLoadout& L = Ships.AddDefaulted_GetRef();
+		L.Id = Id; L.Name = Name; L.Style = Style; L.MoveSpeed = Speed; L.MaxHealth = Hull; L.FireInterval = Interval;
+		L.ShotDamage = Damage; L.ShotSpeed = ShotSpeed; L.ShotScale = ShotScale; L.SpreadAngle = 6.f;
+		L.Color = Color; L.Tint = Tint; L.BodyScale = Body;
+	};
+	//    id         name                  style                          speed   hull  every   dmg   shot   size
+	Ship(TEXT("sunborn"), TEXT("SUNBORN THUNDER"), ESunderShotStyle::TwinSpread, 950.f, 5.f, 0.09f, 10.f, 2200.f, 1.0f,
+		FLinearColor(3.0f, 2.1f, 0.6f), FLinearColor(0.79f, 0.54f, 0.08f), 1.0f);    // 320 px/s, 3 hull, 0.14 s, ±6°
+	Ship(TEXT("scarab"), TEXT("SCARAB WARBRINGER"), ESunderShotStyle::HeavyCannon, 742.f, 7.f, 0.129f, 30.f, 1925.f, 1.6f,
+		FLinearColor(4.0f, 0.7f, 0.3f), FLinearColor(0.69f, 0.05f, 0.03f), 1.1f);    // 250, 4 hull, 0.20 s, 3-damage cannon
+	Ship(TEXT("ibis"), TEXT("IBIS PHANTOM"), ESunderShotStyle::RapidStream, 1188.f, 3.f, 0.058f, 10.f, 2681.f, 0.8f,
+		FLinearColor(0.6f, 3.6f, 1.4f), FLinearColor(0.07f, 0.69f, 0.22f), 0.92f);   // 400, 2 hull, 0.09 s, fast stream
+}
+
+void ASunderGameMode::InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage)
+{
+	Super::InitGame(MapName, Options, ErrorMessage);
+	UGameInstance* GI = GetGameInstance();
+	USunderLoadoutSubsystem* Loadout = GI ? GI->GetSubsystem<USunderLoadoutSubsystem>() : nullptr;
+	if (!Loadout) { return; }
+	Loadout->ReadOptions(Options);                           // ?Ship= / ?Mode= on the URL win over the stored choice
+	ShipId = Loadout->GetShipId();
+	const USunderStorySubsystem* Story = GI->GetSubsystem<USunderStorySubsystem>();
+	bSwarm = Loadout->GetMode() == ESunderPlayMode::Swarm && !(Story && Story->IsActive());
+}
+
+const FSunderShipLoadout* ASunderGameMode::GetShipLoadout() const
+{
+	for (const FSunderShipLoadout& L : Ships) { if (L.Id.Equals(ShipId, ESearchCase::IgnoreCase)) { return &L; } }
+	return Ships.Num() > 0 ? &Ships[0] : nullptr;
+}
+
+APawn* ASunderGameMode::SpawnDefaultPawnAtTransform_Implementation(AController* NewPlayer, const FTransform& SpawnTransform)
+{
+	APawn* Pawn = Super::SpawnDefaultPawnAtTransform_Implementation(NewPlayer, SpawnTransform);
+	if (ASunderShipPawn* ShipPawn = Cast<ASunderShipPawn>(Pawn))
+	{
+		if (const FSunderShipLoadout* L = GetShipLoadout()) { ShipPawn->ApplyLoadout(*L); }
+	}
+	return Pawn;
+}
+
+float ASunderGameMode::GetSwarmTime() const
+{
+	if (!bSwarm) { return 0.f; }
+	return (SwarmEndedAt >= 0.f ? SwarmEndedAt : GetWorld()->GetTimeSeconds()) - SwarmStartedAt;
 }
 
 void ASunderGameMode::BeginPlay()
 {
 	Super::BeginPlay();
 	Lives = StartingLives;
+	SwarmStartedAt = GetWorld()->GetTimeSeconds();
 	Score = 0;
 	bGameOver = false;
 }
@@ -67,6 +121,7 @@ void ASunderGameMode::OnShipDestroyed(ASunderShipPawn* Ship)
 	else
 	{
 		bGameOver = true;
+		if (bSwarm) { SwarmEndedAt = GetWorld()->GetTimeSeconds(); }
 		if (ASunderKeeper* Keeper = GetActiveKeeper()) { Keeper->Gloat(); }   // the Keeper has the last word
 		GetWorldTimerManager().SetTimer(RestartTimer, this, &ASunderGameMode::RestartArena, RestartDelay, false);
 	}

@@ -38,6 +38,14 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Waves")
 	float StartDelay = 1.5f;
 
+	/** Swarm: each second, gaps between enemies and waves shrink by this factor (the web game's 0.985 per second)… */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Waves|Swarm", meta = (ClampMin = "0.5", ClampMax = "1"))
+	float SwarmPaceRate = 0.985f;
+
+	/** …down to this fraction of their length (the web game stops at 0.25 s between spawns). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Waves|Swarm", meta = (ClampMin = "0.1", ClampMax = "1"))
+	float SwarmPaceFloor = 0.4f;
+
 	/** Story mode: seconds after the Hour's last wave (its Keeper) before the story screens open. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Waves")
 	float StoryClearDelay = 3.f;
@@ -71,6 +79,10 @@ private:
 	void ReportStoryHourCleared();
 	FTimerHandle StoryTimer;
 	bool bStoryRun = false;
+	bool bSwarm = false;
+	float SwarmTime = 0.f;
+	/** 1 normally; in Swarm, how much the gaps have shrunk so far. */
+	float Pace() const;
 	int32 StageLayer(int32 Index) const;
 
 	UPROPERTY(Transient)

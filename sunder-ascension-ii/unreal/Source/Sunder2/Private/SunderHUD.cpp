@@ -21,6 +21,24 @@ void ASunderHUD::DrawHUD()
 
 	DrawText(FString::Printf(TEXT("SCORE  %07d"), Mode->GetScore()), Gold, 24.f, 20.f, Font, 1.2f);
 	DrawText(FString::Printf(TEXT("LIVES  %d"), Mode->GetLives()), Cyan, 24.f, 52.f, Font, 1.0f);
+	if (const FSunderShipLoadout* Ship = Mode->GetShipLoadout())
+	{
+		DrawText(Ship->Name, Ship->Tint, 24.f, 100.f, Font, 0.8f);         // under the hull bar
+	}
+	if (Mode->IsSwarm())
+	{
+		const int32 Secs = FMath::FloorToInt(Mode->GetSwarmTime());
+		const FString Clock = FString::Printf(TEXT("SWARM  %d:%02d"), Secs / 60, Secs % 60);
+		float CW = 0.f, CH = 0.f;
+		GetTextSize(Clock, CW, CH, Font, 1.1f);
+		DrawText(Clock, FLinearColor(1.f, 0.25f, 0.6f), W - CW - 24.f, 20.f, Font, 1.1f);
+		if (GetWorld()->GetTimeSeconds() < 3.f)                            // the web game's Swarm Protocol card
+		{
+			const FString Card = TEXT("SWARM PROTOCOL  ·  No Keepers. No mercy. Faster and faster.");
+			GetTextSize(Card, CW, CH, Font, 1.2f);
+			DrawText(Card, Gold, (W - CW) * 0.5f, H * 0.22f, Font, 1.2f);
+		}
+	}
 
 	if (const ASunderShipPawn* Ship = Cast<ASunderShipPawn>(GetOwningPawn()))
 	{

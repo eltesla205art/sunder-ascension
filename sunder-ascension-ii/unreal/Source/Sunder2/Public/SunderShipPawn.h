@@ -18,6 +18,42 @@ class UInputAction;
 class UInputMappingContext;
 struct FInputActionValue;
 
+/** How a ship fires its plasma shots (the web game's ship styles, at power level 1). */
+UENUM(BlueprintType)
+enum class ESunderShotStyle : uint8
+{
+	TwinSpread,    // two shots fanned SpreadAngle either side (Sunborn Thunder)
+	HeavyCannon,   // one big, slow, hard-hitting shot (Scarab Warbringer)
+	RapidStream    // one small, fast shot, very often (Ibis Phantom)
+};
+
+/** One of the hangar's ships, as the arena flies it: the web game's ship stats in Unreal units. */
+USTRUCT(BlueprintType)
+struct FSunderShipLoadout
+{
+	GENERATED_BODY()
+
+	/** Matches the hangar's ship id (?Ship=). */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ship") FString Id;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ship") FString Name;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ship") ESunderShotStyle Style = ESunderShotStyle::TwinSpread;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ship") float MoveSpeed = 950.f;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ship") float MaxHealth = 5.f;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ship") float FireInterval = 0.09f;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ship") float ShotDamage = 10.f;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ship") float ShotSpeed = 2200.f;
+	/** Size of each shot (and its hit sphere). */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ship") float ShotScale = 1.f;
+	/** TwinSpread: degrees either side of straight ahead. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ship") float SpreadAngle = 6.f;
+	/** The ship's colour (HDR): its shots and its beam. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ship") FLinearColor Color = FLinearColor(3.0f, 2.1f, 0.6f, 1.f);
+	/** Its HUD colour (not HDR). */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ship") FLinearColor Tint = FLinearColor(0.79f, 0.54f, 0.08f, 1.f);
+	/** The web game's form scale: the Scarab is bigger, the Ibis smaller. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ship") float BodyScale = 1.f;
+};
+
 UCLASS()
 class SUNDER2_API ASunderShipPawn : public APawn
 {
@@ -73,6 +109,36 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ship|Hull")
 	FLinearColor DeathColor = FLinearColor(3.0f, 2.1f, 0.6f, 1.f);
 
+	/** How the shots fire; set by ApplyLoadout from the hangar's ship. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ship|Weapons")
+	ESunderShotStyle ShotStyle = ESunderShotStyle::TwinSpread;
+
+	/** Damage per shot (0 = the projectile's own). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ship|Weapons")
+	float ShotDamage = 0.f;
+
+	/** Shot speed (0 = the projectile's own). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ship|Weapons")
+	float ShotSpeed = 0.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ship|Weapons")
+	float ShotScale = 1.f;
+
+	/** TwinSpread: degrees either side of straight ahead. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ship|Weapons")
+	float SpreadAngle = 6.f;
+
+	/** Shot colour (HDR); alpha 0 = the projectile's own. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ship|Weapons")
+	FLinearColor ShotColor = FLinearColor(0.f, 0.f, 0.f, 0.f);
+
+	/** Fly as one of the hangar's ships: speed, hull, guns, colour and size. Refills the hull. */
+	UFUNCTION(BlueprintCallable, Category = "Ship")
+	void ApplyLoadout(const FSunderShipLoadout& Loadout);
+
+	UFUNCTION(BlueprintPure, Category = "Ship")
+	const FSunderShipLoadout& GetLoadout() const { return Loadout; }
+
 	UFUNCTION(BlueprintPure, Category = "Ship|Hull")
 	float GetHealth() const { return Health; }
 
@@ -118,6 +184,9 @@ private:
 	UPROPERTY(Transient) TObjectPtr<UInputAction> ShootAction;
 	UPROPERTY(Transient) TObjectPtr<UInputMappingContext> Mapping;
 
+	FSunderShipLoadout Loadout;
+	FVector BaseMeshScale = FVector(0.6f);
+	bool bBaseScaleCaptured = false;               // the loadout can arrive before or after BeginPlay
 	FVector2D MoveInput = FVector2D::ZeroVector;   // X = up the screen, Y = right
 	FVector StartLocation = FVector::ZeroVector;
 	float Health = 5.f;

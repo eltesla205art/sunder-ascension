@@ -61,6 +61,7 @@ void ASunderShipPawn::BeginPlay()
 	Super::BeginPlay();
 	ArenaCenter.Z = GetActorLocation().Z;                    // the play plane is wherever the ship starts
 	StartLocation = GetActorLocation();
+	if (!bBaseScaleCaptured) { BaseMeshScale = Mesh->GetRelativeScale3D(); bBaseScaleCaptured = true; }   // the Blueprint's size
 	Health = MaxHealth;
 	if (ProjectileClass)
 	{
@@ -204,14 +205,50 @@ void ASunderShipPawn::Respawn()
 	SetActorEnableCollision(true);
 }
 
+void ASunderShipPawn::ApplyLoadout(const FSunderShipLoadout& InLoadout)
+{
+	Loadout = InLoadout;
+	MoveSpeed = InLoadout.MoveSpeed;
+	MaxHealth = FMath::Max(InLoadout.MaxHealth, 1.f);
+	Health = MaxHealth;
+	FireInterval = FMath::Max(InLoadout.FireInterval, 0.02f);
+	ShotStyle = InLoadout.Style;
+	ShotDamage = InLoadout.ShotDamage;
+	ShotSpeed = InLoadout.ShotSpeed;
+	ShotScale = InLoadout.ShotScale;
+	SpreadAngle = InLoadout.SpreadAngle;
+	ShotColor = InLoadout.Color;
+	if (BeamWeapon) { BeamWeapon->BeamColor = InLoadout.Color; }   // picked up the next time the beam starts
+	DeathColor = InLoadout.Color;
+	if (!bBaseScaleCaptured) { BaseMeshScale = Mesh->GetRelativeScale3D(); bBaseScaleCaptured = true; }
+	Mesh->SetRelativeScale3D(BaseMeshScale * InLoadout.BodyScale);
+}
+
 void ASunderShipPawn::FireShots()
 {
 	if (!ProjectileClass || bDead) { return; }
 	UProjectilePoolSubsystem* Pool = GetWorld()->GetSubsystem<UProjectilePoolSubsystem>();
 	if (!Pool) { return; }
 	const FVector Origin = Muzzle->GetComponentLocation();
-	for (const float Side : { -1.f, 1.f })
+	auto Fire = [&](const FVector& Offset, float AngleDeg)
 	{
-		Pool->Acquire(ProjectileClass, Origin + FVector(0.f, Side * ShotSpread, 0.f), FVector::ForwardVector, this, this);
+		const FVector Dir = FVector::ForwardVector.RotateAngleAxis(AngleDeg, FVector::UpVector);
+		ASunderProjectile* Shot = Pool->Acquire(ProjectileClass, Origin + Offset, Dir, this, this, ShotSpeed);
+		if (!Shot) { return; }
+		// Only the ship fires this class, so setting these on each shot keeps every pooled one right.
+		if (ShotDamage > 0.f) { Shot->Damage = ShotDamage; }
+		Shot->SetActorScale3D(FVector(ShotScale));
+		if (ShotColor.A > 0.f) { Shot->SetShotColor(ShotColor); }
+	};
+	switch (ShotStyle)
+	{
+	case ESunderShotStyle::TwinSpread:
+		Fire(FVector(0.f, -ShotSpread * 0.5f, 0.f), -SpreadAngle);
+		Fire(FVector(0.f, ShotSpread * 0.5f, 0.f), SpreadAngle);
+		break;
+	case ESunderShotStyle::HeavyCannon:
+	case ESunderShotStyle::RapidStream:
+		Fire(FVector::ZeroVector, 0.f);
+		break;
 	}
 }

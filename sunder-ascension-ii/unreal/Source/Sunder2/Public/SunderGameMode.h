@@ -1,12 +1,15 @@
 // SUNDER: Ascension II — game mode for the arena: the ship as the default pawn, score, lives, respawns, the wave
 // banner, and DAWN DENIED (then a restart) when the last life is lost. BP_SunderGameMode points the pawn at BP_SunderShip.
+// It flies the ship and mode chosen in the hangar (SunderLoadoutSubsystem, or ?Ship= / ?Mode= on the level URL): the
+// ship's loadout from Ships (the web game's three ships), and Swarm (no Keepers, endless, faster and faster) or the
+// Hours.
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
+#include "SunderShipPawn.h"
 #include "SunderGameMode.generated.h"
 
-class ASunderShipPawn;
 class ASunderKeeper;
 
 UCLASS()
@@ -31,6 +34,22 @@ public:
 	 *  In story mode, DAWN DENIED always goes to the story level instead. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Sunder")
 	FName MenuLevel;
+
+	/** The hangar's ships as the arena flies them (defaults: the web game's Sunborn, Scarab and Ibis in Unreal units). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sunder|Ships")
+	TArray<FSunderShipLoadout> Ships;
+
+	/** The ship flying this time (from the hangar's choice; the first of Ships if the id isn't known). */
+	const FSunderShipLoadout* GetShipLoadout() const;
+
+	/** Swarm mode: no Keepers, the waves loop forever and come faster and faster. */
+	UFUNCTION(BlueprintPure, Category = "Sunder") bool IsSwarm() const { return bSwarm; }
+
+	/** Seconds survived in Swarm (stops at DAWN DENIED). */
+	UFUNCTION(BlueprintPure, Category = "Sunder") float GetSwarmTime() const;
+
+	virtual void InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage) override;
+	virtual APawn* SpawnDefaultPawnAtTransform_Implementation(AController* NewPlayer, const FTransform& SpawnTransform) override;
 
 	UFUNCTION(BlueprintCallable, Category = "Sunder")
 	void AddScore(int32 Points);
@@ -65,6 +84,10 @@ protected:
 private:
 	void RestartArena();
 
+	FString ShipId;
+	bool bSwarm = false;
+	float SwarmStartedAt = 0.f;
+	float SwarmEndedAt = -1.f;
 	FTimerHandle RespawnTimer;
 	FTimerHandle RestartTimer;
 	TWeakObjectPtr<ASunderKeeper> ActiveKeeper;

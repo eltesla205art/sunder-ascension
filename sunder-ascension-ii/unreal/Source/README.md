@@ -11,13 +11,14 @@ C++ side of [`../WEAPON_VFX.md`](../WEAPON_VFX.md) and [`../KEEPER_VFX.md`](../K
 | `ImpactFXSubsystem` (+ `UImpactFXSettings`) | World subsystem: `QueueImpact`, merges hits on the same spot, caps full effects per frame, spawns pooled (`AutoRelease`) | §3.2 |
 | `SunderProjectile` | Pooled plasma shot: overlap → queue impact, apply damage, return to the pool; times out off-screen; `SetShotColor` recolours one shot | §3.4 |
 | `ProjectilePoolSubsystem` | World subsystem: `Acquire` / `Release` / `Prewarm`, per-class free lists | §3.4 |
-| `SunderShipPawn` | The player ship: eight-way movement clamped to the arena, held beam, held twin plasma shots from the pool, a 5-hit hull with blinking invulnerability, death and respawn; input built at runtime with Enhanced Input (no input assets) | — |
+| `SunderShipPawn` | The player ship: eight-way movement clamped to the arena, held beam, held plasma shots from the pool in the chosen ship's style (Sunborn twin spread, Scarab heavy cannon, Ibis rapid stream; `ApplyLoadout`), a 5-hit hull with blinking invulnerability, death and respawn; input built at runtime with Enhanced Input (no input assets) | — |
 | `SunderTargetDummy` | Drifting target: takes beam and shot damage, swells when hit, bursts with an impact and respawns | — |
-| `SunderGameMode` | Default pawn = the ship; score, 3 lives, respawn after 2 s, DAWN DENIED and a restart (or back to `MenuLevel`, the title; in story mode, DAWN DENIED on the story level) when the last life goes; wave banner; tracks the active Keeper | — |
+| `SunderGameMode` | Default pawn = the ship, flown as the hangar's choice (`Ships`: the web game's three ships in Unreal units; `?Ship=` / `?Mode=` also work on the URL); Swarm mode; score, 3 lives, respawn after 2 s, DAWN DENIED and a restart (or back to `MenuLevel`, the title; in story mode, DAWN DENIED on the story level) when the last life goes; wave banner; tracks the active Keeper | — |
 | `SunderEnemy` | Enemy craft: moves Straight / Weave / Dive / Strafe / Zigzag, fires Aimed / Spread / Radial from the pool, rams, flashes when hit, bursts and scores on death; each type is a Blueprint child | — |
 | `SunderKeeper` | Keeper boss (child of `SunderEnemy`): enters invulnerable, fits its model to the screen, strafes; three phases (66% / 33%) that fire faster and dash in phase 3; eight attack patterns ported from the web game (Aimed Volley, Spread Fan, Horizontal Sweep, Radial Burst, Cross Ring, Spiral, Dual Spiral, Wall Barrage) rotating every 3.5 s; optional final-form mesh; a two-second death (shudder, bursts across the body, then the final burst); spawns its Niagara effects (aura, arrival Gate, muzzle flares, phase shockwave, death) and tints its shots, falling back to the plasma impacts for any system not built yet; plays its battle theme (building a layer per phase, Apep's final-form theme in phase 3) and its voice (intro, attack, phase, hurt, death, and a gloat at DAWN DENIED) | Keeper VFX |
 | `SunderMusicSubsystem` | World subsystem: layered music like the web game's: a theme's three same-length loops start together and crossfade by layer; `Duck` steps the music back under a voice; one theme at a time with fades. Also the current stage's sound: its ambience bed (fading between stages), its theme and its rate-limited cues | — |
 | `SunderFrontEndGameMode` | Base for the screens outside the arena: no pawn, `SunderMenuController` input (Confirm / Back / Navigate), cues that can wait a beat and duck the music | — |
+| `SunderLoadoutSubsystem` | Game instance subsystem: the hangar's ship and mode, kept across level loads (story mode passes through the story level first) | — |
 | `SunderMenuGameMode` | The title screen and hangar: Start → choose a ship (A / D) and Story / Swarm (W / S) → Launch: Story opens the story level, Swarm the arena (with `?Ship=` / `?Mode=`), Esc back; plays each screen's theme and ambience, the interface cues, and each ship's engine rev when picked and at launch | — |
 | `SunderMenuController` | Input for every front-end screen, built at runtime with Enhanced Input (keys, D-pad, left stick, A / B / Start) | — |
 | `SunderMenuHUD` | Canvas drawing for the title (title art, name, blinking prompt) and hangar (ship sprites in their colours, mode, hints, launch fade) | — |
@@ -27,16 +28,16 @@ C++ side of [`../WEAPON_VFX.md`](../WEAPON_VFX.md) and [`../KEEPER_VFX.md`](../K
 | `SunderStoryHUD` | Canvas drawing for those screens: the crawl, the hour map's road of twelve gates through four acts, briefings over the Hour's backdrop with its Keeper's portrait, wrapped story text | — |
 | `SunderStageAudio` | Data asset (header only): one Hour's (or menu screen's) theme layers, ambience, and Start / Wave / Down / Clear cues | — |
 | `SunderWaveSet` | Data asset: waves of spawn groups (enemy type, count, timing, formation Column / Line / V / Random / Sides, lane, spacing), an optional Keeper per wave, stage audio for the set (and an optional per-wave switch), the Hour's difficulty (enemy health, speed, fire rate, bullet speed, points; not its Keeper's), loop scaling | — |
-| `SunderWaveDirector` | Level actor that plays a wave set: schedules formations along the top edge, spawns a wave's Keeper at the top centre, flies the story's current Hour (and reports it survived) in story mode, plays the stage's sound (Start cue and ambience on entering a stage, Wave cues, the theme building a layer each third of the way to the Keeper), waits for each wave to clear, loops tougher | — |
-| `SunderHUD` | Canvas HUD: score, lives, hull bar, wave banner, Keeper title and taunt, boss bar coloured by phase, DAWN DENIED | — |
+| `SunderWaveDirector` | Level actor that plays a wave set: schedules formations along the top edge, spawns a wave's Keeper at the top centre, flies the story's current Hour (and reports it survived) in story mode, in Swarm skips Keepers, loops and quickens (the web game's 0.985 per second, down to `SwarmPaceFloor`); plays the stage's sound (Start cue and ambience on entering a stage, Wave cues, the theme building a layer each third of the way to the Keeper), waits for each wave to clear, loops tougher | — |
+| `SunderHUD` | Canvas HUD: score, lives, hull bar, the ship's name in its colour, the Swarm clock, wave banner, Keeper title and taunt, boss bar coloured by phase, DAWN DENIED | — |
 
 Projectiles are team-aware: enemy shots only hit the ship, the player's shots never do, and shots ignore each other.
 
 ## Install
 
 1. Copy `Sunder2/Public/*` and `Sunder2/Private/*` into your game module, e.g. `Source/<YourGame>/Public` and
-   `Source/<YourGame>/Private`. If your module has no Public/Private split, put all forty-one files in `Source/<YourGame>/`.
-2. Replace `SUNDER2_API` with your module's export macro (`<YOURGAME>_API`) in the twenty-two headers.
+   `Source/<YourGame>/Private`. If your module has no Public/Private split, put all forty-three files in `Source/<YourGame>/`.
+2. Replace `SUNDER2_API` with your module's export macro (`<YOURGAME>_API`) in the twenty-three headers.
 3. In `Source/<YourGame>/<YourGame>.Build.cs`, add to `PublicDependencyModuleNames`:
    ```csharp
    "Niagara", "DeveloperSettings", "EnhancedInput", "InputCore"
