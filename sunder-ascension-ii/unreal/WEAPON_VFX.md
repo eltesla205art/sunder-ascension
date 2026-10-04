@@ -11,6 +11,7 @@ plus the pooling and budgeting that keeps dozens of simultaneous impacts from dr
 > The C++ in §1.6 and §3 is also provided as drop-in source in [`Source/`](Source/README.md) (not compiled yet either).
 > [`Scripts/create_weapon_fx_assets.py`](Scripts/create_weapon_fx_assets.py) creates the materials (§0.2), Effect Types (§3.3)
 > and empty, named systems in the editor; the emitter stacks below are then built by hand.
+> [`Scripts/create_arena_level.py`](Scripts/create_arena_level.py) then makes the ship Blueprint and a top-down test arena to fly them in.
 > Module names are from UE 5.3–5.5; the few that moved between versions are marked ⚠ — check those in your build.
 
 Conventions: Z is up, the camera looks straight down −Z, the gameplay plane is XY, and "up the screen" is world +X.

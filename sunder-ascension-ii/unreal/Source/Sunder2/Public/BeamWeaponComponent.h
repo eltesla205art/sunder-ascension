@@ -38,8 +38,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Beam", meta = (ClampMin = "0"))
 	float BeamRadius = 14.f;
 
+	/** Visibility works out of the box; switch to a custom PlayerWeapon channel once the project defines one. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Beam")
-	TEnumAsByte<ECollisionChannel> TraceChannel = ECC_GameTraceChannel1;
+	TEnumAsByte<ECollisionChannel> TraceChannel = ECC_Visibility;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Beam")
 	float BeamWidth = 28.f;

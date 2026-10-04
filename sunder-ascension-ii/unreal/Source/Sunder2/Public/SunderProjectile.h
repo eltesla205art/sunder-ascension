@@ -9,6 +9,7 @@
 class USphereComponent;
 class UProjectileMovementComponent;
 class UNiagaraComponent;
+class UStaticMeshComponent;
 
 UCLASS()
 class SUNDER2_API ASunderProjectile : public AActor
@@ -23,6 +24,10 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Projectile")
 	TObjectPtr<UProjectileMovementComponent> Movement;
+
+	/** Placeholder look (a small sphere) until the trail system carries the visuals; swap or hide it in the Blueprint. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Projectile")
+	TObjectPtr<UStaticMeshComponent> Visual;
 
 	/** Optional trail (assign a Niagara system on the component in the Blueprint subclass). */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Projectile")

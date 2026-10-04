@@ -18,7 +18,8 @@ original *SUNDER: Ascension — The Nine Bows* (`web/`, `godot/`, `docs/`), whic
 | `blender/` | Blender Python scripts that model and render the game art |
 | `unreal/WEAPON_VFX.md` | UE5 Niagara guide for the planned Unreal version: the trace-driven laser beam, the plasma-burst impact, pooling and budgets (not yet built in-engine) |
 | `unreal/Scripts/create_weapon_fx_assets.py` | Editor Python: makes the weapon FX master material and instances, Effect Types and empty Niagara systems, then lists what's left to build by hand (untested until first run) |
-| `unreal/Source/` | Drop-in UE5 C++ for that guide: beam weapon component, impact FX subsystem, pooled projectile and its pool (not compiled yet; install steps inside) |
+| `unreal/Source/` | Drop-in UE5 C++: beam weapon component, impact FX subsystem, pooled projectile and its pool, the player ship, a target dummy and a game mode (not compiled yet; install steps inside) |
+| `unreal/Scripts/create_arena_level.py` | Editor Python: makes `BP_SunderShip`, `BP_PlasmaShot`, `BP_SunderGameMode` and the top-down test level `L_SunderArena` (needs the C++ compiled; untested until first run) |
 | `art/blender/` | Full-resolution Blender renders (title backdrop, ship sprites, `keepers/` boss sprites and portraits) |
 | `artifacts/` | Progress note, QA evidence (`final-evidence.md`), inspector captures |
 | `art/` | AI concept art: key art A/B, Scarab Warbringer Mk II A/B, Mk II hangar shots A/B |

@@ -2,6 +2,8 @@
 #include "SunderProjectile.h"
 
 #include "Components/SphereComponent.h"
+#include "Components/StaticMeshComponent.h"
+#include "Engine/StaticMesh.h"
 #include "Engine/World.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/DamageType.h"
@@ -12,6 +14,7 @@
 #include "NiagaraComponent.h"
 #include "ProjectilePoolSubsystem.h"
 #include "TimerManager.h"
+#include "UObject/ConstructorHelpers.h"
 
 ASunderProjectile::ASunderProjectile()
 {
@@ -30,6 +33,13 @@ ASunderProjectile::ASunderProjectile()
 	Movement->bConstrainToPlane = true;                               // shmup: stay on the XY play plane
 	Movement->SetPlaneConstraintNormal(FVector::UpVector);
 	Movement->bAutoActivate = false;
+
+	Visual = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Visual"));
+	Visual->SetupAttachment(Collision);
+	Visual->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	Visual->SetRelativeScale3D(FVector(0.18f, 0.08f, 0.08f));         // a short bolt along its flight
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> Sphere(TEXT("/Engine/BasicShapes/Sphere.Sphere"));
+	if (Sphere.Succeeded()) { Visual->SetStaticMesh(Sphere.Object); }
 
 	Trail = CreateDefaultSubobject<UNiagaraComponent>(TEXT("Trail"));
 	Trail->SetupAttachment(Collision);
@@ -78,6 +88,7 @@ void ASunderProjectile::OnOverlap(UPrimitiveComponent* OverlappedComp, AActor* O
 	int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (bParked || !OtherActor || OtherActor == this || OtherActor == GetOwner() || OtherActor == GetInstigator()) { return; }
+	if (OtherActor->IsA<ASunderProjectile>()) { return; }               // shots pass through each other
 
 	const FVector Dir = Movement->Velocity.GetSafeNormal(UE_SMALL_NUMBER, GetActorForwardVector());
 	const FVector Point = bFromSweep ? FVector(SweepResult.ImpactPoint) : GetActorLocation();
