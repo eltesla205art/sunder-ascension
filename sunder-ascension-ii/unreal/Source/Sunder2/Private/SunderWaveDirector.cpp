@@ -5,6 +5,8 @@
 #include "SunderEnemy.h"
 #include "SunderGameMode.h"
 #include "SunderKeeper.h"
+#include "SunderMusicSubsystem.h"
+#include "SunderStageAudio.h"
 #include "SunderWaveSet.h"
 
 ASunderWaveDirector::ASunderWaveDirector()
@@ -84,7 +86,37 @@ void ASunderWaveDirector::StartWave(int32 Index)
 	const FString& Name = WaveSet->Waves[Index].WaveName;
 	const FString Label = LoopCount > 0 ? FString::Printf(TEXT("%s  +%d"), *Name, LoopCount) : Name;
 	OnWaveStarted.Broadcast(WavesStarted, Label);
+	PlayWaveAudio(Index);
 	if (ASunderGameMode* Mode = GetWorld()->GetAuthGameMode<ASunderGameMode>()) { Mode->AnnounceWave(WavesStarted, Label); }
+}
+
+int32 ASunderWaveDirector::StageLayer(int32 Index) const
+{
+	// Like the web game: the theme builds in thirds as the stage nears its Keeper (here: through its enemy waves).
+	int32 Before = 0, Total = 0;
+	for (int32 i = 0; i < WaveSet->Waves.Num(); ++i)
+	{
+		if (WaveSet->Waves[i].Keeper) { continue; }
+		if (i < Index) { ++Before; }
+		++Total;
+	}
+	return Total > 0 ? FMath::Min(3, 1 + (3 * Before) / Total) : 1;
+}
+
+void ASunderWaveDirector::PlayWaveAudio(int32 Index)
+{
+	USunderMusicSubsystem* Music = GetWorld()->GetSubsystem<USunderMusicSubsystem>();
+	if (!Music) { return; }
+	const FSunderWave& Wave = WaveSet->Waves[Index];
+	if (Wave.StageAudio) { CurrentStage = Wave.StageAudio; }
+	else if (!CurrentStage) { CurrentStage = WaveSet->StageAudio; }
+	if (!CurrentStage) { return; }
+
+	const bool bNewStage = Music->GetStage() != CurrentStage;
+	Music->SetStage(CurrentStage);
+	if (Wave.Keeper) { return; }                             // the Keeper brings its own theme and its own cry
+	Music->PlayStageCue(bNewStage ? ESunderStageCue::Start : ESunderStageCue::Wave);
+	Music->PlayStageMusic(StageLayer(Index));
 }
 
 void ASunderWaveDirector::Tick(float DeltaTime)

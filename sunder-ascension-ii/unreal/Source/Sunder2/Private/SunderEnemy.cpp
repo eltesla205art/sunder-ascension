@@ -12,6 +12,7 @@
 #include "Materials/MaterialInstanceDynamic.h"
 #include "ProjectilePoolSubsystem.h"
 #include "SunderGameMode.h"
+#include "SunderMusicSubsystem.h"
 #include "SunderProjectile.h"
 #include "SunderShipPawn.h"
 #include "UObject/ConstructorHelpers.h"
@@ -227,6 +228,10 @@ void ASunderEnemy::Die(bool bAwardScore)
 			if (MaxHealth >= 100.f) { Impacts->QueueImpact(GetActorLocation(), FVector::BackwardVector, DeathColor); }   // big ones burst bigger
 		}
 		if (ASunderGameMode* Mode = GetWorld()->GetAuthGameMode<ASunderGameMode>()) { Mode->AddScore(ScoreValue); }
+		if (bPlaysDownCue)
+		{
+			if (USunderMusicSubsystem* Music = GetWorld()->GetSubsystem<USunderMusicSubsystem>()) { Music->PlayStageCue(ESunderStageCue::Down); }
+		}
 	}
 	SetActorEnableCollision(false);
 	Destroy();

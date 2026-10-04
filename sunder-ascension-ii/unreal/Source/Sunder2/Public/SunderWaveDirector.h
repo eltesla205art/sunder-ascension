@@ -9,6 +9,7 @@
 
 class USunderWaveSet;
 class ASunderEnemy;
+class USunderStageAudio;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FSunderWaveStarted, int32, WaveNumber, const FString&, WaveName);
 
@@ -62,6 +63,11 @@ private:
 
 	void StartWave(int32 Index);
 	void BuildSpawns(int32 Index);
+	void PlayWaveAudio(int32 Index);
+	int32 StageLayer(int32 Index) const;
+
+	UPROPERTY(Transient)
+	TObjectPtr<USunderStageAudio> CurrentStage;
 
 	TArray<FPendingSpawn> Pending;                 // sorted by Time
 	TArray<TWeakObjectPtr<ASunderEnemy>> Alive;

@@ -3,7 +3,7 @@
 Run inside the Unreal Editor (Tools → Execute Python Script…) AFTER create_keepers.py, with the C++ in unreal/Source
 compiled (it needs SunderKeeper's audio properties and SunderMusicSubsystem).
 
-The sounds are the web game's own (web/keeper_audio.js), rendered to WAV by unreal/Tools/render_keeper_audio.cjs into
+The sounds are the web game's own (web/keeper_audio.js), rendered to WAV by unreal/Tools/render_web_audio.cjs into
 unreal/Content/Audio/Keepers:
   Music/   MUS_Keeper_<Name>_L1/L2/L3.wav: each Keeper's battle theme in three layers (held back / full / doubled),
            seamless same-length loops that the music subsystem plays in step and crossfades with the Keeper's phase;
@@ -68,7 +68,7 @@ def source_dir():
 def import_folder(sub, dest):
     folder = os.path.join(source_dir(), sub)
     if not os.path.isdir(folder):
-        raise RuntimeError("not found: {} (run unreal/Tools/render_keeper_audio.cjs)".format(folder))
+        raise RuntimeError("not found: {} (run node unreal/Tools/render_web_audio.cjs keepers)".format(folder))
     tasks = []
     for name in sorted(os.listdir(folder)):
         if not name.lower().endswith(".wav"):

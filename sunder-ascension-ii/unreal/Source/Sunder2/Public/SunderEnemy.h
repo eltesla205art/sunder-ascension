@@ -82,6 +82,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Enemy", meta = (ClampMin = "1"))
 	float HitRadius = 45.f;
 
+	/** Play the stage's Down cue when destroyed (Keepers play Clear instead). */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Enemy")
+	bool bPlaysDownCue = true;
+
 	// ---- movement
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Enemy|Movement")
 	ESunderMovePattern MovePattern = ESunderMovePattern::Straight;

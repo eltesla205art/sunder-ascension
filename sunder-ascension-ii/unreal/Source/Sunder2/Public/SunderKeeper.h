@@ -5,7 +5,7 @@
 // for a couple of seconds before it bursts. Its Niagara effects (aura, arrival gate, muzzle flares, phase shockwave,
 // death) are all optional: see unreal/KEEPER_VFX.md. Without them it falls back to the shared plasma impacts.
 // Its battle theme (three layers that build with the phases) and its voice (intro, attack, phase, hurt, death) are the
-// web game's, rendered to WAV by unreal/Tools/render_keeper_audio.cjs and set by create_keeper_audio.py.
+// web game's, rendered to WAV by unreal/Tools/render_web_audio.cjs and set by create_keeper_audio.py.
 // Each Keeper is a Blueprint child made by create_keepers.py with its Hour's numbers from the web game.
 #pragma once
 

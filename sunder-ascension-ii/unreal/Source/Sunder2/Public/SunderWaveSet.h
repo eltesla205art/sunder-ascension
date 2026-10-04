@@ -8,6 +8,7 @@
 
 class ASunderEnemy;
 class ASunderKeeper;
+class USunderStageAudio;
 
 UENUM(BlueprintType)
 enum class ESunderFormation : uint8
@@ -66,6 +67,10 @@ struct FSunderWave
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wave")
 	TSubclassOf<ASunderKeeper> Keeper;
 
+	/** Switch to another Hour's sound from this wave on (the Keeper gauntlet gives each Keeper its Hour); empty = keep. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wave")
+	TObjectPtr<USunderStageAudio> StageAudio;
+
 	/** Wait for every enemy of this wave to be destroyed or gone before the next one (up to MaxDuration). */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wave")
 	bool bWaitForClear = true;
@@ -86,6 +91,10 @@ class SUNDER2_API USunderWaveSet : public UPrimaryDataAsset
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Waves")
 	TArray<FSunderWave> Waves;
+
+	/** The stage's music, ambience and cues (DA_StageAudio_*); its theme builds a layer each third of the way to the Keeper. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Waves")
+	TObjectPtr<USunderStageAudio> StageAudio;
 
 	/** After the last wave, start again from the first, tougher each time round. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Waves")
