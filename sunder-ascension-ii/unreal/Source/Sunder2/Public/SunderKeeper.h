@@ -4,6 +4,8 @@
 // (Apep opens its jaws). Announces itself with its taunt, shows a boss bar, and when beaten it shudders and cracks apart
 // for a couple of seconds before it bursts. Its Niagara effects (aura, arrival gate, muzzle flares, phase shockwave,
 // death) are all optional: see unreal/KEEPER_VFX.md. Without them it falls back to the shared plasma impacts.
+// Its battle theme (three layers that build with the phases) and its voice (intro, attack, phase, hurt, death) are the
+// web game's, rendered to WAV by unreal/Tools/render_keeper_audio.cjs and set by create_keeper_audio.py.
 // Each Keeper is a Blueprint child made by create_keepers.py with its Hour's numbers from the web game.
 #pragma once
 
@@ -13,6 +15,7 @@
 
 class UNiagaraComponent;
 class UNiagaraSystem;
+class USoundBase;
 
 /** The web game's boss attack patterns. */
 UENUM(BlueprintType)
@@ -117,6 +120,43 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Keeper|FX", meta = (ClampMin = "0"))
 	float DeathDuration = 2.2f;
 
+	// ---- audio (the web game's keeper_audio.js, rendered)
+
+	/** Battle theme: layers 1–3, same-length loops; the layer heard follows the phase. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Keeper|Audio")
+	TArray<TObjectPtr<USoundBase>> MusicLayers;
+
+	/** A new theme for phase 3 (Apep's final form), started at its layer 3; leave empty to keep building MusicLayers. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Keeper|Audio")
+	TArray<TObjectPtr<USoundBase>> FinalFormMusicLayers;
+
+	/** As it arrives (the music ducks under it). */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Keeper|Audio")
+	TObjectPtr<USoundBase> IntroSound;
+
+	/** Each volley, at most every 0.45 s. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Keeper|Audio")
+	TObjectPtr<USoundBase> AttackSound;
+
+	/** Each phase change (ducks the music); also its gloat when the last life is lost. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Keeper|Audio")
+	TObjectPtr<USoundBase> PhaseSound;
+
+	/** Each hit, at most every 0.1 s. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Keeper|Audio")
+	TObjectPtr<USoundBase> HurtSound;
+
+	/** Beaten (ducks the music, which then fades out). */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Keeper|Audio")
+	TObjectPtr<USoundBase> DeathSound;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Keeper|Audio")
+	float VoiceVolume = 1.f;
+
+	/** The Keeper gloats (its phase cry): called by the game mode when the player's last life goes. */
+	UFUNCTION(BlueprintCallable, Category = "Keeper")
+	void Gloat();
+
 	UFUNCTION(BlueprintPure, Category = "Keeper")
 	int32 GetPhase() const { return Phase; }
 
@@ -150,6 +190,9 @@ private:
 	UNiagaraComponent* SpawnFX(UNiagaraSystem* System, const FVector& Location, float Scale = 1.f, float Duration = 0.f);
 	void SetFXParams(UNiagaraComponent* FX, float Scale, float Duration) const;
 	void TickDying(float DeltaTime);
+	/** Play a voice cue: skipped if the same cue played less than MinGap s ago; bDuck steps the music back under it. */
+	void PlayVoice(USoundBase* Sound, float MinGap, float& LastPlayed, bool bDuck);
+	class USunderMusicSubsystem* Music() const;
 	void FinishDying(bool bAwardScore);
 	FVector WebDirection(float WebAngleRadians) const;
 
@@ -167,4 +210,7 @@ private:
 	float NextDeathPop = 0.f;
 	int32 DeathPops = 0;
 	FVector MeshRest = FVector::ZeroVector;
+	float LastAttackVoice = -100.f;
+	float LastHurtVoice = -100.f;
+	float LastCryVoice = -100.f;                         // intro, phase, death, gloat: never rate-limited (gap 0)
 };

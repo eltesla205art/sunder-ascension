@@ -11,7 +11,10 @@
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraSystem.h"
 #include "ProjectilePoolSubsystem.h"
+#include "Kismet/GameplayStatics.h"
+#include "Sound/SoundBase.h"
 #include "SunderGameMode.h"
+#include "SunderMusicSubsystem.h"
 #include "SunderProjectile.h"
 
 ASunderKeeper::ASunderKeeper()
@@ -60,6 +63,12 @@ void ASunderKeeper::BeginPlay()
 	{
 		Mode->AnnounceKeeper(this, FString::Printf(TEXT("HOUR %d  ·  %s"), Hour, *KeeperName), Taunt);
 	}
+	if (USunderMusicSubsystem* M = Music(); M && MusicLayers.Num() > 0)
+	{
+		TArray<USoundBase*> Layers(MusicLayers);
+		M->PlayLayered(Layers, 1);
+	}
+	PlayVoice(IntroSound, 0.f, LastCryVoice, true);
 	if (AuraFX && AuraFX->GetEmitterHandles().Num() > 0)
 	{
 		Aura->SetAsset(AuraFX);
@@ -67,6 +76,29 @@ void ASunderKeeper::BeginPlay()
 		Aura->SetTranslucentSortPriority(5);                     // behind the shots and impacts
 		Aura->Activate(true);
 	}
+}
+
+USunderMusicSubsystem* ASunderKeeper::Music() const
+{
+	return GetWorld() ? GetWorld()->GetSubsystem<USunderMusicSubsystem>() : nullptr;
+}
+
+void ASunderKeeper::PlayVoice(USoundBase* Sound, float MinGap, float& LastPlayed, bool bDuck)
+{
+	if (!Sound) { return; }
+	const float Now = GetWorld()->GetTimeSeconds();
+	if (MinGap > 0.f && Now - LastPlayed < MinGap) { return; }   // a barrage mustn't turn into noise
+	LastPlayed = Now;
+	UGameplayStatics::PlaySound2D(this, Sound, VoiceVolume);
+	if (bDuck)
+	{
+		if (USunderMusicSubsystem* M = Music()) { M->Duck(Sound->GetDuration() * 0.7f); }   // the web game's duck length
+	}
+}
+
+void ASunderKeeper::Gloat()
+{
+	PlayVoice(PhaseSound, 0.f, LastCryVoice, true);
 }
 
 void ASunderKeeper::SetFXParams(UNiagaraComponent* FX, float Scale, float Duration) const
@@ -149,6 +181,7 @@ void ASunderKeeper::TryFire(float DeltaTime)
 	if (FireCooldown > 0.f) { return; }
 	FirePattern(Patterns[PatternIndex % Patterns.Num()]);
 	SpawnFX(MuzzleFX, MuzzleLocation(), 1.f);
+	PlayVoice(AttackSound, 0.45f, LastAttackVoice, false);
 	FireCooldown = FireInterval * (1.f - Phase * 0.12f) / FireRateScale;   // each phase fires faster
 }
 
@@ -236,11 +269,25 @@ float ASunderKeeper::TakeDamage(float DamageAmount, FDamageEvent const& DamageEv
 	if (bEntering) { return 0.f; }                           // untouchable until it has taken its position
 	const float Applied = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 	if (bDead || bDying) { return Applied; }
+	if (Applied > 0.f) { PlayVoice(HurtSound, 0.1f, LastHurtVoice, false); }
 	const float Fraction = GetHealthFraction();
 	const int32 NewPhase = Fraction <= 0.33f ? 3 : (Fraction <= 0.66f ? 2 : 1);
 	if (NewPhase > Phase)
 	{
 		Phase = NewPhase;
+		PlayVoice(PhaseSound, 0.f, LastCryVoice, true);
+		if (USunderMusicSubsystem* M = Music())
+		{
+			if (Phase == 3 && FinalFormMusicLayers.Num() > 0)
+			{
+				TArray<USoundBase*> Layers(FinalFormMusicLayers);
+				M->PlayLayered(Layers, 3);                      // Apep's final form has its own theme
+			}
+			else
+			{
+				M->SetLayer(Phase);                              // the theme builds with each phase
+			}
+		}
 		const bool bNewForm = Phase == 3 && PhaseThreeMesh;
 		if (bNewForm)
 		{
@@ -266,6 +313,8 @@ float ASunderKeeper::TakeDamage(float DamageAmount, FDamageEvent const& DamageEv
 void ASunderKeeper::Die(bool bAwardScore)
 {
 	if (bDead || bDying) { return; }
+	if (USunderMusicSubsystem* M = Music()) { M->StopMusic(bAwardScore ? 2.5f : 1.f); }
+	if (bAwardScore) { PlayVoice(DeathSound, 0.f, LastCryVoice, true); }
 	if (!bAwardScore || DeathDuration <= 0.f)
 	{
 		FinishDying(bAwardScore);
