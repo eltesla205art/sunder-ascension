@@ -8,6 +8,7 @@ Implementation guide for two weapon effects in the Unreal Engine 5 version of th
 plus the pooling and budgeting that keeps dozens of simultaneous impacts from dropping frames.
 
 > **Status:** written guidance, not yet built or run in-engine (no Unreal in the environment where it was written).
+> The C++ in §1.6 and §3 is also provided as drop-in source in [`Source/`](Source/README.md) (not compiled yet either).
 > Module names are from UE 5.3–5.5; the few that moved between versions are marked ⚠ — check those in your build.
 
 Conventions: Z is up, the camera looks straight down −Z, the gameplay plane is XY, and "up the screen" is world +X.
