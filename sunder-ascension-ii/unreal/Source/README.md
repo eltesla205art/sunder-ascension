@@ -24,6 +24,11 @@ C++ side of [`../WEAPON_VFX.md`](../WEAPON_VFX.md). Written for UE 5.3+ (5.1 min
    (`Core`, `CoreUObject` and `Engine` are already there in a standard game module.)
 4. Enable the **Niagara** plugin (on by default), regenerate project files, and build `<YourGame>Editor` (Development Editor).
 
+## Assets
+
+Run [`../Scripts/create_weapon_fx_assets.py`](../Scripts/create_weapon_fx_assets.py) in the editor (Tools → Execute Python
+Script) for the materials, Effect Types and empty `NS_*` systems; build the emitters by hand from the guide.
+
 ## Hook up
 
 - **Project Settings → Game → Sunder Impact FX:** set `ImpactFX` to `NS_PlasmaBurst_Impact` and `ImpactFXLite` to the
