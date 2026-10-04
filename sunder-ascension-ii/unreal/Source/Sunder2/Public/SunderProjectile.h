@@ -55,6 +55,9 @@ public:
 
 	bool IsParked() const { return bParked; }
 
+	/** Fired by an enemy (decided when fired, so it holds even after the enemy is destroyed). */
+	bool IsFromEnemy() const { return bFromEnemy; }
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -68,4 +71,5 @@ private:
 
 	FTimerHandle LifetimeTimer;
 	bool bParked = true;
+	bool bFromEnemy = false;
 };

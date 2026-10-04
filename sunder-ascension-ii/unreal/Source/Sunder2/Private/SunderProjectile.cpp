@@ -13,6 +13,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "NiagaraComponent.h"
 #include "ProjectilePoolSubsystem.h"
+#include "SunderEnemy.h"
+#include "SunderShipPawn.h"
 #include "TimerManager.h"
 #include "UObject/ConstructorHelpers.h"
 
@@ -56,6 +58,7 @@ void ASunderProjectile::BeginPlay()
 void ASunderProjectile::Fire(const FVector& Location, const FVector& Direction, AActor* InOwner, APawn* InInstigator)
 {
 	bParked = false;
+	bFromEnemy = InOwner && InOwner->IsA<ASunderEnemy>();
 	SetOwner(InOwner);
 	SetInstigator(InInstigator);
 	const FVector Dir = FVector(Direction.X, Direction.Y, 0.f).GetSafeNormal(UE_SMALL_NUMBER, FVector::ForwardVector);
@@ -89,6 +92,7 @@ void ASunderProjectile::OnOverlap(UPrimitiveComponent* OverlappedComp, AActor* O
 {
 	if (bParked || !OtherActor || OtherActor == this || OtherActor == GetOwner() || OtherActor == GetInstigator()) { return; }
 	if (OtherActor->IsA<ASunderProjectile>()) { return; }               // shots pass through each other
+	if (bFromEnemy != OtherActor->IsA<ASunderShipPawn>()) { return; }  // enemy shots hit only the ship; ours never do
 
 	const FVector Dir = Movement->Velocity.GetSafeNormal(UE_SMALL_NUMBER, GetActorForwardVector());
 	const FVector Point = bFromSweep ? FVector(SweepResult.ImpactPoint) : GetActorLocation();

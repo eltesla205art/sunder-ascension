@@ -6,6 +6,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "Engine/LocalPlayer.h"
 #include "Engine/StaticMesh.h"
+#include "Engine/DamageEvents.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "GameFramework/PlayerController.h"
@@ -13,7 +14,9 @@
 #include "InputActionValue.h"
 #include "InputMappingContext.h"
 #include "InputModifiers.h"
+#include "ImpactFXSubsystem.h"
 #include "ProjectilePoolSubsystem.h"
+#include "SunderGameMode.h"
 #include "SunderProjectile.h"
 #include "UObject/ConstructorHelpers.h"
 
@@ -57,6 +60,8 @@ void ASunderShipPawn::BeginPlay()
 {
 	Super::BeginPlay();
 	ArenaCenter.Z = GetActorLocation().Z;                    // the play plane is wherever the ship starts
+	StartLocation = GetActorLocation();
+	Health = MaxHealth;
 	if (ProjectileClass)
 	{
 		if (UProjectilePoolSubsystem* Pool = GetWorld()->GetSubsystem<UProjectilePoolSubsystem>())
@@ -127,7 +132,7 @@ void ASunderShipPawn::OnMoveUp(const FInputActionValue& Value) { MoveInput.X = V
 void ASunderShipPawn::OnMoveUpReleased(const FInputActionValue& Value) { MoveInput.X = 0.f; }
 void ASunderShipPawn::OnMoveRight(const FInputActionValue& Value) { MoveInput.Y = Value.Get<float>(); }
 void ASunderShipPawn::OnMoveRightReleased(const FInputActionValue& Value) { MoveInput.Y = 0.f; }
-void ASunderShipPawn::OnBeamPressed(const FInputActionValue& Value) { BeamWeapon->StartFire(); }
+void ASunderShipPawn::OnBeamPressed(const FInputActionValue& Value) { if (!bDead) { BeamWeapon->StartFire(); } }
 void ASunderShipPawn::OnBeamReleased(const FInputActionValue& Value) { BeamWeapon->StopFire(); }
 void ASunderShipPawn::OnShootPressed(const FInputActionValue& Value) { bShooting = true; }
 void ASunderShipPawn::OnShootReleased(const FInputActionValue& Value) { bShooting = false; }
@@ -135,6 +140,13 @@ void ASunderShipPawn::OnShootReleased(const FInputActionValue& Value) { bShootin
 void ASunderShipPawn::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	if (bDead) { return; }
+
+	if (Invulnerable > 0.f)                                   // blink while invulnerable
+	{
+		Invulnerable = FMath::Max(Invulnerable - DeltaTime, 0.f);
+		Mesh->SetVisibility(Invulnerable <= 0.f || FMath::Fmod(Invulnerable * 12.f, 1.f) < 0.6f);
+	}
 
 	FVector Move(MoveInput.X, MoveInput.Y, 0.f);
 	if (Move.SizeSquared() > 1.f) { Move.Normalize(); }    // diagonals no faster than straight lines
@@ -161,9 +173,40 @@ void ASunderShipPawn::Tick(float DeltaTime)
 	}
 }
 
+float ASunderShipPawn::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+	if (bDead || Invulnerable > 0.f || DamageAmount <= 0.f) { return 0.f; }
+	Health -= DamageAmount;
+	Invulnerable = HitInvulnerability;
+	if (Health > 0.f) { return DamageAmount; }
+
+	bDead = true;                                             // hull gone: burst, vanish, tell the game mode
+	bShooting = false;
+	BeamWeapon->StopFire();
+	if (UImpactFXSubsystem* Impacts = GetWorld()->GetSubsystem<UImpactFXSubsystem>())
+	{
+		for (int32 i = 0; i < 4; ++i) { Impacts->QueueImpact(GetActorLocation(), FVector::ForwardVector, DeathColor); }
+	}
+	Mesh->SetVisibility(false);
+	SetActorEnableCollision(false);
+	if (ASunderGameMode* Mode = GetWorld()->GetAuthGameMode<ASunderGameMode>()) { Mode->OnShipDestroyed(this); }
+	return DamageAmount;
+}
+
+void ASunderShipPawn::Respawn()
+{
+	SetActorLocation(StartLocation);
+	Health = MaxHealth;
+	Invulnerable = HitInvulnerability * 3.f;
+	bDead = false;
+	Mesh->SetVisibility(true);
+	SetActorEnableCollision(true);
+}
+
 void ASunderShipPawn::FireShots()
 {
-	if (!ProjectileClass) { return; }
+	if (!ProjectileClass || bDead) { return; }
 	UProjectilePoolSubsystem* Pool = GetWorld()->GetSubsystem<UProjectilePoolSubsystem>();
 	if (!Pool) { return; }
 	const FVector Origin = Muzzle->GetComponentLocation();

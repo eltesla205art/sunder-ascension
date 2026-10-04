@@ -62,6 +62,30 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ship|Movement")
 	float MoveSpeed = 950.f;
 
+	/** Hits the hull can take before the ship is lost (enemy shots and rams do 1 each by default). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ship|Hull", meta = (ClampMin = "1"))
+	float MaxHealth = 5.f;
+
+	/** Seconds of invulnerability after a hit, and (×3) after a respawn; the ship blinks meanwhile. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ship|Hull")
+	float HitInvulnerability = 0.6f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ship|Hull")
+	FLinearColor DeathColor = FLinearColor(3.0f, 2.1f, 0.6f, 1.f);
+
+	UFUNCTION(BlueprintPure, Category = "Ship|Hull")
+	float GetHealth() const { return Health; }
+
+	UFUNCTION(BlueprintPure, Category = "Ship|Hull")
+	bool IsAlive() const { return !bDead; }
+
+	/** Back at the start position with a full hull (called by the game mode while lives remain). */
+	UFUNCTION(BlueprintCallable, Category = "Ship|Hull")
+	void Respawn();
+
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator,
+		AActor* DamageCauser) override;
+
 	/** The arena the ship can fly in, centred on ArenaCenter (X up the screen, Y across it). */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ship|Movement")
 	FVector ArenaCenter = FVector::ZeroVector;
@@ -95,6 +119,10 @@ private:
 	UPROPERTY(Transient) TObjectPtr<UInputMappingContext> Mapping;
 
 	FVector2D MoveInput = FVector2D::ZeroVector;   // X = up the screen, Y = right
+	FVector StartLocation = FVector::ZeroVector;
+	float Health = 5.f;
+	float Invulnerable = 0.f;
+	bool bDead = false;
 	bool bShooting = false;
 	float ShotCooldown = 0.f;
 };

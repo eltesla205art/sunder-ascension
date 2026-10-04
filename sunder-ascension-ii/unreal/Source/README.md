@@ -1,6 +1,6 @@
-# SUNDER II — drop-in UE5 C++ for the weapons and the test arena
+# SUNDER II — drop-in UE5 C++ for the weapons, the ship, enemies and waves
 
-C++ side of [`../WEAPON_VFX.md`](../WEAPON_VFX.md), plus the ship, a target and a game mode for the test arena. Written for UE 5.3+ (5.1 minimum: it uses `UE_SMALL_NUMBER`).
+C++ side of [`../WEAPON_VFX.md`](../WEAPON_VFX.md), plus the ship, enemies, waves, scoring and a HUD for the test arena. Written for UE 5.3+ (5.1 minimum: it uses `UE_SMALL_NUMBER`).
 
 > **Status:** written without an Unreal install, so **not compiled yet**. Expect to fix small API differences on the
 > first build; the comments say what each piece is for, so fixes stay local.
@@ -11,15 +11,21 @@ C++ side of [`../WEAPON_VFX.md`](../WEAPON_VFX.md), plus the ship, a target and 
 | `ImpactFXSubsystem` (+ `UImpactFXSettings`) | World subsystem: `QueueImpact`, merges hits on the same spot, caps full effects per frame, spawns pooled (`AutoRelease`) | §3.2 |
 | `SunderProjectile` | Pooled plasma shot: overlap → queue impact, apply damage, return to the pool; times out off-screen | §3.4 |
 | `ProjectilePoolSubsystem` | World subsystem: `Acquire` / `Release` / `Prewarm`, per-class free lists | §3.4 |
-| `SunderShipPawn` | The player ship: eight-way movement clamped to the arena, held beam, held twin plasma shots from the pool; input built at runtime with Enhanced Input (no input assets) | — |
+| `SunderShipPawn` | The player ship: eight-way movement clamped to the arena, held beam, held twin plasma shots from the pool, a 5-hit hull with blinking invulnerability, death and respawn; input built at runtime with Enhanced Input (no input assets) | — |
 | `SunderTargetDummy` | Drifting target: takes beam and shot damage, swells when hit, bursts with an impact and respawns | — |
-| `SunderGameMode` | Game mode whose default pawn is the ship (the Blueprint child points it at `BP_SunderShip`) | — |
+| `SunderGameMode` | Default pawn = the ship; score, 3 lives, respawn after 2 s, DAWN DENIED and a restart when the last life goes; wave banner | — |
+| `SunderEnemy` | Enemy craft: moves Straight / Weave / Dive / Strafe / Zigzag, fires Aimed / Spread / Radial from the pool, rams, flashes when hit, bursts and scores on death; each type is a Blueprint child | — |
+| `SunderWaveSet` | Data asset: waves of spawn groups (enemy type, count, timing, formation Column / Line / V / Random / Sides, lane, spacing), loop scaling | — |
+| `SunderWaveDirector` | Level actor that plays a wave set: schedules formations along the top edge, waits for each wave to clear, loops tougher | — |
+| `SunderHUD` | Canvas HUD: score, lives, hull bar, wave banner, DAWN DENIED | — |
+
+Projectiles are team-aware: enemy shots only hit the ship, the player's shots never do, and shots ignore each other.
 
 ## Install
 
 1. Copy `Sunder2/Public/*` and `Sunder2/Private/*` into your game module, e.g. `Source/<YourGame>/Public` and
-   `Source/<YourGame>/Private`. If your module has no Public/Private split, put all fourteen files in `Source/<YourGame>/`.
-2. Replace `SUNDER2_API` with your module's export macro (`<YOURGAME>_API`) in the seven headers.
+   `Source/<YourGame>/Private`. If your module has no Public/Private split, put all twenty-one files in `Source/<YourGame>/`.
+2. Replace `SUNDER2_API` with your module's export macro (`<YOURGAME>_API`) in the eleven headers.
 3. In `Source/<YourGame>/<YourGame>.Build.cs`, add to `PublicDependencyModuleNames`:
    ```csharp
    "Niagara", "DeveloperSettings", "EnhancedInput", "InputCore"
@@ -35,6 +41,9 @@ C++ side of [`../WEAPON_VFX.md`](../WEAPON_VFX.md), plus the ship, a target and 
 2. [`../Scripts/create_arena_level.py`](../Scripts/create_arena_level.py): `BP_PlasmaShot`, `BP_SunderShip`, `BP_SunderGameMode` and the
    `L_SunderArena` level (ortho top-down camera, floor, light, player start, three target dummies, bloom). Open the
    level and press Play: **W A S D** move, **Space** beam, **J** shoot (gamepad: left stick, right trigger, A).
+3. [`../Scripts/create_enemies_and_waves.py`](../Scripts/create_enemies_and_waves.py): `BP_EnemyShot`, five enemy Blueprints
+   (Scout, Diver, Skimmer, Gunship, Bomber), `DA_TestWaves` (five waves, looping tougher) and a wave director in
+   `L_SunderArena`, replacing the target dummies.
 
 ## Hook up
 
