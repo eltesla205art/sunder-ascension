@@ -19,6 +19,7 @@ class UStaticMeshComponent;
 class UBeamWeaponComponent;
 class UNiagaraSystem;
 class UStaticMesh;
+class USoundBase;
 class ASunderProjectile;
 class UInputAction;
 class UInputMappingContext;
@@ -216,6 +217,25 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ship|Power-ups")
 	TObjectPtr<UStaticMeshComponent> ShieldMesh;
 
+	// ---- the game's own sounds (web/game.html sfx(), rendered by unreal/Tools/render_web_audio.cjs effects)
+	/** Weapon, Power and Bomb pickups (the web game's "power"). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ship|Sounds")
+	TObjectPtr<USoundBase> PickupSound;
+
+	/** Life and Shield pickups (the web game's "life"). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ship|Sounds")
+	TObjectPtr<USoundBase> LifeSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ship|Sounds")
+	TObjectPtr<USoundBase> BombSound;
+
+	/** A shield soaking a hit, or the hull taking one (the web game's "hit"). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ship|Sounds")
+	TObjectPtr<USoundBase> HitSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ship|Sounds")
+	float SoundVolume = 1.f;
+
 	UFUNCTION(BlueprintCallable, Category = "Ship|Power-ups")
 	void CollectPickup(ESunderPickupKind Kind);
 
@@ -281,6 +301,7 @@ private:
 	void OnShootReleased(const FInputActionValue& Value);
 	void OnBombPressed(const FInputActionValue& Value);
 	void SetPower(int32 NewPower);
+	void PlaySound(USoundBase* Sound) const;
 	void UpdateBodyScale();
 	float FormScale() const;
 

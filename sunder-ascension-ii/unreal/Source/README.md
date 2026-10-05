@@ -11,7 +11,7 @@ C++ side of [`../WEAPON_VFX.md`](../WEAPON_VFX.md) and [`../KEEPER_VFX.md`](../K
 | `ImpactFXSubsystem` (+ `UImpactFXSettings`) | World subsystem: `QueueImpact`, merges hits on the same spot, caps full effects per frame, spawns pooled (`AutoRelease`) | §3.2 |
 | `SunderProjectile` | Pooled plasma shot: overlap → queue impact, apply damage, return to the pool; times out off-screen; `SetShotColor` recolours one shot | §3.4 |
 | `ProjectilePoolSubsystem` | World subsystem: `Acquire` / `Release` / `Prewarm`, per-class free lists | §3.4 |
-| `SunderShipPawn` | The player ship: eight-way movement clamped to the arena, held beam, held plasma shots from the pool in the chosen ship's style (Sunborn twin spread, Scarab heavy cannon, Ibis rapid stream; `ApplyLoadout`), flown as the ship's own model (turned nose-up, sized, guns at its nose); the web game's power-ups (Spread / Laser weapons, three forms per ship with more guns and ×power damage, bombs on X / K / Y that hit everything and wipe enemy shots, shields that soak a whole hit, Life up to 2 over full; a hull hit costs a form), a 5-hit hull with blinking invulnerability, death and respawn; input built at runtime with Enhanced Input (no input assets) | — |
+| `SunderShipPawn` | The player ship: eight-way movement clamped to the arena, held beam, held plasma shots from the pool in the chosen ship's style (Sunborn twin spread, Scarab heavy cannon, Ibis rapid stream; `ApplyLoadout`), flown as the ship's own model (turned nose-up, sized, guns at its nose); the web game's power-ups (Spread / Laser weapons, three forms per ship with more guns and ×power damage, bombs on X / K / Y that hit everything and wipe enemy shots, shields that soak a whole hit, Life up to 2 over full; a hull hit costs a form) with the web game's pickup, bomb and hit sounds, a 5-hit hull with blinking invulnerability, death and respawn; input built at runtime with Enhanced Input (no input assets) | — |
 | `SunderPickup` | A falling power-up (S Spread, L Laser, P Power, B Bomb, O Shield, + Life) in the web game's colours; dropped by enemies at the Hour's rate (bombers more), collected by flying into it | — |
 | `SunderTargetDummy` | Drifting target: takes beam and shot damage, swells when hit, bursts with an impact and respawns | — |
 | `SunderGameMode` | Default pawn = the ship, flown as the hangar's choice (`Ships`: the web game's three ships in Unreal units; `?Ship=` / `?Mode=` also work on the URL); Swarm mode; score, 3 lives, respawn after 2 s, DAWN DENIED and a restart (or back to `MenuLevel`, the title; in story mode, DAWN DENIED on the story level) when the last life goes; wave banner; tracks the active Keeper | — |
@@ -90,6 +90,9 @@ Projectiles are team-aware: enemy shots only hit the ship, the player's shots ne
 11. [`../Scripts/create_ship_models.py`](../Scripts/create_ship_models.py): imports the three ships' models from
     [`../Content/Ships`](../Content/Ships) (`blender/ships.py <dir> 0 --fbx`) and gives each to its ship in
     `BP_SunderGameMode` → Ships, replacing the placeholder cone.
+12. [`../Scripts/create_ship_sounds.py`](../Scripts/create_ship_sounds.py): imports the game's own sound effects from
+    [`../Content/Audio/Effects`](../Content/Audio/Effects) (`render_web_audio.cjs effects`, from `web/game.html` sfx()) and
+    sets the pickup, life, bomb and hit sounds on `BP_SunderShip`.
 
 ## Hook up
 

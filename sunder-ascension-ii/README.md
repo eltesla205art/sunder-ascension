@@ -32,11 +32,13 @@ original *SUNDER: Ascension — The Nine Bows* (`web/`, `godot/`, `docs/`), whic
 | `unreal/Content/Audio/Menus/` | The title and hangar themes (three layers each), ambience beds, interface cues and ship engine revs as WAV, rendered from `web/menu_audio.js` |
 | `unreal/Scripts/create_story_level.py` | Editor Python: story mode (`L_SunderStory`): the opening crawl, hour map, briefings, Hour survived, dawn and DAWN DENIED, with their music, ambience and cues, and the twelve Hours wired to their stage sound and Keepers (untested until first run) |
 | `unreal/Scripts/create_ship_models.py` | Editor Python: imports the Sunborn, Scarab and Ibis models and sets them on the arena's ships (untested until first run) |
+| `unreal/Scripts/create_ship_sounds.py` | Editor Python: imports the game's sound effects and sets the ship's pickup, life, bomb and hit sounds (untested until first run) |
+| `unreal/Content/Audio/Effects/` | The game's own sound effects (pickups, bomb, hits, shots, explosions) as WAV, rendered from `web/game.html` |
 | `unreal/Content/Ships/` | The three ships as FBX for Unreal (one mesh each), from `blender/ships.py --fbx` |
 | `unreal/Scripts/create_hour_waves.py` | Editor Python: a wave set for each of the Twelve Hours from the web game's stage tuning, each ending with its Keeper, for story mode (untested until first run) |
 | `unreal/Content/Audio/Story/` | The story screens' themes (three layers each), the crawl's and the map's ambience, and the story cues as WAV, rendered from `web/story_audio.js` |
 | `unreal/Content/Story/story.json` | The story's words and each Hour's battle tuning for Unreal, exported from `web/game.html` by `unreal/Tools/export_story_text.cjs` |
-| `unreal/Tools/render_web_audio.cjs` | Renders the Keeper, stage, menu and story WAVs from the web game's synth in Chromium (Playwright) |
+| `unreal/Tools/render_web_audio.cjs` | Renders the Keeper, stage, menu, story and game-effect WAVs from the web game's synth in Chromium (Playwright) |
 | `unreal/Content/Keepers/` | The thirteen Keeper models as FBX for Unreal (one mesh each, plus Apep's final form), from `blender/keepers.py --fbx` |
 | `art/blender/` | Full-resolution Blender renders (title backdrop, ship sprites, `keepers/` boss sprites and portraits) |
 | `artifacts/` | Progress note, QA evidence (`final-evidence.md`), inspector captures |

@@ -2,7 +2,7 @@
 // story_audio.js) to WAV
 // for Unreal, so both versions sound the same.
 //
-//   node unreal/Tools/render_web_audio.cjs [keepers|stages|menus|story|all] [out_root] [gain]
+//   node unreal/Tools/render_web_audio.cjs [keepers|stages|menus|story|effects|all] [out_root] [gain]
 //   (defaults: all, unreal/Content/Audio, 1.6; needs Playwright with Chromium: npm i -g playwright)
 //
 // keepers → Audio/Keepers: Music/MUS_Keeper_<Name>_L1..3 (each theme in three layers) and
@@ -13,6 +13,9 @@
 //           Cues/SFX_Menu_Title_Start/Leaderboard, SFX_Menu_Hangar_Move/Mode/Back/Launch, SFX_Ship_<Ship>_Rev
 // story   → Audio/Story:   Music/MUS_Story_Opening|Map|Briefing|Interlude|Victory|Defeat_L1..3,
 //           Ambience/AMB_Story_Opening|Map, Cues/SFX_Story_Begin/Map/Gate/Briefing/Interlude/Dawn/Denied
+// effects → Audio/Effects: SFX_Game_<Kind> — the game's own little synth (web/game.html sfx()): Power (weapon, power and
+//           bomb pickups), Life (life and shield pickups), Bomb, Hit (a shield soaking a hit, a hull hit), and Shoot,
+//           Boom, BigBoom, Select. Read straight from game.html, so they stay the web game's.
 // Music loops are exactly one loop, cut from the second pass of two so notes ringing over the loop point are already
 // at its start: seamless, and the three layers of a theme are the same length so they play in step and crossfade.
 // Ambience is a 24 s loop (22.05 kHz) of the beds and their scattered events, its seam hidden with an equal-power
@@ -37,7 +40,16 @@ const ENGINE = fs.readFileSync(path.join(WEB, 'keeper_audio.js'), 'utf8');
 const STAGES = fs.readFileSync(path.join(WEB, 'stage_audio.js'), 'utf8');
 const MENUS = fs.readFileSync(path.join(WEB, 'menu_audio.js'), 'utf8');
 const STORY = fs.readFileSync(path.join(WEB, 'story_audio.js'), 'utf8');
-if (!['keepers', 'stages', 'menus', 'story', 'all'].includes(PACK)) { console.error('pack must be keepers, stages, menus, story or all'); process.exit(2); }
+const GAME_HTML = fs.readFileSync(path.join(WEB, 'game.html'), 'utf8');
+// the game's sfx() function, as written: from its declaration to the first closing brace at the start of a line
+const SFX_SRC = (() => {
+  const from = GAME_HTML.indexOf('function sfx(kind){');
+  const to = GAME_HTML.indexOf('\n}', from);
+  if (from < 0 || to < 0) { throw new Error('sfx() not found in web/game.html'); }
+  return GAME_HTML.slice(from, to + 2);
+})();
+const EFFECTS = (SFX_SRC.match(/case '([a-z]+)'/g) || []).map(c => c.slice(6, -1));
+if (!['keepers', 'stages', 'menus', 'story', 'effects', 'all'].includes(PACK)) { console.error('pack must be keepers, stages, menus, story, effects or all'); process.exit(2); }
 
 const camel = id => id === 'story' ? '' : id.replace(/^(stage|menu|ship|story)_/, '').split('_').map(p => p[0].toUpperCase() + p.slice(1)).join('');
 
@@ -95,10 +107,16 @@ function wav(samples, rate){
   }, { ambLoop: AMB_LOOP });
 
   // Render in the page, hand back 16-bit PCM as base64 (small enough to pass through evaluate).
-  const render = (kind, args, rate) => page.evaluate(async ({ kind, args, rate, gain, fade, warm }) => {
+  const render = (kind, args, rate) => page.evaluate(async ({ kind, args, rate, gain, fade, warm, sfxSrc }) => {
     const K = window.KeeperAudio;
     let ctx, from, to;
-    if (kind === 'ambience'){
+    if (kind === 'effect'){
+      // the game's sfx(), run as it is in the game, against an offline context
+      ctx = new OfflineAudioContext(1, Math.ceil(1.2 * rate), rate);
+      new Function('ctx', 'kind', 'let IS_BROWSER = true, sfxOn = true, lastShotSfx = -1; const ac = () => ctx;\n'
+        + sfxSrc + '\nsfx(kind);')(ctx, args.id);
+      from = 0; to = ctx.length;
+    } else if (kind === 'ambience'){
       const { id, loop } = args;
       const total = warm + loop + fade + 2;
       ctx = new OfflineAudioContext(1, Math.ceil(total * rate), rate);
@@ -123,7 +141,7 @@ function wav(samples, rate){
       ch = out;
     }
     let peak = 0; for (const s of ch) peak = Math.max(peak, Math.abs(s));
-    if (kind === 'voice'){                                // trim the silence after the tail, with a 10 ms fade
+    if (kind === 'voice' || kind === 'effect'){           // trim the silence after the tail, with a 10 ms fade
       let last = ch.length - 1; while (last > 0 && Math.abs(ch[last]) < 0.0005) last--;
       const n = Math.min(ch.length, last + Math.round(0.02 * rate));
       ch = ch.slice(0, n);
@@ -134,7 +152,7 @@ function wav(samples, rate){
     const bytes = new Uint8Array(pcm.buffer); let bin = '';
     for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
     return { b64: btoa(bin), peak, seconds: ch.length / rate };
-  }, { kind, args, rate, gain: GAIN, fade: AMB_FADE, warm: AMB_WARMUP });
+  }, { kind, args, rate, gain: GAIN, fade: AMB_FADE, warm: AMB_WARMUP, sfxSrc: SFX_SRC });
 
   const save = (file, r, rate) => {
     const pcm = Buffer.from(r.b64, 'base64');
@@ -163,6 +181,15 @@ function wav(samples, rate){
     const name = join('SFX', prefix(v), camel(v.id), title(v.cue));
     save(path.join(dir(v), v.pack === 'keepers' ? 'Voices' : 'Cues', name + '.wav'), r, RATE);
     report.voices.push({ name, seconds: +r.seconds.toFixed(3), peak: +r.peak.toFixed(3) });
+  }
+  if (PACK === 'all' || PACK === 'effects'){
+    report.effects = [];
+    for (const id of EFFECTS){
+      const r = await render('effect', { id }, RATE);
+      const name = 'SFX_Game_' + (id === 'bigboom' ? 'BigBoom' : title(id));
+      save(path.join(ROOT, 'Effects', name + '.wav'), r, RATE);
+      report.effects.push({ name, seconds: +r.seconds.toFixed(3), peak: +r.peak.toFixed(3) });
+    }
   }
   for (const a of plan.ambience.filter(wanted)){
     const r = await render('ambience', a, AMB_RATE);

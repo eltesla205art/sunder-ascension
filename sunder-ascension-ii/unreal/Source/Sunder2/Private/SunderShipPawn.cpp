@@ -19,6 +19,7 @@
 #include "ImpactFXSubsystem.h"
 #include "Kismet/GameplayStatics.h"
 #include "Materials/MaterialInstanceDynamic.h"
+#include "Sound/SoundBase.h"
 #include "SunderEnemy.h"
 #include "SunderKeeper.h"
 #include "ProjectilePoolSubsystem.h"
@@ -216,6 +217,7 @@ float ASunderShipPawn::TakeDamage(float DamageAmount, FDamageEvent const& Damage
 		// A shield soaks the whole hit: no hull lost, no power lost.
 		--State.Shield;
 		Invulnerable = ShieldInvulnerability;
+		PlaySound(HitSound);
 		if (UImpactFXSubsystem* Impacts = GetWorld()->GetSubsystem<UImpactFXSubsystem>())
 		{
 			Impacts->QueueImpact(GetActorLocation(), FVector::ForwardVector, BombColor);
@@ -224,6 +226,7 @@ float ASunderShipPawn::TakeDamage(float DamageAmount, FDamageEvent const& Damage
 	}
 	Health -= DamageAmount;
 	Invulnerable = HitInvulnerability;
+	PlaySound(HitSound);
 	if (State.Power > 1) { SetPower(State.Power - 1); }      // the form falls back a step
 	if (Health > 0.f) { return DamageAmount; }
 
@@ -329,9 +332,16 @@ void ASunderShipPawn::SetPower(int32 NewPower)
 	UpdateBodyScale();
 }
 
+void ASunderShipPawn::PlaySound(USoundBase* Sound) const
+{
+	if (Sound) { UGameplayStatics::PlaySound2D(this, Sound, SoundVolume); }
+}
+
 void ASunderShipPawn::CollectPickup(ESunderPickupKind Kind)
 {
 	if (bDead) { return; }
+	// The web game's sounds: a rising chime for guns, power and bombs; a softer, higher one for life and shields.
+	PlaySound(Kind == ESunderPickupKind::Life || Kind == ESunderPickupKind::Shield ? LifeSound : PickupSound);
 	switch (Kind)
 	{
 	case ESunderPickupKind::Spread:
@@ -353,6 +363,7 @@ void ASunderShipPawn::UseBomb()
 {
 	if (bDead || State.Bombs <= 0) { return; }
 	--State.Bombs;
+	PlaySound(BombSound);
 	UWorld* World = GetWorld();
 	// Every enemy shot is wiped away…
 	for (TActorIterator<ASunderProjectile> It(World); It; ++It)
