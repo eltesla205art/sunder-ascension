@@ -24,7 +24,7 @@ ASunderPickup::ASunderPickup()
 	Gem->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	Gem->SetRelativeScale3D(FVector(0.55f, 0.55f, 0.12f));   // a flat square, turned 45° in Tick: a diamond from above
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> Cube(TEXT("/Engine/BasicShapes/Cube.Cube"));
-	if (Cube.Succeeded()) { Gem->SetStaticMesh(Cube.Object); }
+	if (Cube.Succeeded()) { Gem->SetStaticMesh(Cube.Object); PlaceholderMesh = Cube.Object; }
 
 	Letter = CreateDefaultSubobject<UTextRenderComponent>(TEXT("Letter"));
 	Letter->SetupAttachment(Collision);
@@ -67,7 +67,28 @@ FString ASunderPickup::KindLetter(ESunderPickupKind InKind)
 void ASunderPickup::SetKind(ESunderPickupKind InKind)
 {
 	Kind = InKind;
+	UStaticMesh* Model = KindMeshes.FindRef(Kind);
+	bModel = Model != nullptr;
+	if (bModel)
+	{
+		// The kind's own gem, with its own materials: sized to MeshSize corner to corner, turned emblem-up.
+		Gem->EmptyOverrideMaterials();
+		GemMaterial = nullptr;
+		Gem->SetStaticMesh(Model);
+		const FBox Turned = Model->GetBoundingBox().TransformBy(FTransform(MeshRotation));
+		const float Across = FMath::Max(FMath::Max(Turned.GetSize().X, Turned.GetSize().Y), 1.f);
+		GemBaseScale = FVector(MeshSize / Across);
+		GemBaseRotation = MeshRotation;
+		Letter->SetVisibility(false);                            // the emblem is part of the model
+		return;
+	}
+	// The placeholder: a flat square turned 45°, tinted, with the kind's letter on it.
+	if (PlaceholderMesh && Gem->GetStaticMesh() != PlaceholderMesh) { Gem->SetStaticMesh(PlaceholderMesh); }
+	GemBaseScale = FVector(0.55f, 0.55f, 0.12f);
+	GemBaseRotation = FRotator(0.f, 45.f, 0.f);
+	Letter->SetVisibility(true);
 	Letter->SetText(FText::FromString(KindLetter(Kind)));
+	if (!GemMaterial && HasActorBegunPlay()) { GemMaterial = Gem->CreateDynamicMaterialInstance(0); }
 	if (GemMaterial) { GemMaterial->SetVectorParameterValue(TEXT("Color"), KindColor(Kind)); }
 }
 
@@ -75,7 +96,7 @@ void ASunderPickup::BeginPlay()
 {
 	Super::BeginPlay();
 	StartY = GetActorLocation().Y;
-	GemMaterial = Gem->CreateDynamicMaterialInstance(0);       // the engine shape material's "Color"
+	if (!KindMeshes.FindRef(Kind)) { GemMaterial = Gem->CreateDynamicMaterialInstance(0); }   // the engine shape's "Color"
 	SetKind(Kind);
 	Collision->OnComponentBeginOverlap.AddDynamic(this, &ASunderPickup::OnOverlap);
 }
@@ -88,8 +109,10 @@ void ASunderPickup::Tick(float DeltaTime)
 	P.X -= FallSpeed * DeltaTime;                              // down the screen
 	P.Y = StartY + 15.f * FMath::Sin(Age * 7.f);               // the web game's little wobble
 	SetActorLocation(P);
-	Gem->SetRelativeRotation(FRotator(0.f, 45.f + 25.f * FMath::Sin(Age * 3.f), 0.f));
-	Gem->SetRelativeScale3D(FVector(0.55f, 0.55f, 0.12f) * (1.f + 0.08f * FMath::Sin(Age * 9.f)));   // a glint
+	// A slow sway, and for a model a gentle tilt that catches the light on its facets.
+	const float Tilt = bModel ? 14.f : 0.f;
+	Gem->SetRelativeRotation(GemBaseRotation + FRotator(Tilt * FMath::Sin(Age * 2.3f), 25.f * FMath::Sin(Age * 3.f), Tilt * FMath::Cos(Age * 1.9f)));
+	Gem->SetRelativeScale3D(GemBaseScale * (1.f + 0.06f * FMath::Sin(Age * 9.f)));   // a glint
 }
 
 void ASunderPickup::OnOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,

@@ -34,6 +34,8 @@ original *SUNDER: Ascension — The Nine Bows* (`web/`, `godot/`, `docs/`), whic
 | `unreal/Scripts/create_ship_models.py` | Editor Python: imports the Sunborn, Scarab and Ibis models and sets them on the arena's ships (untested until first run) |
 | `unreal/SHIP_VFX.md` | UE5 Niagara guide for the ship's shield: the looping rings (one per layer) and its ripple, shatter and gather events |
 | `unreal/Scripts/create_ship_fx_assets.py` | Editor Python: the shield's materials and empty Niagara systems, set on the ship (untested until first run) |
+| `unreal/Scripts/create_pickup_art.py` | Editor Python: imports the six pickup gems and makes the pickups use them (untested until first run) |
+| `unreal/Content/Pickups/` | The six power-up pickups as FBX gems for Unreal, from `blender/pickups.py --fbx` |
 | `unreal/Scripts/create_ship_sounds.py` | Editor Python: imports the game's sound effects and sets the ship's pickup, life, bomb and hit sounds (untested until first run) |
 | `unreal/Content/Audio/Effects/` | The game's own sound effects (pickups, bomb, hits, shots, explosions) as WAV, rendered from `web/game.html` |
 | `unreal/Content/Ships/` | The three ships as FBX for Unreal (one mesh each), from `blender/ships.py --fbx` |
@@ -105,6 +107,8 @@ python blender/keepers.py /tmp/anim 48 [act|id] --anim         # Keeper animatio
 python blender/keepers.py web/models 8 [act|id] --glb          # only the animated Codex models
 python blender/keepers.py unreal/Content/Keepers 8 [act|id] --fbx   # static FBX models for Unreal
 python blender/ships.py unreal/Content/Ships 0 --fbx              # the three ships as FBX for Unreal
+python blender/pickups.py art/blender 160                        # pickups_preview.png: the six pickup gems
+python blender/pickups.py unreal/Content/Pickups 0 --fbx          # the pickup gems as FBX for Unreal
 python3 blender/pack_anim.py /tmp/anim art/blender/keepers/anim web/assets   # pack into sprite sheets (needs Pillow)
 ```
 

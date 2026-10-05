@@ -12,7 +12,7 @@ C++ side of [`../WEAPON_VFX.md`](../WEAPON_VFX.md) and [`../KEEPER_VFX.md`](../K
 | `SunderProjectile` | Pooled plasma shot: overlap → queue impact, apply damage, return to the pool; times out off-screen; `SetShotColor` recolours one shot | §3.4 |
 | `ProjectilePoolSubsystem` | World subsystem: `Acquire` / `Release` / `Prewarm`, per-class free lists | §3.4 |
 | `SunderShipPawn` | The player ship: eight-way movement clamped to the arena, held beam, held plasma shots from the pool in the chosen ship's style (Sunborn twin spread, Scarab heavy cannon, Ibis rapid stream; `ApplyLoadout`), flown as the ship's own model (turned nose-up, sized, guns at its nose); the web game's power-ups (Spread / Laser weapons, three forms per ship with more guns and ×power damage, bombs on X / K / Y that hit everything and wipe enemy shots, shields that soak a whole hit (a Niagara shield that grows with the layers and the ship's form, ripples, shatters and gathers — SHIP_VFX.md — with a placeholder disc until it is built), Life up to 2 over full; a hull hit costs a form) with the web game's pickup, bomb and hit sounds, a 5-hit hull with blinking invulnerability, death and respawn; input built at runtime with Enhanced Input (no input assets) | — |
-| `SunderPickup` | A falling power-up (S Spread, L Laser, P Power, B Bomb, O Shield, + Life) in the web game's colours; dropped by enemies at the Hour's rate (bombers more), collected by flying into it | — |
+| `SunderPickup` | A falling power-up (Spread, Laser, Power, Bomb, Shield, Life): each kind's faceted gem from `blender/pickups.py` (`KindMeshes`), tilting to catch the light, or a placeholder diamond with its letter; dropped by enemies at the Hour's rate (bombers more), collected by flying into it | — |
 | `SunderTargetDummy` | Drifting target: takes beam and shot damage, swells when hit, bursts with an impact and respawns | — |
 | `SunderGameMode` | Default pawn = the ship, flown as the hangar's choice (`Ships`: the web game's three ships in Unreal units; `?Ship=` / `?Mode=` also work on the URL); Swarm mode; score, 3 lives, respawn after 2 s, DAWN DENIED and a restart (or back to `MenuLevel`, the title; in story mode, DAWN DENIED on the story level) when the last life goes; wave banner; tracks the active Keeper | — |
 | `SunderEnemy` | Enemy craft: moves Straight / Weave / Dive / Strafe / Zigzag, fires Aimed / Spread / Radial from the pool, rams, flashes when hit, bursts and scores on death; each type is a Blueprint child | — |
@@ -95,6 +95,9 @@ Projectiles are team-aware: enemy shots only hit the ship, the player's shots ne
     sets the pickup, life, bomb and hit sounds on `BP_SunderShip`.
 13. [`../Scripts/create_ship_fx_assets.py`](../Scripts/create_ship_fx_assets.py): the shield's materials and empty
     `NS_Ship_Shield` / `NS_Ship_ShieldEvent`, set on `BP_SunderShip`; build the emitters from [`../SHIP_VFX.md`](../SHIP_VFX.md).
+14. [`../Scripts/create_pickup_art.py`](../Scripts/create_pickup_art.py): imports the six pickup gems from
+    [`../Content/Pickups`](../Content/Pickups) (`blender/pickups.py <dir> 0 --fbx`), makes `BP_SunderPickup` with them, and
+    sets it as the game mode's Pickup Class.
 
 ## Hook up
 
