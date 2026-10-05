@@ -1,8 +1,8 @@
 """SUNDER: Ascension II — procedural starfighters, rendered top-down for game sprites.
 
 Run with Blender's Python (bpy 4.2):
-    python ships.py <out_dir> [size]
-Writes ship_<id>.png (transparent, nose pointing up) for every ship in SHIPS.
+    python ships.py <out_dir> [size]           ship_<id>.png for every ship in SHIPS (transparent, nose pointing up)
+    python ships.py <out_dir> 0 --fbx          SM_Ship_<Id>.fbx for Unreal instead (one mesh each, nose along +Y)
 """
 import math
 import sys
@@ -11,8 +11,10 @@ import bpy
 import bmesh
 from mathutils import Vector
 
-OUT = sys.argv[1] if len(sys.argv) > 1 else "."
-SIZE = int(sys.argv[2]) if len(sys.argv) > 2 else 256
+ARGS = [a for a in sys.argv[1:] if not a.startswith("--")]
+OUT = ARGS[0] if len(ARGS) > 0 else "."
+SIZE = int(ARGS[1]) if len(ARGS) > 1 else 256
+FBX = "--fbx" in sys.argv
 
 # Each ship is the same kit of parts with different proportions and paint.
 SHIPS = {
@@ -253,10 +255,33 @@ def setup_render(size):
     light("fill", "AREA", (0, 0, 9), 90, (1, 1, 1), 8)
 
 
+def export_fbx(sid, path):
+    """The ship as ONE mesh (one section per material) for Unreal's FBX importer. 1 Blender unit = 1 m = 100 Unreal
+    units, so the ships arrive about 200–250 units long; SunderShipPawn sizes and turns them from its loadout."""
+    meshes = [o for o in bpy.context.scene.objects if o.type == "MESH"]
+    bpy.ops.object.select_all(action="DESELECT")
+    for o in meshes:
+        o.select_set(True)
+    bpy.context.view_layer.objects.active = meshes[0]
+    bpy.ops.object.convert(target="MESH")              # bake the bevel modifiers
+    if len(meshes) > 1:
+        bpy.ops.object.join()
+    mesh = bpy.context.view_layer.objects.active
+    bpy.ops.object.transform_apply(location=False, rotation=True, scale=True)
+    mesh.name = "SM_Ship_" + sid.capitalize()
+    bpy.ops.export_scene.fbx(filepath=path, use_selection=True, object_types={"MESH"}, apply_unit_scale=True,
+                             apply_scale_options="FBX_SCALE_UNITS", mesh_smooth_type="FACE", use_mesh_modifiers=True,
+                             bake_anim=False, add_leaf_bones=False)
+
+
 def main():
     for sid, spec in SHIPS.items():
         reset()
         build_ship(spec)
+        if FBX:
+            export_fbx(sid, f"{OUT}/SM_Ship_{sid.capitalize()}.fbx")
+            print("exported", sid)
+            continue
         ORTHO[0] = max(2 * spec["span"] + 0.3, spec["length"] * 1.25)
         setup_render(SIZE)
         bpy.context.scene.render.filepath = f"{OUT}/ship_{sid}.png"

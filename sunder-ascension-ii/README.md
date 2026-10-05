@@ -31,6 +31,8 @@ original *SUNDER: Ascension — The Nine Bows* (`web/`, `godot/`, `docs/`), whic
 | `unreal/Scripts/create_menu_level.py` | Editor Python: the title screen and hangar level (`L_SunderTitle`) with the menu music, ambience, interface cues and ship engines (untested until first run) |
 | `unreal/Content/Audio/Menus/` | The title and hangar themes (three layers each), ambience beds, interface cues and ship engine revs as WAV, rendered from `web/menu_audio.js` |
 | `unreal/Scripts/create_story_level.py` | Editor Python: story mode (`L_SunderStory`): the opening crawl, hour map, briefings, Hour survived, dawn and DAWN DENIED, with their music, ambience and cues, and the twelve Hours wired to their stage sound and Keepers (untested until first run) |
+| `unreal/Scripts/create_ship_models.py` | Editor Python: imports the Sunborn, Scarab and Ibis models and sets them on the arena's ships (untested until first run) |
+| `unreal/Content/Ships/` | The three ships as FBX for Unreal (one mesh each), from `blender/ships.py --fbx` |
 | `unreal/Scripts/create_hour_waves.py` | Editor Python: a wave set for each of the Twelve Hours from the web game's stage tuning, each ending with its Keeper, for story mode (untested until first run) |
 | `unreal/Content/Audio/Story/` | The story screens' themes (three layers each), the crawl's and the map's ambience, and the story cues as WAV, rendered from `web/story_audio.js` |
 | `unreal/Content/Story/story.json` | The story's words and each Hour's battle tuning for Unreal, exported from `web/game.html` by `unreal/Tools/export_story_text.cjs` |
@@ -98,6 +100,7 @@ python blender/stages.py art/blender/stages 64 [id ...]       # stage backdrops 
 python blender/keepers.py /tmp/anim 48 [act|id] --anim         # Keeper animation frames (8 per Keeper)
 python blender/keepers.py web/models 8 [act|id] --glb          # only the animated Codex models
 python blender/keepers.py unreal/Content/Keepers 8 [act|id] --fbx   # static FBX models for Unreal
+python blender/ships.py unreal/Content/Ships 0 --fbx              # the three ships as FBX for Unreal
 python3 blender/pack_anim.py /tmp/anim art/blender/keepers/anim web/assets   # pack into sprite sheets (needs Pillow)
 ```
 

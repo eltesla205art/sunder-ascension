@@ -11,7 +11,7 @@ C++ side of [`../WEAPON_VFX.md`](../WEAPON_VFX.md) and [`../KEEPER_VFX.md`](../K
 | `ImpactFXSubsystem` (+ `UImpactFXSettings`) | World subsystem: `QueueImpact`, merges hits on the same spot, caps full effects per frame, spawns pooled (`AutoRelease`) | §3.2 |
 | `SunderProjectile` | Pooled plasma shot: overlap → queue impact, apply damage, return to the pool; times out off-screen; `SetShotColor` recolours one shot | §3.4 |
 | `ProjectilePoolSubsystem` | World subsystem: `Acquire` / `Release` / `Prewarm`, per-class free lists | §3.4 |
-| `SunderShipPawn` | The player ship: eight-way movement clamped to the arena, held beam, held plasma shots from the pool in the chosen ship's style (Sunborn twin spread, Scarab heavy cannon, Ibis rapid stream; `ApplyLoadout`), a 5-hit hull with blinking invulnerability, death and respawn; input built at runtime with Enhanced Input (no input assets) | — |
+| `SunderShipPawn` | The player ship: eight-way movement clamped to the arena, held beam, held plasma shots from the pool in the chosen ship's style (Sunborn twin spread, Scarab heavy cannon, Ibis rapid stream; `ApplyLoadout`), flown as the ship's own model (turned nose-up, sized, guns at its nose), a 5-hit hull with blinking invulnerability, death and respawn; input built at runtime with Enhanced Input (no input assets) | — |
 | `SunderTargetDummy` | Drifting target: takes beam and shot damage, swells when hit, bursts with an impact and respawns | — |
 | `SunderGameMode` | Default pawn = the ship, flown as the hangar's choice (`Ships`: the web game's three ships in Unreal units; `?Ship=` / `?Mode=` also work on the URL); Swarm mode; score, 3 lives, respawn after 2 s, DAWN DENIED and a restart (or back to `MenuLevel`, the title; in story mode, DAWN DENIED on the story level) when the last life goes; wave banner; tracks the active Keeper | — |
 | `SunderEnemy` | Enemy craft: moves Straight / Weave / Dive / Strafe / Zigzag, fires Aimed / Spread / Radial from the pool, rams, flashes when hit, bursts and scores on death; each type is a Blueprint child | — |
@@ -86,6 +86,9 @@ Projectiles are team-aware: enemy shots only hit the ship, the player's shots ne
     style, its scout lines and bomber runs, a second enemy from its briefing, gunships in later acts; difficulty by the
     web ratios to Hour 1; long enough for the web Hour's score to its Keeper, longer each act), ending with the Hour's
     Keeper in its own sound. Gives them to `DA_StoryData`; set `ARENA_HOUR` to fly one in the arena.
+11. [`../Scripts/create_ship_models.py`](../Scripts/create_ship_models.py): imports the three ships' models from
+    [`../Content/Ships`](../Content/Ships) (`blender/ships.py <dir> 0 --fbx`) and gives each to its ship in
+    `BP_SunderGameMode` → Ships, replacing the placeholder cone.
 
 ## Hook up
 

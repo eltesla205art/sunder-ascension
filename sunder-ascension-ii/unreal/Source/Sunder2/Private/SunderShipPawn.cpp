@@ -221,7 +221,21 @@ void ASunderShipPawn::ApplyLoadout(const FSunderShipLoadout& InLoadout)
 	if (BeamWeapon) { BeamWeapon->BeamColor = InLoadout.Color; }   // picked up the next time the beam starts
 	DeathColor = InLoadout.Color;
 	if (!bBaseScaleCaptured) { BaseMeshScale = Mesh->GetRelativeScale3D(); bBaseScaleCaptured = true; }
-	Mesh->SetRelativeScale3D(BaseMeshScale * InLoadout.BodyScale);
+	if (InLoadout.Mesh)
+	{
+		// The ship's own model: turned nose-up, sized to MeshLength × BodyScale, the guns moved to its nose.
+		Mesh->SetStaticMesh(InLoadout.Mesh);
+		Mesh->SetRelativeRotation(InLoadout.MeshRotation);
+		const FBox Turned = InLoadout.Mesh->GetBoundingBox().TransformBy(FTransform(InLoadout.MeshRotation));
+		const float Length = FMath::Max(Turned.GetSize().X, 1.f);
+		const float Scale = InLoadout.MeshLength * InLoadout.BodyScale / Length;
+		Mesh->SetRelativeScale3D(FVector(Scale));
+		Muzzle->SetRelativeLocation(FVector(Turned.Max.X * Scale, 0.f, 0.f));
+	}
+	else
+	{
+		Mesh->SetRelativeScale3D(BaseMeshScale * InLoadout.BodyScale);
+	}
 }
 
 void ASunderShipPawn::FireShots()

@@ -13,6 +13,7 @@ class USphereComponent;
 class UStaticMeshComponent;
 class UBeamWeaponComponent;
 class UNiagaraSystem;
+class UStaticMesh;
 class ASunderProjectile;
 class UInputAction;
 class UInputMappingContext;
@@ -52,6 +53,16 @@ struct FSunderShipLoadout
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ship") FLinearColor Tint = FLinearColor(0.79f, 0.54f, 0.08f, 1.f);
 	/** The web game's form scale: the Scarab is bigger, the Ibis smaller. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ship") float BodyScale = 1.f;
+
+	/** The ship's model (SM_Ship_<Id>, from blender/ships.py --fbx); empty = keep the Blueprint's mesh. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ship|Model") TObjectPtr<UStaticMesh> Mesh;
+
+	/** Turns the model so its nose points up the screen (+X). Yaw 90 = Blender's +Y nose through Unreal's usual FBX
+	 *  axes; if a ship flies sideways or backwards, change this. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ship|Model") FRotator MeshRotation = FRotator(0.f, 90.f, 0.f);
+
+	/** Nose-to-tail length on screen in units, before BodyScale (the web game's ship is about 300 at its scale). */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ship|Model") float MeshLength = 300.f;
 };
 
 UCLASS()
