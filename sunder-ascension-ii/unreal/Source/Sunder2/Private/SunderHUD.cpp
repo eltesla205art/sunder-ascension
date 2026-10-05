@@ -42,10 +42,29 @@ void ASunderHUD::DrawHUD()
 
 	if (const ASunderShipPawn* Ship = Cast<ASunderShipPawn>(GetOwningPawn()))
 	{
-		const float Max = FMath::Max(Ship->MaxHealth, 1.f);
-		const float Frac = FMath::Clamp(Ship->GetHealth() / Max, 0.f, 1.f);
-		DrawRect(FLinearColor(0.f, 0.f, 0.f, 0.5f), 24.f, 84.f, 180.f, 10.f);
-		DrawRect(Frac > 0.34f ? Cyan : FLinearColor(1.f, 0.25f, 0.6f), 24.f, 84.f, 180.f * Frac, 10.f);
+		// The hull bar has room for the 2 over full that Life pickups can give (drawn in pale blue).
+		const float Max = FMath::Max(Ship->MaxHealth, 1.f), Cap = Max + 2.f, BarW = 180.f;
+		const float Hull = FMath::Clamp(Ship->GetHealth(), 0.f, Cap);
+		DrawRect(FLinearColor(0.f, 0.f, 0.f, 0.5f), 24.f, 84.f, BarW, 10.f);
+		DrawRect(Hull / Max > 0.34f ? Cyan : FLinearColor(1.f, 0.25f, 0.6f), 24.f, 84.f, BarW * FMath::Min(Hull, Max) / Cap, 10.f);
+		if (Hull > Max) { DrawRect(FLinearColor(0.56f, 0.89f, 1.f), 24.f + BarW * Max / Cap, 84.f, BarW * (Hull - Max) / Cap, 10.f); }
+		DrawLine(24.f + BarW * Max / Cap, 82.f, 24.f + BarW * Max / Cap, 96.f, FLinearColor(1.f, 1.f, 1.f, 0.6f));
+
+		// Bombs and shields bottom left; weapon, level and form bottom right (the web game's corners).
+		DrawText(FString::Printf(TEXT("BOMB %d   SHLD %d"), Ship->GetBombs(), Ship->GetShield()), Cyan, 24.f, H - 44.f, Font, 1.0f);
+		const bool bLaser = Ship->GetWeapon() == ESunderWeapon::Laser;
+		const FString Gun = FString::Printf(TEXT("%s Lv%d"), bLaser ? TEXT("LASER") : TEXT("SPREAD"), Ship->GetPower());
+		const FString Form = Ship->GetFormName().ToUpper();
+		float GW = 0.f, GH = 0.f;
+		GetTextSize(Gun, GW, GH, Font, 1.0f);
+		DrawText(Gun, bLaser ? FLinearColor(0.49f, 0.78f, 1.f) : FLinearColor(1.f, 0.62f, 0.37f), W - GW - 24.f, H - 70.f, Font, 1.0f);
+		GetTextSize(Form, GW, GH, Font, 1.0f);
+		DrawText(Form, Gold, W - GW - 24.f, H - 44.f, Font, 1.0f);
+		if (!Ship->GetToast().IsEmpty())                                   // "FORM: SOLAR HORUS"
+		{
+			GetTextSize(Ship->GetToast(), GW, GH, Font, 1.4f);
+			DrawText(Ship->GetToast(), Gold, (W - GW) * 0.5f, H * 0.62f, Font, 1.4f);
+		}
 	}
 
 	const float Since = GetWorld()->GetTimeSeconds() - Mode->GetWaveAnnouncedAt();

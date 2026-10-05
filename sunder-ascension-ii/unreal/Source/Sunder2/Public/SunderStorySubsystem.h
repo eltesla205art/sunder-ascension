@@ -6,6 +6,7 @@
 #include "CoreMinimal.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "SunderStoryData.h"
+#include "SunderShipPawn.h"
 #include "SunderStorySubsystem.generated.h"
 
 class USunderWaveSet;
@@ -56,6 +57,11 @@ public:
 
 	const FSunderStoryHour* GetHour() const;
 
+	/** The ship's power-ups, bombs, shields and hull at the end of an Hour, for the next one. */
+	void CarryShip(const FSunderShipState& InState) { CarriedShip = InState; bHasCarriedShip = true; }
+	bool HasCarriedShip() const { return bHasCarriedShip; }
+	const FSunderShipState& GetCarriedShip() const { return CarriedShip; }
+
 	/** Move on to the next Hour (after the Clear screen). */
 	void AdvanceHour();
 
@@ -82,4 +88,6 @@ private:
 	int32 TotalScore = 0;
 	int32 EndLayer = 1;
 	ESunderStoryScreen Screen = ESunderStoryScreen::Opening;
+	FSunderShipState CarriedShip;
+	bool bHasCarriedShip = false;
 };

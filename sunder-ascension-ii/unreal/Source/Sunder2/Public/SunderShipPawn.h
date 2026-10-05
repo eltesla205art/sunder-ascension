@@ -1,6 +1,11 @@
 // SUNDER: Ascension II — the player's ship: eight-way movement inside the arena, a held beam and held plasma shots.
 // Input is built at runtime with Enhanced Input (no input assets to create):
 //   move  W A S D / left stick      beam  Space / right trigger      shots  J / left mouse / gamepad A
+//   bomb  X / K / gamepad Y or right bumper
+// Power-ups (SunderPickup) follow the web game's rules: Spread / Laser weapons (the same one again powers up, the
+// other switches and keeps the level), Power (+1 level, max 3: each level is a new form of the ship with more guns),
+// Bomb (+1, max 9), Shield (+1, max 3: each soaks a whole hit), Life (+1 hull, up to 2 over full). A hull hit costs a
+// power level. Damage per shot = (base + Laser bonus) × power level (the web game's battle math #1).
 // The camera is the level's ortho CameraActor (Auto Activate for Player 0), looking straight down: +X is up the
 // screen, +Y is right.
 #pragma once
@@ -19,7 +24,40 @@ class UInputAction;
 class UInputMappingContext;
 struct FInputActionValue;
 
-/** How a ship fires its plasma shots (the web game's ship styles, at power level 1). */
+/** The two weapons the pickups give (the web game's red "S" and blue "L"). */
+UENUM(BlueprintType)
+enum class ESunderWeapon : uint8
+{
+	Spread,   // the ship's own shots, in its colour
+	Laser     // +LaserBonusDamage per shot and 15 % faster fire, in blue
+};
+
+/** What a falling pickup gives (SunderPickup). */
+UENUM(BlueprintType)
+enum class ESunderPickupKind : uint8
+{
+	Spread,
+	Laser,
+	Power,
+	Bomb,
+	Shield,
+	Life
+};
+
+/** The ship's power-up state, carried from one story Hour to the next. */
+USTRUCT(BlueprintType)
+struct FSunderShipState
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ship") ESunderWeapon Weapon = ESunderWeapon::Spread;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ship") int32 Power = 1;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ship") int32 Bombs = 3;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ship") int32 Shield = 1;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ship") float Health = 5.f;
+};
+
+/** How a ship fires its plasma shots (the web game's ship styles; more guns at each power level). */
 UENUM(BlueprintType)
 enum class ESunderShotStyle : uint8
 {
@@ -53,6 +91,15 @@ struct FSunderShipLoadout
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ship") FLinearColor Tint = FLinearColor(0.79f, 0.54f, 0.08f, 1.f);
 	/** The web game's form scale: the Scarab is bigger, the Ibis smaller. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ship") float BodyScale = 1.f;
+
+	/** Bombs at the start (the web game's: Sunborn 3, Scarab 4, Ibis 3). */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ship") int32 StartBombs = 3;
+
+	/** The ship's three forms, one per power level (the web game's form names). */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ship") TArray<FString> FormNames;
+
+	/** Each form's size relative to the first (the web game's form scales). */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ship") TArray<float> FormScales;
 
 	/** The ship's model (SM_Ship_<Id>, from blender/ships.py --fbx); empty = keep the Blueprint's mesh. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ship|Model") TObjectPtr<UStaticMesh> Mesh;
@@ -143,6 +190,50 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ship|Weapons")
 	FLinearColor ShotColor = FLinearColor(0.f, 0.f, 0.f, 0.f);
 
+	// ---- power-ups and bombs (the web game's rules; see the top of this file)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ship|Power-ups")
+	float LaserBonusDamage = 10.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ship|Power-ups")
+	FLinearColor LaserColor = FLinearColor(0.6f, 1.6f, 4.0f, 1.f);
+
+	/** A bomb: this much damage to every enemy on screen (the web game's 8)… */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ship|Power-ups")
+	float BombDamage = 80.f;
+
+	/** …and this much to a Keeper that has taken its place (the web game's 10); every enemy shot is wiped away. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ship|Power-ups")
+	float BombKeeperDamage = 100.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ship|Power-ups")
+	FLinearColor BombColor = FLinearColor(0.6f, 2.4f, 4.0f, 1.f);
+
+	/** Seconds of invulnerability after a shield takes a hit. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ship|Power-ups")
+	float ShieldInvulnerability = 0.8f;
+
+	/** Placeholder shield: a flat cyan disc under the ship while any shield is up (swap for a Niagara ring later). */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ship|Power-ups")
+	TObjectPtr<UStaticMeshComponent> ShieldMesh;
+
+	UFUNCTION(BlueprintCallable, Category = "Ship|Power-ups")
+	void CollectPickup(ESunderPickupKind Kind);
+
+	UFUNCTION(BlueprintCallable, Category = "Ship|Power-ups")
+	void UseBomb();
+
+	UFUNCTION(BlueprintPure, Category = "Ship|Power-ups") ESunderWeapon GetWeapon() const { return State.Weapon; }
+	UFUNCTION(BlueprintPure, Category = "Ship|Power-ups") int32 GetPower() const { return State.Power; }
+	UFUNCTION(BlueprintPure, Category = "Ship|Power-ups") int32 GetBombs() const { return State.Bombs; }
+	UFUNCTION(BlueprintPure, Category = "Ship|Power-ups") int32 GetShield() const { return State.Shield; }
+	UFUNCTION(BlueprintPure, Category = "Ship|Power-ups") FString GetFormName() const;
+	/** "FORM: SOLAR HORUS" for a moment after the form changes (empty otherwise). */
+	UFUNCTION(BlueprintPure, Category = "Ship|Power-ups") FString GetToast() const { return ToastTime > 0.f ? Toast : FString(); }
+
+	/** The ship's state to carry to the next story Hour, and to restore it there. */
+	UFUNCTION(BlueprintPure, Category = "Ship|Power-ups") FSunderShipState GetState() const;
+	UFUNCTION(BlueprintCallable, Category = "Ship|Power-ups") void ApplyState(const FSunderShipState& InState);
+
 	/** Fly as one of the hangar's ships: speed, hull, guns, colour and size. Refills the hull. */
 	UFUNCTION(BlueprintCallable, Category = "Ship")
 	void ApplyLoadout(const FSunderShipLoadout& Loadout);
@@ -188,16 +279,28 @@ private:
 	void OnBeamReleased(const FInputActionValue& Value);
 	void OnShootPressed(const FInputActionValue& Value);
 	void OnShootReleased(const FInputActionValue& Value);
+	void OnBombPressed(const FInputActionValue& Value);
+	void SetPower(int32 NewPower);
+	void UpdateBodyScale();
+	float FormScale() const;
 
 	UPROPERTY(Transient) TObjectPtr<UInputAction> MoveUpAction;
 	UPROPERTY(Transient) TObjectPtr<UInputAction> MoveRightAction;
 	UPROPERTY(Transient) TObjectPtr<UInputAction> BeamAction;
 	UPROPERTY(Transient) TObjectPtr<UInputAction> ShootAction;
+	UPROPERTY(Transient) TObjectPtr<UInputAction> BombAction;
+	UPROPERTY(Transient) TObjectPtr<class UMaterialInstanceDynamic> ShieldMaterial;
 	UPROPERTY(Transient) TObjectPtr<UInputMappingContext> Mapping;
 
 	FSunderShipLoadout Loadout;
+	FSunderShipState State;
+	FVector FittedScale = FVector(0.6f);           // the body's size at form 1
+	FString Toast;
+	float ToastTime = 0.f;
+	float FormFlash = 0.f;
 	FVector BaseMeshScale = FVector(0.6f);
 	bool bBaseScaleCaptured = false;               // the loadout can arrive before or after BeginPlay
+	bool bLoadoutApplied = false;
 	FVector2D MoveInput = FVector2D::ZeroVector;   // X = up the screen, Y = right
 	FVector StartLocation = FVector::ZeroVector;
 	float Health = 5.f;

@@ -9,6 +9,7 @@
 #include "SunderStageAudio.h"
 #include "SunderStorySubsystem.h"
 #include "Engine/GameInstance.h"
+#include "Kismet/GameplayStatics.h"
 #include "TimerManager.h"
 #include "SunderWaveSet.h"
 
@@ -107,6 +108,15 @@ void ASunderWaveDirector::ReportStoryHourCleared()
 	if (Mode && Mode->IsGameOver()) { return; }              // DAWN DENIED got there first
 	if (USunderStorySubsystem* Story = GetGameInstance() ? GetGameInstance()->GetSubsystem<USunderStorySubsystem>() : nullptr)
 	{
+		// Battle math #5: every Hour survived, +1 hull (up to 2 over full), +1 bomb, +1 shield, carried to the next.
+		if (const ASunderShipPawn* Ship = Cast<ASunderShipPawn>(UGameplayStatics::GetPlayerPawn(this, 0)))
+		{
+			FSunderShipState State = Ship->GetState();
+			State.Health = FMath::Min(State.Health + 1.f, Ship->MaxHealth + 2.f);
+			State.Bombs = FMath::Min(State.Bombs + 1, 9);
+			State.Shield = FMath::Min(State.Shield + 1, 3);
+			Story->CarryShip(State);
+		}
 		Story->ReportHourCleared(this, Mode ? Mode->GetScore() : 0);
 	}
 }
@@ -200,6 +210,7 @@ void ASunderWaveDirector::Tick(float DeltaTime)
 			{
 				Enemy->Setup(ArenaCenter, ArenaHalfExtents, HealthScale * WaveSet->HealthScale, SpeedScale * WaveSet->SpeedScale,
 					FireScale * WaveSet->FireRateScale, WaveSet->ShotSpeedScale, WaveSet->ScoreScale);
+				Enemy->DropChance = FMath::Clamp(WaveSet->DropChance + Enemy->DropChanceBonus, 0.f, 1.f);
 			}
 			Alive.Add(Enemy);
 		}

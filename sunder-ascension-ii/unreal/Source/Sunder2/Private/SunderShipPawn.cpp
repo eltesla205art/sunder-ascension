@@ -14,7 +14,13 @@
 #include "InputActionValue.h"
 #include "InputMappingContext.h"
 #include "InputModifiers.h"
+#include "EngineUtils.h"
+#include "GameFramework/DamageType.h"
 #include "ImpactFXSubsystem.h"
+#include "Kismet/GameplayStatics.h"
+#include "Materials/MaterialInstanceDynamic.h"
+#include "SunderEnemy.h"
+#include "SunderKeeper.h"
 #include "ProjectilePoolSubsystem.h"
 #include "SunderGameMode.h"
 #include "SunderProjectile.h"
@@ -46,6 +52,14 @@ ASunderShipPawn::ASunderShipPawn()
 	Muzzle->SetRelativeLocation(FVector(60.f, 0.f, 0.f));
 
 	BeamWeapon = CreateDefaultSubobject<UBeamWeaponComponent>(TEXT("BeamWeapon"));
+
+	ShieldMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ShieldMesh"));
+	ShieldMesh->SetupAttachment(Collision);
+	ShieldMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	ShieldMesh->SetRelativeLocation(FVector(0.f, 0.f, -30.f));          // under the ship, seen from above
+	ShieldMesh->SetVisibility(false);
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> Disc(TEXT("/Engine/BasicShapes/Sphere.Sphere"));
+	if (Disc.Succeeded()) { ShieldMesh->SetStaticMesh(Disc.Object); }
 }
 
 void ASunderShipPawn::PostInitializeComponents()
@@ -61,8 +75,10 @@ void ASunderShipPawn::BeginPlay()
 	Super::BeginPlay();
 	ArenaCenter.Z = GetActorLocation().Z;                    // the play plane is wherever the ship starts
 	StartLocation = GetActorLocation();
-	if (!bBaseScaleCaptured) { BaseMeshScale = Mesh->GetRelativeScale3D(); bBaseScaleCaptured = true; }   // the Blueprint's size
-	Health = MaxHealth;
+	if (!bBaseScaleCaptured) { BaseMeshScale = Mesh->GetRelativeScale3D(); FittedScale = BaseMeshScale; bBaseScaleCaptured = true; }   // the Blueprint's size
+	if (!bLoadoutApplied) { Health = MaxHealth; }              // a loadout applied before BeginPlay has set it
+	ShieldMaterial = ShieldMesh->CreateDynamicMaterialInstance(0);
+	if (ShieldMaterial) { ShieldMaterial->SetVectorParameterValue(TEXT("Color"), FLinearColor(0.1f, 0.55f, 0.8f)); }
 	if (ProjectileClass)
 	{
 		if (UProjectilePoolSubsystem* Pool = GetWorld()->GetSubsystem<UProjectilePoolSubsystem>())
@@ -92,6 +108,7 @@ void ASunderShipPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 	MoveRightAction = MakeAction(TEXT("IA_MoveRight"), EInputActionValueType::Axis1D);
 	BeamAction = MakeAction(TEXT("IA_Beam"), EInputActionValueType::Boolean);
 	ShootAction = MakeAction(TEXT("IA_Shoot"), EInputActionValueType::Boolean);
+	BombAction = MakeAction(TEXT("IA_Bomb"), EInputActionValueType::Boolean);
 
 	Mapping = NewObject<UInputMappingContext>(this, TEXT("IMC_Ship"));
 	auto MapNegated = [this](UInputAction* Action, const FKey& Key)
@@ -110,6 +127,10 @@ void ASunderShipPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 	Mapping->MapKey(ShootAction, EKeys::J);
 	Mapping->MapKey(ShootAction, EKeys::LeftMouseButton);
 	Mapping->MapKey(ShootAction, EKeys::Gamepad_FaceButton_Bottom);
+	Mapping->MapKey(BombAction, EKeys::X);
+	Mapping->MapKey(BombAction, EKeys::K);
+	Mapping->MapKey(BombAction, EKeys::Gamepad_FaceButton_Top);
+	Mapping->MapKey(BombAction, EKeys::Gamepad_RightShoulder);
 
 	if (APlayerController* PC = Cast<APlayerController>(GetController()))
 	{
@@ -127,6 +148,7 @@ void ASunderShipPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 	Input->BindAction(BeamAction, ETriggerEvent::Completed, this, &ASunderShipPawn::OnBeamReleased);
 	Input->BindAction(ShootAction, ETriggerEvent::Started, this, &ASunderShipPawn::OnShootPressed);
 	Input->BindAction(ShootAction, ETriggerEvent::Completed, this, &ASunderShipPawn::OnShootReleased);
+	Input->BindAction(BombAction, ETriggerEvent::Started, this, &ASunderShipPawn::OnBombPressed);
 }
 
 void ASunderShipPawn::OnMoveUp(const FInputActionValue& Value) { MoveInput.X = Value.Get<float>(); }
@@ -137,11 +159,22 @@ void ASunderShipPawn::OnBeamPressed(const FInputActionValue& Value) { if (!bDead
 void ASunderShipPawn::OnBeamReleased(const FInputActionValue& Value) { BeamWeapon->StopFire(); }
 void ASunderShipPawn::OnShootPressed(const FInputActionValue& Value) { bShooting = true; }
 void ASunderShipPawn::OnShootReleased(const FInputActionValue& Value) { bShooting = false; }
+void ASunderShipPawn::OnBombPressed(const FInputActionValue& Value) { UseBomb(); }
 
 void ASunderShipPawn::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	ToastTime = FMath::Max(ToastTime - DeltaTime, 0.f);
 	if (bDead) { return; }
+
+	if (FormFlash > 0.f) { FormFlash = FMath::Max(FormFlash - DeltaTime, 0.f); UpdateBodyScale(); }
+	// The shield: a disc under the ship, bigger with each layer, breathing.
+	ShieldMesh->SetVisibility(State.Shield > 0);
+	if (State.Shield > 0)
+	{
+		const float R = (1.5f + 0.25f * State.Shield) * (1.f + 0.05f * FMath::Sin(GetWorld()->GetTimeSeconds() * 5.f));
+		ShieldMesh->SetRelativeScale3D(FVector(R, R, 0.03f));
+	}
 
 	if (Invulnerable > 0.f)                                   // blink while invulnerable
 	{
@@ -164,7 +197,7 @@ void ASunderShipPawn::Tick(float DeltaTime)
 		while (ShotCooldown <= 0.f && Volleys++ < 4)          // catch up after a long frame, but never flood
 		{
 			FireShots();
-			ShotCooldown += FireInterval;
+			ShotCooldown += FireInterval * (State.Weapon == ESunderWeapon::Laser ? 0.85f : 1.f);   // the Laser fires faster
 		}
 		ShotCooldown = FMath::Max(ShotCooldown, 0.f);
 	}
@@ -178,8 +211,20 @@ float ASunderShipPawn::TakeDamage(float DamageAmount, FDamageEvent const& Damage
 {
 	Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 	if (bDead || Invulnerable > 0.f || DamageAmount <= 0.f) { return 0.f; }
+	if (State.Shield > 0)
+	{
+		// A shield soaks the whole hit: no hull lost, no power lost.
+		--State.Shield;
+		Invulnerable = ShieldInvulnerability;
+		if (UImpactFXSubsystem* Impacts = GetWorld()->GetSubsystem<UImpactFXSubsystem>())
+		{
+			Impacts->QueueImpact(GetActorLocation(), FVector::ForwardVector, BombColor);
+		}
+		return 0.f;
+	}
 	Health -= DamageAmount;
 	Invulnerable = HitInvulnerability;
+	if (State.Power > 1) { SetPower(State.Power - 1); }      // the form falls back a step
 	if (Health > 0.f) { return DamageAmount; }
 
 	bDead = true;                                             // hull gone: burst, vanish, tell the game mode
@@ -199,6 +244,9 @@ void ASunderShipPawn::Respawn()
 {
 	SetActorLocation(StartLocation);
 	Health = MaxHealth;
+	SetPower(1);                                             // back to the first form, with a shield and the ship's bombs
+	State.Shield = FMath::Max(State.Shield, 1);
+	State.Bombs = FMath::Max(State.Bombs, Loadout.StartBombs);
 	Invulnerable = HitInvulnerability * 3.f;
 	bDead = false;
 	Mesh->SetVisibility(true);
@@ -208,9 +256,13 @@ void ASunderShipPawn::Respawn()
 void ASunderShipPawn::ApplyLoadout(const FSunderShipLoadout& InLoadout)
 {
 	Loadout = InLoadout;
+	bLoadoutApplied = true;
 	MoveSpeed = InLoadout.MoveSpeed;
 	MaxHealth = FMath::Max(InLoadout.MaxHealth, 1.f);
 	Health = MaxHealth;
+	State = FSunderShipState();
+	State.Bombs = InLoadout.StartBombs;
+	State.Health = Health;
 	FireInterval = FMath::Max(InLoadout.FireInterval, 0.02f);
 	ShotStyle = InLoadout.Style;
 	ShotDamage = InLoadout.ShotDamage;
@@ -229,13 +281,121 @@ void ASunderShipPawn::ApplyLoadout(const FSunderShipLoadout& InLoadout)
 		const FBox Turned = InLoadout.Mesh->GetBoundingBox().TransformBy(FTransform(InLoadout.MeshRotation));
 		const float Length = FMath::Max(Turned.GetSize().X, 1.f);
 		const float Scale = InLoadout.MeshLength * InLoadout.BodyScale / Length;
-		Mesh->SetRelativeScale3D(FVector(Scale));
+		FittedScale = FVector(Scale);
 		Muzzle->SetRelativeLocation(FVector(Turned.Max.X * Scale, 0.f, 0.f));
 	}
 	else
 	{
-		Mesh->SetRelativeScale3D(BaseMeshScale * InLoadout.BodyScale);
+		FittedScale = BaseMeshScale * InLoadout.BodyScale;
 	}
+	UpdateBodyScale();
+}
+
+float ASunderShipPawn::FormScale() const
+{
+	const TArray<float>& Scales = Loadout.FormScales;
+	return Scales.IsValidIndex(State.Power - 1) ? Scales[State.Power - 1] : 1.f;
+}
+
+void ASunderShipPawn::UpdateBodyScale()
+{
+	Mesh->SetRelativeScale3D(FittedScale * FormScale() * (1.f + FormFlash * 0.6f));   // the web game's form-change swell
+}
+
+FString ASunderShipPawn::GetFormName() const
+{
+	return Loadout.FormNames.IsValidIndex(State.Power - 1) ? Loadout.FormNames[State.Power - 1] : FString();
+}
+
+void ASunderShipPawn::SetPower(int32 NewPower)
+{
+	NewPower = FMath::Clamp(NewPower, 1, 3);
+	if (NewPower == State.Power) { return; }
+	const bool bUp = NewPower > State.Power;
+	State.Power = NewPower;
+	FormFlash = bUp ? 0.4f : 0.f;
+	if (!GetFormName().IsEmpty())
+	{
+		Toast = TEXT("FORM: ") + GetFormName().ToUpper();
+		ToastTime = bUp ? 2.2f : 1.6f;
+	}
+	if (bUp)
+	{
+		if (UImpactFXSubsystem* Impacts = GetWorld()->GetSubsystem<UImpactFXSubsystem>())
+		{
+			Impacts->QueueImpact(GetActorLocation(), FVector::ForwardVector, ShotColor.A > 0.f ? ShotColor : DeathColor);
+		}
+	}
+	UpdateBodyScale();
+}
+
+void ASunderShipPawn::CollectPickup(ESunderPickupKind Kind)
+{
+	if (bDead) { return; }
+	switch (Kind)
+	{
+	case ESunderPickupKind::Spread:
+	case ESunderPickupKind::Laser:
+	{
+		const ESunderWeapon Weapon = Kind == ESunderPickupKind::Laser ? ESunderWeapon::Laser : ESunderWeapon::Spread;
+		if (State.Weapon == Weapon) { SetPower(State.Power + 1); }
+		else { State.Weapon = Weapon; }                      // switching keeps the power level (Sunder rules)
+		break;
+	}
+	case ESunderPickupKind::Power:  SetPower(State.Power + 1); break;
+	case ESunderPickupKind::Bomb:   State.Bombs = FMath::Min(State.Bombs + 1, 9); break;
+	case ESunderPickupKind::Shield: State.Shield = FMath::Min(State.Shield + 1, 3); break;
+	case ESunderPickupKind::Life:   Health = FMath::Min(Health + 1.f, MaxHealth + 2.f); break;   // up to 2 over full
+	}
+}
+
+void ASunderShipPawn::UseBomb()
+{
+	if (bDead || State.Bombs <= 0) { return; }
+	--State.Bombs;
+	UWorld* World = GetWorld();
+	// Every enemy shot is wiped away…
+	for (TActorIterator<ASunderProjectile> It(World); It; ++It)
+	{
+		if (It->IsFromEnemy() && !It->IsParked()) { It->Recall(); }
+	}
+	// …and everything on screen takes the blast (a Keeper only once it has taken its place).
+	TArray<ASunderEnemy*> Targets;
+	for (TActorIterator<ASunderEnemy> It(World); It; ++It) { Targets.Add(*It); }
+	for (ASunderEnemy* Enemy : Targets)
+	{
+		const bool bKeeper = Enemy->IsA<ASunderKeeper>();
+		UGameplayStatics::ApplyDamage(Enemy, bKeeper ? BombKeeperDamage : BombDamage, GetController(), this, UDamageType::StaticClass());
+	}
+	if (UImpactFXSubsystem* Impacts = World->GetSubsystem<UImpactFXSubsystem>())
+	{
+		// A ring of bursts ahead of the ship (the web game's blast is 100 px up the screen).
+		const FVector Centre = GetActorLocation() + FVector(500.f, 0.f, 0.f);
+		Impacts->QueueImpact(Centre, FVector::ForwardVector, BombColor);
+		for (int32 i = 0; i < 10; ++i)
+		{
+			const float A = UE_TWO_PI * i / 10;
+			Impacts->QueueImpact(Centre + FVector(FMath::Cos(A), FMath::Sin(A), 0.f) * 380.f, FVector::ForwardVector, BombColor);
+		}
+	}
+}
+
+FSunderShipState ASunderShipPawn::GetState() const
+{
+	FSunderShipState Out = State;
+	Out.Health = Health;
+	return Out;
+}
+
+void ASunderShipPawn::ApplyState(const FSunderShipState& InState)
+{
+	State.Weapon = InState.Weapon;
+	State.Bombs = FMath::Clamp(InState.Bombs, 0, 9);
+	State.Shield = FMath::Clamp(InState.Shield, 0, 3);
+	Health = FMath::Clamp(InState.Health, 1.f, MaxHealth + 2.f);
+	State.Power = FMath::Clamp(InState.Power, 1, 3);
+	FormFlash = 0.f;
+	UpdateBodyScale();
 }
 
 void ASunderShipPawn::FireShots()
@@ -244,25 +404,42 @@ void ASunderShipPawn::FireShots()
 	UProjectilePoolSubsystem* Pool = GetWorld()->GetSubsystem<UProjectilePoolSubsystem>();
 	if (!Pool) { return; }
 	const FVector Origin = Muzzle->GetComponentLocation();
-	auto Fire = [&](const FVector& Offset, float AngleDeg)
+	const bool bLaser = State.Weapon == ESunderWeapon::Laser;
+	// Battle math #1: (base + Laser bonus) × power level.
+	const float Damage = ShotDamage > 0.f ? (ShotDamage + (bLaser ? LaserBonusDamage : 0.f)) * State.Power : 0.f;
+	const FLinearColor Color = bLaser ? LaserColor : ShotColor;
+	auto Fire = [&](float OffsetY, float AngleDeg)
 	{
 		const FVector Dir = FVector::ForwardVector.RotateAngleAxis(AngleDeg, FVector::UpVector);
-		ASunderProjectile* Shot = Pool->Acquire(ProjectileClass, Origin + Offset, Dir, this, this, ShotSpeed);
+		ASunderProjectile* Shot = Pool->Acquire(ProjectileClass, Origin + FVector(0.f, OffsetY, 0.f), Dir, this, this, ShotSpeed);
 		if (!Shot) { return; }
 		// Only the ship fires this class, so setting these on each shot keeps every pooled one right.
-		if (ShotDamage > 0.f) { Shot->Damage = ShotDamage; }
+		if (Damage > 0.f) { Shot->Damage = Damage; }
 		Shot->SetActorScale3D(FVector(ShotScale));
-		if (ShotColor.A > 0.f) { Shot->SetShotColor(ShotColor); }
+		if (Color.A > 0.f) { Shot->SetShotColor(Color); }
 	};
+	// The web game's guns per form (power 1 / 2 / 3); its pixels × 5 for the offsets.
+	const int32 P = FMath::Clamp(State.Power, 1, 3);
+	const float Fan = SpreadAngle / 6.f;                       // the loadout's spread, relative to the web game's ±6°
 	switch (ShotStyle)
 	{
 	case ESunderShotStyle::TwinSpread:
-		Fire(FVector(0.f, -ShotSpread * 0.5f, 0.f), -SpreadAngle);
-		Fire(FVector(0.f, ShotSpread * 0.5f, 0.f), SpreadAngle);
+	{
+		static const TArray<float> Angles[3] = { { -6.f, 6.f }, { -10.f, 0.f, 10.f }, { -16.f, -5.f, 5.f, 16.f } };
+		for (const float A : Angles[P - 1]) { Fire(0.f, A * Fan); }
 		break;
+	}
 	case ESunderShotStyle::HeavyCannon:
-	case ESunderShotStyle::RapidStream:
-		Fire(FVector::ZeroVector, 0.f);
+	{
+		static const TArray<float> Offsets[3] = { { 0.f }, { -70.f, 70.f }, { -90.f, 0.f, 90.f } };
+		for (const float O : Offsets[P - 1]) { Fire(O, 0.f); }
 		break;
+	}
+	case ESunderShotStyle::RapidStream:
+	{
+		static const TArray<float> Offsets[3] = { { 0.f }, { -40.f, 40.f }, { -60.f, 0.f, 60.f } };
+		for (const float O : Offsets[P - 1]) { Fire(O, 0.f); }
+		break;
+	}
 	}
 }

@@ -111,6 +111,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Waves|Difficulty", meta = (ClampMin = "0.1"))
 	float ShotSpeedScale = 1.f;
 
+	/** Chance of each enemy dropping a pickup (the web game's Hour rate + 4 %, battle math #4); bombers add their bonus. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Waves|Difficulty", meta = (ClampMin = "0", ClampMax = "1"))
+	float DropChance = 0.24f;
+
 	/** Points per kill. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Waves|Difficulty", meta = (ClampMin = "0"))
 	float ScoreScale = 1.f;

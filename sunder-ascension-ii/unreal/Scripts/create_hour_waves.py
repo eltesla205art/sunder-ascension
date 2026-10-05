@@ -15,8 +15,8 @@ Makes /Game/Sunder/Waves/Hours/DA_Waves_HourNN_<Stage>, twelve wave sets that:
     waves in sooner;
   • last at least as long: waves are added until their worth reaches the web Hour's score to its Keeper (with a margin
     for the ones that get away), and each act's Hours have more waves than the last's (MIN_WAVES);
-  • scale like it: enemy speed, fire rate, bullet speed and points by the web ratios to Hour 1; health by that ratio
-    softened (HEALTH_CURVE) because the Unreal ship has no power-up forms yet;
+  • scale like it: enemy speed, fire rate, bullet speed, points and health by the web ratios to Hour 1 (HEALTH_CURVE
+    can soften health), and drop pickups at the web Hour's rate + 4 % (battle math #4);
   • end with the Hour's Keeper, in the Hour's own sound (its DA_StageAudio), and don't loop.
 Then gives each Hour its set in DA_StoryData (if made), and, with ARENA_HOUR set, puts that Hour in L_SunderArena.
 
@@ -28,7 +28,8 @@ import os
 import unreal
 
 ARENA_HOUR = 0        # 1–12: point the arena's wave director at that Hour's set (to test it); 0 = leave the arena alone
-HEALTH_CURVE = 0.75   # enemy health = (web health ratio to Hour 1) ** this; 1 = the web game's full ratio
+HEALTH_CURVE = 1.0    # enemy health = (web health ratio to Hour 1) ** this; 1 = the web game's full ratio (the ship
+                      # powers up through three forms, as in the web game; lower it to soften the later Hours)
 MARGIN = 1.3          # spawn this much more worth than the score to the Keeper (not every enemy gets shot down)
 MIN_WAVES = [4, 5, 6, 7]
 FIT = 1.15                 # a longer Hour may carry this much over its budget before its groups are thinned   # per act: each act's Hours are longer than the last's
@@ -127,6 +128,7 @@ def difficulty(t, first):
         "fire_rate_scale": round(first["enemy_fire_interval"] / t["enemy_fire_interval"], 3),
         "shot_speed_scale": round(t["enemy_bullet_speed"] / first["enemy_bullet_speed"], 3),
         "score_scale": round(t["enemy_points"] / first["enemy_points"], 3),
+        "drop_chance": round(t.get("drop_chance", 0.2) + 0.04, 3),
     }
 
 

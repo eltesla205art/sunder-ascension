@@ -24,6 +24,7 @@ ASunderKeeper::ASunderKeeper()
 	ContactDamage = 1.f;
 	bDiesOnContact = false;
 	bPlaysDownCue = false;                                   // its stage plays Clear instead
+	bDropsPickups = false;
 	FireInterval = 1.3f;
 	FirstShotDelay = 0.6f;
 	BodyRotation = FRotator(0.f, 90.f, 0.f);   // Blender's down-screen (-Y) to Unreal's (-X); adjust if a model faces the wrong way

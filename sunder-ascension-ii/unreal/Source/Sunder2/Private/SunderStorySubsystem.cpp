@@ -13,6 +13,7 @@ void USunderStorySubsystem::StartCampaign(USunderStoryData* InData)
 	TotalScore = 0;
 	EndLayer = 1;
 	Screen = ESunderStoryScreen::Opening;
+	bHasCarriedShip = false;                                 // a new night starts at the first form
 }
 
 void USunderStorySubsystem::EndCampaign()
@@ -52,6 +53,7 @@ USunderWaveSet* USunderStorySubsystem::MakeHourWaveSet(UObject* Outer) const
 		Set->FireRateScale = Source->FireRateScale;
 		Set->ShotSpeedScale = Source->ShotSpeedScale;
 		Set->ScoreScale = Source->ScoreScale;
+		Set->DropChance = Source->DropChance;
 	}
 	if (Hour->Keeper)
 	{

@@ -59,6 +59,7 @@
     "enemy_bullet_speed": 210,
     "enemy_points": 100,
     "spawn_interval": 1.2,
+    "drop_chance": 0.2,
     "score_to_boss": 3200
    }
   },
@@ -82,6 +83,7 @@
     "enemy_bullet_speed": 225,
     "enemy_points": 110,
     "spawn_interval": 1.13,
+    "drop_chance": 0.19,
     "score_to_boss": 3840
    }
   },
@@ -105,6 +107,7 @@
     "enemy_bullet_speed": 239,
     "enemy_points": 130,
     "spawn_interval": 1.05,
+    "drop_chance": 0.18,
     "score_to_boss": 4640
    }
   },
@@ -128,6 +131,7 @@
     "enemy_bullet_speed": 252,
     "enemy_points": 140,
     "spawn_interval": 0.99,
+    "drop_chance": 0.17,
     "score_to_boss": 5280
    }
   },
@@ -151,6 +155,7 @@
     "enemy_bullet_speed": 259,
     "enemy_points": 160,
     "spawn_interval": 0.95,
+    "drop_chance": 0.16,
     "score_to_boss": 5920
    }
   },
@@ -174,6 +179,7 @@
     "enemy_bullet_speed": 266,
     "enemy_points": 190,
     "spawn_interval": 0.92,
+    "drop_chance": 0.15,
     "score_to_boss": 6880
    }
   },
@@ -197,6 +203,7 @@
     "enemy_bullet_speed": 275,
     "enemy_points": 210,
     "spawn_interval": 0.88,
+    "drop_chance": 0.15,
     "score_to_boss": 7840
    }
   },
@@ -220,6 +227,7 @@
     "enemy_bullet_speed": 286,
     "enemy_points": 220,
     "spawn_interval": 0.84,
+    "drop_chance": 0.14,
     "score_to_boss": 8800
    }
   },
@@ -243,6 +251,7 @@
     "enemy_bullet_speed": 297,
     "enemy_points": 250,
     "spawn_interval": 0.77,
+    "drop_chance": 0.13,
     "score_to_boss": 9920
    }
   },
@@ -266,6 +275,7 @@
     "enemy_bullet_speed": 311,
     "enemy_points": 280,
     "spawn_interval": 0.72,
+    "drop_chance": 0.12,
     "score_to_boss": 11360
    }
   },
@@ -289,6 +299,7 @@
     "enemy_bullet_speed": 323,
     "enemy_points": 310,
     "spawn_interval": 0.67,
+    "drop_chance": 0.13,
     "score_to_boss": 12800
    }
   },
@@ -312,6 +323,7 @@
     "enemy_bullet_speed": 330,
     "enemy_points": 350,
     "spawn_interval": 0.6,
+    "drop_chance": 0.14,
     "score_to_boss": 14400
    }
   }

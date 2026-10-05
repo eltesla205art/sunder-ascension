@@ -231,7 +231,11 @@ void ASunderEnemy::Die(bool bAwardScore)
 			Impacts->QueueImpact(GetActorLocation(), FVector::BackwardVector, DeathColor);
 			if (MaxHealth >= 100.f) { Impacts->QueueImpact(GetActorLocation(), FVector::BackwardVector, DeathColor); }   // big ones burst bigger
 		}
-		if (ASunderGameMode* Mode = GetWorld()->GetAuthGameMode<ASunderGameMode>()) { Mode->AddScore(ScoreValue); }
+		if (ASunderGameMode* Mode = GetWorld()->GetAuthGameMode<ASunderGameMode>())
+		{
+			Mode->AddScore(ScoreValue);
+			if (bDropsPickups) { Mode->TrySpawnPickup(GetActorLocation(), DropChance); }
+		}
 		if (bPlaysDownCue)
 		{
 			if (USunderMusicSubsystem* Music = GetWorld()->GetSubsystem<USunderMusicSubsystem>()) { Music->PlayStageCue(ESunderStageCue::Down); }

@@ -82,6 +82,18 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Enemy", meta = (ClampMin = "1"))
 	float HitRadius = 45.f;
 
+	/** Chance of dropping a pickup when shot down; the wave director sets it from its wave set (the Hour's rate). */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Enemy|Pickups", meta = (ClampMin = "0", ClampMax = "1"))
+	float DropChance = 0.24f;
+
+	/** Added to the Hour's rate for this type (bombers: the web game's +0.12 over the others). */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Enemy|Pickups")
+	float DropChanceBonus = 0.f;
+
+	/** Keepers don't drop pickups. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Enemy|Pickups")
+	bool bDropsPickups = true;
+
 	/** Play the stage's Down cue when destroyed (Keepers play Clear instead). */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Enemy")
 	bool bPlaysDownCue = true;

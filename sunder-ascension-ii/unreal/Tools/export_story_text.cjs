@@ -45,7 +45,7 @@ const story = {
     tuning: {
       enemy_health: s.enemy_health, enemy_speed: s.enemy_speed, enemy_fire_interval: s.enemy_fire_interval,
       enemy_move: s.enemy_move, enemy_bullet_speed: s.enemy_bullet_speed, enemy_points: s.enemy_points,
-      spawn_interval: s.spawn_interval, score_to_boss: Math.round(s.score_to_boss * STAGE_LEN),   // bossThreshold()
+      spawn_interval: s.spawn_interval, drop_chance: s.drop_chance, score_to_boss: Math.round(s.score_to_boss * STAGE_LEN),   // bossThreshold()
     },
   })),
 };

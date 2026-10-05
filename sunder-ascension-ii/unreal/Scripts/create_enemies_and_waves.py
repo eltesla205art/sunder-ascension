@@ -119,6 +119,7 @@ def build_enemies(shot):
             "body_mesh": shape("Cylinder"), "body_scale": unreal.Vector(1.3, 1.3, 0.35),
             "body_rotation": unreal.Rotator(0.0, 0.0, 0.0), "body_color": color(0.12, 0.10, 0.16),
             "max_health": 220.0, "score_value": 600, "move_pattern": move.STRAIGHT, "speed": 95.0,
+            "drop_chance_bonus": 0.12,                        # the web game's bombers drop more (+0.16 vs +0.04)
             "fire_pattern": fire.RADIAL, "shot_count": 12, "fire_interval": 2.0, "first_shot_delay": 1.0},
     }
     classes = {}

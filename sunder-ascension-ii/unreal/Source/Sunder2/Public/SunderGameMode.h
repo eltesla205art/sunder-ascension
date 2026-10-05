@@ -11,6 +11,7 @@
 #include "SunderGameMode.generated.h"
 
 class ASunderKeeper;
+class ASunderPickup;
 
 UCLASS()
 class SUNDER2_API ASunderGameMode : public AGameModeBase
@@ -38,6 +39,17 @@ public:
 	/** The hangar's ships as the arena flies them (defaults: the web game's Sunborn, Scarab and Ibis in Unreal units). */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sunder|Ships")
 	TArray<FSunderShipLoadout> Ships;
+
+	/** What a destroyed enemy drops (ASunderPickup or a Blueprint child with real art). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sunder|Pickups")
+	TSubclassOf<ASunderPickup> PickupClass;
+
+	/** Odds of each kind, in ESunderPickupKind order: Spread, Laser, Power, Bomb, Shield, Life (the web game's). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sunder|Pickups")
+	TArray<float> PickupWeights = { 0.28f, 0.24f, 0.16f, 0.12f, 0.12f, 0.08f };
+
+	/** Drop a pickup here with this chance (called by an enemy as it is destroyed). */
+	void TrySpawnPickup(const FVector& Location, float Chance);
 
 	/** The ship flying this time (from the hangar's choice; the first of Ships if the id isn't known). */
 	const FSunderShipLoadout* GetShipLoadout() const;

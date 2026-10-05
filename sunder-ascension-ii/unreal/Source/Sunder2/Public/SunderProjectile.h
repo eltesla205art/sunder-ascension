@@ -59,6 +59,9 @@ public:
 
 	bool IsParked() const { return bParked; }
 
+	/** Back to the pool at once, with no impact (a bomb wiping the screen). */
+	void Recall() { ReturnToPool(); }
+
 	/** Fired by an enemy (decided when fired, so it holds even after the enemy is destroyed). */
 	bool IsFromEnemy() const { return bFromEnemy; }
 
