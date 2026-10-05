@@ -92,7 +92,7 @@ Projectiles are team-aware: enemy shots only hit the ship, the player's shots ne
     `BP_SunderGameMode` → Ships, replacing the placeholder cone.
 12. [`../Scripts/create_ship_sounds.py`](../Scripts/create_ship_sounds.py): imports the game's own sound effects from
     [`../Content/Audio/Effects`](../Content/Audio/Effects) (`render_web_audio.cjs effects`, from `web/game.html` sfx()) and
-    sets the pickup, life, bomb and hit sounds on `BP_SunderShip`.
+    sets the shot, pickup, life, bomb and hit sounds on `BP_SunderShip` and the explosions on `BP_SunderGameMode`.
 13. [`../Scripts/create_ship_fx_assets.py`](../Scripts/create_ship_fx_assets.py): the shield's materials and empty
     `NS_Ship_Shield` / `NS_Ship_ShieldEvent`, set on `BP_SunderShip`; build the emitters from [`../SHIP_VFX.md`](../SHIP_VFX.md).
 14. [`../Scripts/create_pickup_art.py`](../Scripts/create_pickup_art.py): imports the six pickup gems from

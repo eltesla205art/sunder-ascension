@@ -250,6 +250,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ship|Sounds")
 	TObjectPtr<USoundBase> BombSound;
 
+	/** Each volley, at most every 0.09 s (the web game's "shoot"). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ship|Sounds")
+	TObjectPtr<USoundBase> ShootSound;
+
 	/** A shield soaking a hit, or the hull taking one (the web game's "hit"). */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ship|Sounds")
 	TObjectPtr<USoundBase> HitSound;
@@ -347,6 +351,7 @@ private:
 	bool bBaseScaleCaptured = false;               // the loadout can arrive before or after BeginPlay
 	bool bLoadoutApplied = false;
 	bool bShieldFXReady = false;
+	float LastShootSound = -100.f;
 	int32 ShownShield = -1;
 	FVector2D MoveInput = FVector2D::ZeroVector;   // X = up the screen, Y = right
 	FVector StartLocation = FVector::ZeroVector;

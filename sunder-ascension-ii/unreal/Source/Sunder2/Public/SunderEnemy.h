@@ -90,6 +90,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Enemy|Pickups")
 	float DropChanceBonus = 0.f;
 
+	/** Its death sounds the big explosion (Keepers) rather than the small one. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Enemy")
+	bool bBigExplosion = false;
+
 	/** Keepers don't drop pickups. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Enemy|Pickups")
 	bool bDropsPickups = true;

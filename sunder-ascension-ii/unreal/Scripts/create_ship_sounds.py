@@ -1,19 +1,23 @@
-"""SUNDER: Ascension II — the ship's pickup, bomb and hit sounds.
+"""SUNDER: Ascension II — the game's own sounds in the arena: shots, explosions, pickups, bombs and hits.
 
 Run inside the Unreal Editor (Tools → Execute Python Script…) AFTER create_arena_level.py, with the C++ in unreal/Source
-compiled (SunderShipPawn's sound properties).
+compiled (SunderShipPawn's and SunderGameMode's sound properties).
 
 The sounds are the web game's own little synth (web/game.html sfx()), rendered to WAV by
 unreal/Tools/render_web_audio.cjs effects into unreal/Content/Audio/Effects as SFX_Game_<Kind>.wav.
 
 Does:
-  1. imports all of them into /Game/Sunder/Audio/Effects (Power, Life, Bomb, Hit, and Shoot, Boom, BigBoom, Select for
-     later use);
-  2. sets them on BP_SunderShip, as the web game plays them:
+  1. imports all of them into /Game/Sunder/Audio/Effects (Shoot, Boom, BigBoom, Power, Life, Bomb, Hit, and Select
+     for later use);
+  2. sets them as the web game plays them, on BP_SunderShip:
+       Shoot Sound  = SFX_Game_Shoot   each volley, at most every 0.09 s
        Pickup Sound = SFX_Game_Power   weapon, power and bomb pickups
        Life Sound   = SFX_Game_Life    life and shield pickups
        Bomb Sound   = SFX_Game_Bomb    using a bomb
        Hit Sound    = SFX_Game_Hit     a shield soaking a hit, or the hull taking one
+     and on BP_SunderGameMode:
+       Explosion Sound     = SFX_Game_Boom      an enemy shot down (a bomb's sweep plays one, not dozens)
+       Big Explosion Sound = SFX_Game_BigBoom   a Keeper's final burst, or the ship destroyed
 
 Safe to run again. Untested until its first run.
 """
@@ -25,8 +29,10 @@ SOURCE_DIR = None   # None = ../Content/Audio/Effects next to this script
 
 SOUND_DIR = "/Game/Sunder/Audio/Effects"
 SHIP_BP = "/Game/Sunder/Blueprints/BP_SunderShip"
-SHIP_SOUNDS = {"pickup_sound": "SFX_Game_Power", "life_sound": "SFX_Game_Life", "bomb_sound": "SFX_Game_Bomb",
-               "hit_sound": "SFX_Game_Hit"}
+GAME_MODE = "/Game/Sunder/Blueprints/BP_SunderGameMode"
+SHIP_SOUNDS = {"shoot_sound": "SFX_Game_Shoot", "pickup_sound": "SFX_Game_Power", "life_sound": "SFX_Game_Life",
+               "bomb_sound": "SFX_Game_Bomb", "hit_sound": "SFX_Game_Hit"}
+MODE_SOUNDS = {"explosion_sound": "SFX_Game_Boom", "big_explosion_sound": "SFX_Game_BigBoom"}
 
 TOOLS = unreal.AssetToolsHelpers.get_asset_tools()
 EAL = unreal.EditorAssetLibrary
@@ -83,17 +89,17 @@ def import_sounds():
     log("imported {} sounds into {}".format(len(names), SOUND_DIR))
 
 
-def wire_ship():
-    if not EAL.does_asset_exist(SHIP_BP):
-        raise RuntimeError(SHIP_BP + " not found; run create_arena_level.py first")
-    bp = EAL.load_asset(SHIP_BP)
-    cdo = unreal.get_default_object(EAL.load_blueprint_class(SHIP_BP))
-    for prop, name in SHIP_SOUNDS.items():
+def wire(bp_path, sounds):
+    if not EAL.does_asset_exist(bp_path):
+        raise RuntimeError(bp_path + " not found; run create_arena_level.py first")
+    bp = EAL.load_asset(bp_path)
+    cdo = unreal.get_default_object(EAL.load_blueprint_class(bp_path))
+    for prop, name in sounds.items():
         full = "{}/{}".format(SOUND_DIR, name)
         if EAL.does_asset_exist(full):
             cdo.set_editor_property(prop, EAL.load_asset(full))
         else:
-            MANUAL.append("BP_SunderShip: no {} for {}".format(name, prop))
+            MANUAL.append("{}: no {} for {}".format(bp_path.split("/")[-1], name, prop))
     unreal.BlueprintEditorLibrary.compile_blueprint(bp)
     EAL.save_loaded_asset(bp)
 
@@ -104,14 +110,15 @@ def main():
         return
     EAL.make_directory(SOUND_DIR)
     step("import the game sounds", import_sounds)
-    step("BP_SunderShip: pickup, life, bomb and hit sounds", wire_ship)
+    step("BP_SunderShip: shot, pickup, life, bomb and hit sounds", wire, SHIP_BP, SHIP_SOUNDS)
+    step("BP_SunderGameMode: explosion sounds", wire, GAME_MODE, MODE_SOUNDS)
     log("---- done ({}) ----".format(len(DONE)))
     for label in DONE:
         log("  ok  " + label)
     log("---- still to do by hand ({}) ----".format(len(MANUAL)))
     for item in MANUAL:
         log("  •   " + item)
-    log("Play: pickups chime, bombs roar, and hits thud, as in the web game.")
+    log("Play: shots, explosions, pickups, bombs and hits sound as in the web game.")
 
 
 main()

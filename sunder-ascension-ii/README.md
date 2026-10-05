@@ -36,7 +36,7 @@ original *SUNDER: Ascension — The Nine Bows* (`web/`, `godot/`, `docs/`), whic
 | `unreal/Scripts/create_ship_fx_assets.py` | Editor Python: the shield's materials and empty Niagara systems, set on the ship (untested until first run) |
 | `unreal/Scripts/create_pickup_art.py` | Editor Python: imports the six pickup gems and makes the pickups use them (untested until first run) |
 | `unreal/Content/Pickups/` | The six power-up pickups as FBX gems for Unreal, from `blender/pickups.py --fbx` |
-| `unreal/Scripts/create_ship_sounds.py` | Editor Python: imports the game's sound effects and sets the ship's pickup, life, bomb and hit sounds (untested until first run) |
+| `unreal/Scripts/create_ship_sounds.py` | Editor Python: imports the game's sound effects and sets the shot, explosion, pickup, life, bomb and hit sounds (untested until first run) |
 | `unreal/Content/Audio/Effects/` | The game's own sound effects (pickups, bomb, hits, shots, explosions) as WAV, rendered from `web/game.html` |
 | `unreal/Content/Ships/` | The three ships as FBX for Unreal (one mesh each), from `blender/ships.py --fbx` |
 | `unreal/Scripts/create_hour_waves.py` | Editor Python: a wave set for each of the Twelve Hours from the web game's stage tuning, each ending with its Keeper, for story mode (untested until first run) |

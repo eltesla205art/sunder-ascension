@@ -11,6 +11,7 @@
 #include "SunderStorySubsystem.h"
 #include "SunderLoadoutSubsystem.h"
 #include "SunderPickup.h"
+#include "Sound/SoundBase.h"
 #include "TimerManager.h"
 
 ASunderGameMode::ASunderGameMode()
@@ -71,6 +72,16 @@ APawn* ASunderGameMode::SpawnDefaultPawnAtTransform_Implementation(AController* 
 		if (Story && Story->IsActive() && Story->HasCarriedShip()) { ShipPawn->ApplyState(Story->GetCarriedShip()); }
 	}
 	return Pawn;
+}
+
+void ASunderGameMode::PlayExplosion(bool bBig)
+{
+	USoundBase* Sound = bBig ? BigExplosionSound.Get() : ExplosionSound.Get();
+	if (!Sound) { return; }
+	const float Now = GetWorld()->GetTimeSeconds();
+	if (!bBig && Now - LastExplosionAt < 0.03f) { return; }   // a bomb's sweep: one boom per frame or two, not one per kill
+	if (!bBig) { LastExplosionAt = Now; }
+	UGameplayStatics::PlaySound2D(this, Sound, ExplosionVolume);
 }
 
 void ASunderGameMode::TrySpawnPickup(const FVector& Location, float Chance)
@@ -142,6 +153,7 @@ void ASunderGameMode::ClearKeeper(ASunderKeeper* Keeper)
 void ASunderGameMode::OnShipDestroyed(ASunderShipPawn* Ship)
 {
 	if (bGameOver || !Ship) { return; }
+	PlayExplosion(true);                                     // the web game's "bigboom" as the ship goes
 	Lives = FMath::Max(Lives - 1, 0);
 	if (Lives > 0)
 	{

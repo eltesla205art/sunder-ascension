@@ -234,6 +234,7 @@ void ASunderEnemy::Die(bool bAwardScore)
 		if (ASunderGameMode* Mode = GetWorld()->GetAuthGameMode<ASunderGameMode>())
 		{
 			Mode->AddScore(ScoreValue);
+			Mode->PlayExplosion(bBigExplosion);
 			if (bDropsPickups) { Mode->TrySpawnPickup(GetActorLocation(), DropChance); }
 		}
 		if (bPlaysDownCue)

@@ -48,6 +48,20 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sunder|Pickups")
 	TArray<float> PickupWeights = { 0.28f, 0.24f, 0.16f, 0.12f, 0.12f, 0.08f };
 
+	/** An enemy shot down (the web game's "boom"; web/game.html sfx(), rendered to SFX_Game_Boom). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sunder|Sounds")
+	TObjectPtr<class USoundBase> ExplosionSound;
+
+	/** A Keeper's final burst, or the ship destroyed (the web game's "bigboom"). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sunder|Sounds")
+	TObjectPtr<class USoundBase> BigExplosionSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sunder|Sounds")
+	float ExplosionVolume = 1.f;
+
+	/** Play an explosion: big for Keepers and the ship. A bomb's many kills in one frame play one boom, not dozens. */
+	void PlayExplosion(bool bBig);
+
 	/** Drop a pickup here with this chance (called by an enemy as it is destroyed). */
 	void TrySpawnPickup(const FVector& Location, float Chance);
 
@@ -97,6 +111,7 @@ private:
 	void RestartArena();
 
 	FString ShipId;
+	float LastExplosionAt = -100.f;
 	bool bSwarm = false;
 	float SwarmStartedAt = 0.f;
 	float SwarmEndedAt = -1.f;

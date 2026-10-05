@@ -214,6 +214,8 @@ void ASunderShipPawn::Tick(float DeltaTime)
 		while (ShotCooldown <= 0.f && Volleys++ < 4)          // catch up after a long frame, but never flood
 		{
 			FireShots();
+			const float Now = GetWorld()->GetTimeSeconds();
+			if (Now - LastShootSound >= 0.09f) { LastShootSound = Now; PlaySound(ShootSound); }   // the web game's limit
 			ShotCooldown += FireInterval * (State.Weapon == ESunderWeapon::Laser ? 0.85f : 1.f);   // the Laser fires faster
 		}
 		ShotCooldown = FMath::Max(ShotCooldown, 0.f);
