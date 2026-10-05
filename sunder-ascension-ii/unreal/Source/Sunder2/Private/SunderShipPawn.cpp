@@ -19,6 +19,9 @@
 #include "ImpactFXSubsystem.h"
 #include "Kismet/GameplayStatics.h"
 #include "Materials/MaterialInstanceDynamic.h"
+#include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraSystem.h"
 #include "Sound/SoundBase.h"
 #include "SunderEnemy.h"
 #include "SunderKeeper.h"
@@ -61,6 +64,10 @@ ASunderShipPawn::ASunderShipPawn()
 	ShieldMesh->SetVisibility(false);
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> Disc(TEXT("/Engine/BasicShapes/Sphere.Sphere"));
 	if (Disc.Succeeded()) { ShieldMesh->SetStaticMesh(Disc.Object); }
+
+	ShieldComponent = CreateDefaultSubobject<UNiagaraComponent>(TEXT("ShieldComponent"));
+	ShieldComponent->SetupAttachment(Collision);
+	ShieldComponent->SetAutoActivate(false);
 }
 
 void ASunderShipPawn::PostInitializeComponents()
@@ -80,6 +87,15 @@ void ASunderShipPawn::BeginPlay()
 	if (!bLoadoutApplied) { Health = MaxHealth; }              // a loadout applied before BeginPlay has set it
 	ShieldMaterial = ShieldMesh->CreateDynamicMaterialInstance(0);
 	if (ShieldMaterial) { ShieldMaterial->SetVectorParameterValue(TEXT("Color"), FLinearColor(0.1f, 0.55f, 0.8f)); }
+	// The Niagara shield, once NS_Ship_Shield has emitters; until then the disc stands in.
+	bShieldFXReady = ShieldFX && ShieldFX->GetEmitterHandles().Num() > 0;
+	if (bShieldFXReady)
+	{
+		ShieldComponent->SetAsset(ShieldFX);
+		ShieldComponent->SetTranslucentSortPriority(4);         // under the shots and impacts
+	}
+	ShownShield = -1;
+	UpdateShield(-1);
 	if (ProjectileClass)
 	{
 		if (UProjectilePoolSubsystem* Pool = GetWorld()->GetSubsystem<UProjectilePoolSubsystem>())
@@ -169,9 +185,9 @@ void ASunderShipPawn::Tick(float DeltaTime)
 	if (bDead) { return; }
 
 	if (FormFlash > 0.f) { FormFlash = FMath::Max(FormFlash - DeltaTime, 0.f); UpdateBodyScale(); }
-	// The shield: a disc under the ship, bigger with each layer, breathing.
-	ShieldMesh->SetVisibility(State.Shield > 0);
-	if (State.Shield > 0)
+	if (State.Shield != ShownShield) { UpdateShield(State.Shield > ShownShield && ShownShield >= 0 ? 2 : -1); }
+	// The fallback shield: a disc under the ship, bigger with each layer, breathing.
+	if (!bShieldFXReady && State.Shield > 0)
 	{
 		const float R = (1.5f + 0.25f * State.Shield) * (1.f + 0.05f * FMath::Sin(GetWorld()->GetTimeSeconds() * 5.f));
 		ShieldMesh->SetRelativeScale3D(FVector(R, R, 0.03f));
@@ -218,10 +234,7 @@ float ASunderShipPawn::TakeDamage(float DamageAmount, FDamageEvent const& Damage
 		--State.Shield;
 		Invulnerable = ShieldInvulnerability;
 		PlaySound(HitSound);
-		if (UImpactFXSubsystem* Impacts = GetWorld()->GetSubsystem<UImpactFXSubsystem>())
-		{
-			Impacts->QueueImpact(GetActorLocation(), FVector::ForwardVector, BombColor);
-		}
+		UpdateShield(State.Shield == 0 ? 1 : 0);              // the last layer shatters; others ripple
 		return 0.f;
 	}
 	Health -= DamageAmount;
@@ -239,6 +252,7 @@ float ASunderShipPawn::TakeDamage(float DamageAmount, FDamageEvent const& Damage
 	}
 	Mesh->SetVisibility(false);
 	SetActorEnableCollision(false);
+	UpdateShield(-1);
 	if (ASunderGameMode* Mode = GetWorld()->GetAuthGameMode<ASunderGameMode>()) { Mode->OnShipDestroyed(this); }
 	return DamageAmount;
 }
@@ -294,6 +308,41 @@ void ASunderShipPawn::ApplyLoadout(const FSunderShipLoadout& InLoadout)
 	UpdateBodyScale();
 }
 
+void ASunderShipPawn::UpdateShield(int32 Event)
+{
+	ShownShield = State.Shield;
+	const bool bUp = State.Shield > 0 && !bDead;
+	ShieldMesh->SetVisibility(bUp && !bShieldFXReady);
+	if (bShieldFXReady)
+	{
+		ShieldComponent->SetVariableFloat(TEXT("Layers"), (float)State.Shield);
+		ShieldComponent->SetVariableFloat(TEXT("Radius"), ShieldRadiusNow());
+		ShieldComponent->SetVariableLinearColor(TEXT("ShieldColor"), ShieldColor);
+		if (bUp && !ShieldComponent->IsActive()) { ShieldComponent->Activate(true); }
+		else if (!bUp && ShieldComponent->IsActive()) { ShieldComponent->Deactivate(); }   // let it fade, don't cut it
+	}
+	if (Event < 0) { return; }
+	if (ShieldEventFX && ShieldEventFX->GetEmitterHandles().Num() > 0)
+	{
+		if (UNiagaraComponent* FX = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), ShieldEventFX, GetActorLocation(),
+			FRotator::ZeroRotator, FVector(1.f), /*bAutoDestroy*/ false, /*bAutoActivate*/ true, ENCPoolMethod::AutoRelease, false))
+		{
+			FX->SetVariableFloat(TEXT("Event"), (float)Event);
+			FX->SetVariableFloat(TEXT("Layers"), (float)State.Shield);
+			FX->SetVariableFloat(TEXT("Radius"), ShieldRadiusNow());
+			FX->SetVariableLinearColor(TEXT("ShieldColor"), ShieldColor);
+			FX->SetTranslucentSortPriority(14);
+		}
+	}
+	else if (Event != 2)                                       // fallback for a hit or a break: a plasma burst
+	{
+		if (UImpactFXSubsystem* Impacts = GetWorld()->GetSubsystem<UImpactFXSubsystem>())
+		{
+			Impacts->QueueImpact(GetActorLocation(), FVector::ForwardVector, ShieldColor);
+		}
+	}
+}
+
 float ASunderShipPawn::FormScale() const
 {
 	const TArray<float>& Scales = Loadout.FormScales;
@@ -303,6 +352,7 @@ float ASunderShipPawn::FormScale() const
 void ASunderShipPawn::UpdateBodyScale()
 {
 	Mesh->SetRelativeScale3D(FittedScale * FormScale() * (1.f + FormFlash * 0.6f));   // the web game's form-change swell
+	if (bShieldFXReady) { ShieldComponent->SetVariableFloat(TEXT("Radius"), ShieldRadiusNow()); }   // the shield grows with the form
 }
 
 FString ASunderShipPawn::GetFormName() const

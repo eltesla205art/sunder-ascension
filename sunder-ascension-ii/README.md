@@ -32,6 +32,8 @@ original *SUNDER: Ascension — The Nine Bows* (`web/`, `godot/`, `docs/`), whic
 | `unreal/Content/Audio/Menus/` | The title and hangar themes (three layers each), ambience beds, interface cues and ship engine revs as WAV, rendered from `web/menu_audio.js` |
 | `unreal/Scripts/create_story_level.py` | Editor Python: story mode (`L_SunderStory`): the opening crawl, hour map, briefings, Hour survived, dawn and DAWN DENIED, with their music, ambience and cues, and the twelve Hours wired to their stage sound and Keepers (untested until first run) |
 | `unreal/Scripts/create_ship_models.py` | Editor Python: imports the Sunborn, Scarab and Ibis models and sets them on the arena's ships (untested until first run) |
+| `unreal/SHIP_VFX.md` | UE5 Niagara guide for the ship's shield: the looping rings (one per layer) and its ripple, shatter and gather events |
+| `unreal/Scripts/create_ship_fx_assets.py` | Editor Python: the shield's materials and empty Niagara systems, set on the ship (untested until first run) |
 | `unreal/Scripts/create_ship_sounds.py` | Editor Python: imports the game's sound effects and sets the ship's pickup, life, bomb and hit sounds (untested until first run) |
 | `unreal/Content/Audio/Effects/` | The game's own sound effects (pickups, bomb, hits, shots, explosions) as WAV, rendered from `web/game.html` |
 | `unreal/Content/Ships/` | The three ships as FBX for Unreal (one mesh each), from `blender/ships.py --fbx` |

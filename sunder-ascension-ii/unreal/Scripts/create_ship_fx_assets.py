@@ -1,0 +1,138 @@
+"""SUNDER: Ascension II — create the scriptable half of the ship's shield VFX (see ../SHIP_VFX.md) and wire it to the ship.
+
+Run inside the Unreal Editor (Tools → Execute Python Script…) AFTER create_weapon_fx_assets.py (for the master material
+and EFT_PlayerWeapon) and create_arena_level.py (for BP_SunderShip), with the C++ in unreal/Source compiled.
+
+Creates under /Game/FX/Ship:
+  Materials/  MI_Shield_Ring, MI_Shield_Glow (instances of M_FX_Additive)
+  Systems/    NS_Ship_Shield (looping), NS_Ship_ShieldEvent (one-shot, pooled): empty systems; build their emitters
+              by hand from SHIP_VFX.md
+and sets them on BP_SunderShip as Shield FX and Shield Event FX.
+
+Empty systems are safe: the ship keeps its placeholder shield disc (and a plasma impact for hits) until a system has
+an emitter, then uses it with no further wiring.
+
+Safe to run again. Untested until its first run.
+"""
+import unreal
+
+ROOT = "/Game/FX/Ship"
+MAT_DIR = ROOT + "/Materials"
+SYS_DIR = ROOT + "/Systems"
+MASTER = "/Game/FX/Weapons/Materials/M_FX_Additive"
+EFFECT_TYPE = "/Game/FX/Weapons/EffectTypes/EFT_PlayerWeapon"
+SHIP_BP = "/Game/Sunder/Blueprints/BP_SunderShip"
+
+TOOLS = unreal.AssetToolsHelpers.get_asset_tools()
+MEL = unreal.MaterialEditingLibrary
+EAL = unreal.EditorAssetLibrary
+
+DONE = []
+MANUAL = []
+
+
+def log(msg):
+    unreal.log("[SunderShipFX] " + msg)
+
+
+def step(label, fn, *args):
+    try:
+        result = fn(*args)
+        DONE.append(label)
+        return result
+    except Exception as exc:   # the editor's Python API differs a little between versions
+        MANUAL.append("{}  (script error: {})".format(label, exc))
+        unreal.log_warning("[SunderShipFX] {} failed: {}".format(label, exc))
+        return None
+
+
+def get_or_create(name, path, asset_class, factory):
+    full = "{}/{}".format(path, name)
+    if EAL.does_asset_exist(full):
+        log("updating " + full)
+        return EAL.load_asset(full)
+    asset = TOOLS.create_asset(name, path, asset_class, factory)
+    if asset is None:
+        raise RuntimeError("could not create " + full)
+    log("created " + full)
+    return asset
+
+
+# Mode: 0 ribbon, 1 round sprite, 2 ring (see create_weapon_fx_assets.py). Colour comes from Particle Color.
+INSTANCES = {
+    "MI_Shield_Ring": {"Mode": 2.0, "CoreSharpness": 3.0, "GlowSharpness": 1.2, "CoreBoost": 5.0, "RingThickness": 0.06},
+    "MI_Shield_Glow": {"Mode": 1.0, "CoreSharpness": 0.8, "GlowSharpness": 0.5, "CoreBoost": 1.0},
+}
+
+
+def build_instance(name, master):
+    mi = get_or_create(name, MAT_DIR, unreal.MaterialInstanceConstant, unreal.MaterialInstanceConstantFactoryNew())
+    MEL.set_material_instance_parent(mi, master)
+    for param, value in INSTANCES[name].items():
+        MEL.set_material_instance_scalar_parameter_value(mi, param, value)
+    MEL.update_material_instance(mi)
+    EAL.save_loaded_asset(mi)
+    return mi
+
+
+def build_system(name, pool_max, pool_prime):
+    system = get_or_create(name, SYS_DIR, unreal.NiagaraSystem, unreal.NiagaraSystemFactoryNew())
+    if EAL.does_asset_exist(EFFECT_TYPE):
+        system.set_editor_property("effect_type", EAL.load_asset(EFFECT_TYPE))
+    else:
+        MANUAL.append("{}: set Effect Type = EFT_PlayerWeapon (run create_weapon_fx_assets.py)".format(name))
+    for prop, value in (("max_pool_size", pool_max), ("pool_prime_size", pool_prime)):
+        if value is None:
+            continue
+        try:
+            system.set_editor_property(prop, value)
+        except Exception as exc:
+            MANUAL.append("{}: set {} = {} in System Properties  ({})".format(name, prop, value, exc))
+    EAL.save_loaded_asset(system)
+    return system
+
+
+def wire_ship(shield, event):
+    if not EAL.does_asset_exist(SHIP_BP):
+        raise RuntimeError(SHIP_BP + " not found; run create_arena_level.py first")
+    bp = EAL.load_asset(SHIP_BP)
+    cdo = unreal.get_default_object(EAL.load_blueprint_class(SHIP_BP))
+    if shield is not None:
+        cdo.set_editor_property("shield_fx", shield)
+    if event is not None:
+        cdo.set_editor_property("shield_event_fx", event)
+    unreal.BlueprintEditorLibrary.compile_blueprint(bp)
+    EAL.save_loaded_asset(bp)
+
+
+def main():
+    if not hasattr(unreal, "SunderShipPawn"):
+        unreal.log_error("[SunderShipFX] C++ types not found: SunderShipPawn. Compile unreal/Source first.")
+        return
+    for path in (MAT_DIR, SYS_DIR):
+        EAL.make_directory(path)
+
+    if EAL.does_asset_exist(MASTER):
+        master = EAL.load_asset(MASTER)
+        for name in INSTANCES:
+            step(name, build_instance, name, master)
+    else:
+        MANUAL.append("Shield materials: run create_weapon_fx_assets.py first (needs " + MASTER + "), then this again")
+
+    shield = step("NS_Ship_Shield (empty)", build_system, "NS_Ship_Shield", None, None)
+    event = step("NS_Ship_ShieldEvent (empty)", build_system, "NS_Ship_ShieldEvent", 6, 2)
+    step("BP_SunderShip: Shield FX and Shield Event FX", wire_ship, shield, event)
+
+    MANUAL.extend([
+        "NS_Ship_Shield and NS_Ship_ShieldEvent: add the user parameters (SHIP_VFX.md §1.1) and the emitters (§2, §3)",
+        "Scratch pad dynamic input SP_LayerMask (SHIP_VFX.md §1.3); SP_FlattenToPlane is from WEAPON_VFX.md §2.3",
+    ])
+    log("---- done ({}) ----".format(len(DONE)))
+    for label in DONE:
+        log("  ok  " + label)
+    log("---- still to do by hand ({}) ----".format(len(MANUAL)))
+    for item in MANUAL:
+        log("  •   " + item)
+
+
+main()

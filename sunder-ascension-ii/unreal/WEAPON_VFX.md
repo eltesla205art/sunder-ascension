@@ -12,7 +12,7 @@ plus the pooling and budgeting that keeps dozens of simultaneous impacts from dr
 > [`Scripts/create_weapon_fx_assets.py`](Scripts/create_weapon_fx_assets.py) creates the materials (§0.2), Effect Types (§3.3)
 > and empty, named systems in the editor; the emitter stacks below are then built by hand.
 > [`Scripts/create_arena_level.py`](Scripts/create_arena_level.py) then makes the ship Blueprint and a top-down test arena to fly them in.
-> The Keepers' effects build on this guide: see [`KEEPER_VFX.md`](KEEPER_VFX.md).
+> The Keepers' effects and the ship's shield build on this guide: see [`KEEPER_VFX.md`](KEEPER_VFX.md) and [`SHIP_VFX.md`](SHIP_VFX.md).
 > Module names are from UE 5.3–5.5; the few that moved between versions are marked ⚠ — check those in your build.
 
 Conventions: Z is up, the camera looks straight down −Z, the gameplay plane is XY, and "up the screen" is world +X.

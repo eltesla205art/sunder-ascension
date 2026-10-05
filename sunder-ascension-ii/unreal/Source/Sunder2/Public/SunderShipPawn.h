@@ -18,6 +18,7 @@ class USphereComponent;
 class UStaticMeshComponent;
 class UBeamWeaponComponent;
 class UNiagaraSystem;
+class UNiagaraComponent;
 class UStaticMesh;
 class USoundBase;
 class ASunderProjectile;
@@ -213,9 +214,29 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ship|Power-ups")
 	float ShieldInvulnerability = 0.8f;
 
-	/** Placeholder shield: a flat cyan disc under the ship while any shield is up (swap for a Niagara ring later). */
+	/** Fallback shield: a flat cyan disc under the ship while any shield is up, until ShieldFX has emitters. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ship|Power-ups")
 	TObjectPtr<UStaticMeshComponent> ShieldMesh;
+
+	/** NS_Ship_Shield (SHIP_VFX.md §2): the looping shield around the ship. User.Layers = shields up (0–3),
+	 *  User.Radius, User.ShieldColor. Runs while any shield is up; fades out (not cut off) when the last one goes. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ship|Power-ups")
+	TObjectPtr<UNiagaraSystem> ShieldFX;
+
+	/** NS_Ship_ShieldEvent (SHIP_VFX.md §3), one-shot and pooled: User.Event 0 = a hit soaked (ripple), 1 = the last
+	 *  layer breaks (shatter), 2 = a layer forms (light gathers in); plus User.Radius, User.ShieldColor, User.Layers. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ship|Power-ups")
+	TObjectPtr<UNiagaraSystem> ShieldEventFX;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Ship|Power-ups")
+	TObjectPtr<UNiagaraComponent> ShieldComponent;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ship|Power-ups")
+	FLinearColor ShieldColor = FLinearColor(0.6f, 2.4f, 4.0f, 1.f);
+
+	/** The shield's radius around a form-1 ship (it grows with the ship's forms). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ship|Power-ups")
+	float ShieldRadius = 190.f;
 
 	// ---- the game's own sounds (web/game.html sfx(), rendered by unreal/Tools/render_web_audio.cjs effects)
 	/** Weapon, Power and Bomb pickups (the web game's "power"). */
@@ -302,6 +323,9 @@ private:
 	void OnBombPressed(const FInputActionValue& Value);
 	void SetPower(int32 NewPower);
 	void PlaySound(USoundBase* Sound) const;
+	/** Keep the shield's look in step with its layers (and spawn an event: 0 hit, 1 break, 2 raise; -1 none). */
+	void UpdateShield(int32 Event);
+	float ShieldRadiusNow() const { return ShieldRadius * FormScale(); }
 	void UpdateBodyScale();
 	float FormScale() const;
 
@@ -322,6 +346,8 @@ private:
 	FVector BaseMeshScale = FVector(0.6f);
 	bool bBaseScaleCaptured = false;               // the loadout can arrive before or after BeginPlay
 	bool bLoadoutApplied = false;
+	bool bShieldFXReady = false;
+	int32 ShownShield = -1;
 	FVector2D MoveInput = FVector2D::ZeroVector;   // X = up the screen, Y = right
 	FVector StartLocation = FVector::ZeroVector;
 	float Health = 5.f;
