@@ -1,0 +1,523 @@
+# EditorSettings
+
+**Inherits:** Resource
+
+Object that holds the project-independent editor settings.
+
+Object that holds the project-independent editor settings. These settings are generally visible in the Editor > Editor Settings menu. Property names use slash delimiters to distinguish sections. Setting values can be of any Variant type.
+
+## Properties
+
+- `asset_store/available_urls: Dictionary` — A list of the available URLs that can be chosen in the Asset Store to fetch asset data.
+- `asset_store/show_incompatible_assets: bool` — If `true`, the Asset Store will show asset releases that are not compatible with the current engine version.
+- `asset_store/use_threads: bool` — If `true`, the Asset Store uses multiple threads for its HTTP requests.
+- `debugger/auto_switch_to_remote_scene_tree: bool` — If `true`, automatically switches to the Remote scene tree when running the project from the editor.
+- `debugger/auto_switch_to_stack_trace: bool` — If `true`, automatically switches to the Stack Trace panel when the debugger hits a breakpoint or steps.
+- `debugger/max_node_selection: int` — The limit of how many remote nodes can be selected at once.
+- `debugger/profile_native_calls: bool` — If `true`, enables collection of profiling data from non-GDScript Godot functions, such as engine class methods.
+- `debugger/profiler_frame_history_size: int` — The size of the profiler's frame history.
+- `debugger/profiler_frame_max_functions: int` — The maximum number of script functions that can be displayed per frame in the profiler.
+- `debugger/profiler_target_fps: int` — The target frame rate shown in the visual profiler graph, in frames per second.
+- `debugger/remote_inspect_refresh_interval: float` — The refresh interval for the remote inspector's properties (in seconds).
+- `debugger/remote_scene_tree_refresh_interval: float` — The refresh interval for the remote scene tree (in seconds).
+- `docks/filesystem/always_show_folders: bool` — If `true`, displays folders in the FileSystem dock's bottom pane when split mode is enabled.
+- `docks/filesystem/ask_before_moving_files: bool` — If `true`, displays a confirmation dialog when moving or duplicating items in the FileSystem dock.
+- `docks/filesystem/automatically_open_created_scripts: bool` — If `true`, scripts created in FileSystem dock will be automatically edited.
+- `docks/filesystem/other_file_extensions: String` — A comma separated list of unsupported file extensions to show in the FileSystem dock, e.g.
+- `docks/filesystem/textfile_extensions: String` — A comma separated list of file extensions to consider as editable text files in the FileSystem dock (by double-clicking on the files), e.g.
+- `docks/filesystem/thumbnail_size: int` — The thumbnail size to use in the FileSystem dock (in pixels).
+- `docks/property_editor/auto_refresh_interval: float` — The refresh interval to use for the Inspector dock's properties.
+- `docks/property_editor/subresource_hue_tint: float` — The tint intensity to use for the subresources background in the Inspector dock.
+- `docks/scene_tree/accessibility_warnings: bool` — If `true`, accessibility related warnings are displayed alongside other configuration warnings.
+- `docks/scene_tree/ask_before_deleting_related_animation_tracks: bool` — If `true`, when a node is deleted with animation tracks referencing it, a confirmation dialog appears before the tracks are deleted.
+- `docks/scene_tree/ask_before_revoking_unique_name: bool` — If `true`, displays a confirmation dialog after left-clicking the "percent" icon next to a node name in the Scene tree dock.
+- `docks/scene_tree/auto_expand_to_selected: bool` — If `true`, the scene tree dock will automatically unfold nodes when a node that has folded parents is selected.
+- `docks/scene_tree/center_node_on_reparent: bool` — If `true`, new node created when reparenting node(s) will be positioned at the average position of the selected node(s).
+- `docks/scene_tree/derive_script_globals_by_name: bool` — If `true`, when extending a script, the global class name of the script is inserted in the script creation dialog, if it exists.
+- `docks/scene_tree/hide_filtered_out_parents: bool` — If `true`, the scene tree dock will only show nodes that match the filter, without showing parents that don't.
+- `docks/scene_tree/start_create_dialog_fully_expanded: bool` — If `true`, the Create dialog (Create New Node/Create New Resource) will start with all its sections expanded.
+- `editors/2d/auto_resample_delay: float` — Delay time for automatic resampling in the 2D editor (in seconds).
+- `editors/2d/bone_color1: Color` — The "start" stop of the color gradient to use for bones in the 2D skeleton editor.
+- `editors/2d/bone_color2: Color` — The "end" stop of the color gradient to use for bones in the 2D skeleton editor.
+- `editors/2d/bone_ik_color: Color` — The color to use for inverse kinematics-enabled bones in the 2D skeleton editor.
+- `editors/2d/bone_outline_color: Color` — The outline color to use for non-selected bones in the 2D skeleton editor.
+- `editors/2d/bone_outline_size: float` — The outline size in the 2D skeleton editor (in pixels).
+- `editors/2d/bone_selected_color: Color` — The color to use for selected bones in the 2D skeleton editor.
+- `editors/2d/bone_width: float` — The bone width in the 2D skeleton editor (in pixels).
+- `editors/2d/grid_color: Color` — The grid color to use in the 2D editor.
+- `editors/2d/guides_color: Color` — The guides color to use in the 2D editor.
+- `editors/2d/locked_selection_rectangle_color: Color` — The color to use for the selection rectangle that surrounds selected locked nodes in the 2D editor viewport.
+- `editors/2d/ruler_width: float` — The thickness of the coordinate ruler in the 2D editor.
+- `editors/2d/selection_rectangle_color: Color` — The color to use for the selection rectangle outlines that surrounds selected nodes in the 2D editor viewport.
+- `editors/2d/smart_snapping_line_color: Color` — The color to use when drawing smart snapping lines in the 2D editor.
+- `editors/2d/use_integer_zoom_by_default: bool` — If `true`, the 2D editor will snap to integer zoom values when not holding the `Alt` key.
+- `editors/2d/viewport_border_color: Color` — The color of the viewport border in the 2D editor.
+- `editors/2d/zoom_speed_factor: float` — The factor to use when zooming in or out in the 2D editor.
+- `editors/3d/active_selection_box_color: Color` — The color to use for the active selection box that surrounds selected nodes in the 3D editor viewport.
+- `editors/3d/default_fov: float` — The default camera vertical field of view to use in the 3D editor (in degrees).
+- `editors/3d/default_z_far: float` — The default camera far clip distance to use in the 3D editor (in degrees).
+- `editors/3d/default_z_near: float` — The default camera near clip distance to use in the 3D editor (in degrees).
+- `editors/3d/freelook/freelook_activation_modifier: int` — The modifier key to use to enable freelook in the 3D editor (on top of pressing the right mouse button).
+- `editors/3d/freelook/freelook_base_speed: float` — The base 3D freelook speed in units per second.
+- `editors/3d/freelook/freelook_inertia: float` — The inertia of the 3D freelook camera.
+- `editors/3d/freelook/freelook_invert_y_axis: bool` — If `true`, invert the vertical mouse axis when using freelook mode in the 3D editor.
+- `editors/3d/freelook/freelook_navigation_scheme: int` — The navigation scheme to use when freelook is enabled in the 3D editor.
+- `editors/3d/freelook/freelook_sensitivity: float` — The mouse sensitivity to use while freelook mode is active in the 3D editor.
+- `editors/3d/freelook/freelook_speed_zoom_link: bool` — If `true`, freelook speed is linked to the zoom value used in the camera orbit mode in the 3D editor.
+- `editors/3d/grid_division_level_bias: float` — The grid division bias to use in the 3D editor.
+- `editors/3d/grid_division_level_max: int` — The largest grid division to use in the 3D editor.
+- `editors/3d/grid_division_level_min: int` — The smallest grid division to use in the 3D editor.
+- `editors/3d/grid_size: int` — The grid size in units.
+- `editors/3d/grid_xy_plane: bool` — If `true`, renders the grid on the XY plane in perspective view.
+- `editors/3d/grid_xz_plane: bool` — If `true`, renders the grid on the XZ plane in perspective view.
+- `editors/3d/grid_yz_plane: bool` — If `true`, renders the grid on the YZ plane in perspective view.
+- `editors/3d/manipulator_gizmo_opacity: float` — Opacity of the default gizmo for moving, rotating, and scaling 3D nodes.
+- `editors/3d/manipulator_gizmo_size: int` — Size of the default gizmo for moving, rotating, and scaling 3D nodes.
+- `editors/3d/navigation/emulate_3_button_mouse: bool` — If `true`, enables 3-button mouse emulation mode.
+- `editors/3d/navigation/emulate_numpad: bool` — If `true`, allows using the top row `0`-`9` keys to function as their equivalent numpad keys for 3D editor navigation.
+- `editors/3d/navigation/invert_x_axis: bool` — If `true`, invert the horizontal mouse axis when panning or orbiting in the 3D editor.
+- `editors/3d/navigation/invert_y_axis: bool` — If `true`, invert the vertical mouse axis when panning or orbiting in the 3D editor.
+- `editors/3d/navigation/navigation_scheme: int` — The navigation scheme preset to use in the 3D editor.
+- `editors/3d/navigation/orbit_mouse_button: int` — The mouse button that needs to be held down to orbit in the 3D editor viewport.
+- `editors/3d/navigation/pan_mouse_button: int` — The mouse button that needs to be held down to pan in the 3D editor viewport.
+- `editors/3d/navigation/show_viewport_navigation_gizmo: bool` — If `true`, shows gizmos for moving and rotating the camera in the bottom corners of the 3D editor's viewport.
+- `editors/3d/navigation/show_viewport_rotation_gizmo: bool` — If `true`, shows a small orientation gizmo in the top-right corner of the 3D editor's viewports.
+- `editors/3d/navigation/warped_mouse_panning: bool` — If `true`, warps the mouse around the 3D viewport while panning in the 3D editor.
+- `editors/3d/navigation/zoom_mouse_button: int` — The mouse button that needs to be held down to zoom in the 3D editor viewport.
+- `editors/3d/navigation/zoom_style: int` — The mouse cursor movement direction to use when zooming by moving the mouse.
+- `editors/3d/navigation_feel/angle_snap_threshold: float` — The angle threshold for snapping camera rotation to 45-degree angles while orbiting with `Alt` held.
+- `editors/3d/navigation_feel/orbit_inertia: float` — The inertia to use when orbiting in the 3D editor.
+- `editors/3d/navigation_feel/orbit_sensitivity: float` — The mouse sensitivity to use when orbiting in the 3D editor.
+- `editors/3d/navigation_feel/translation_inertia: float` — The inertia to use when panning in the 3D editor.
+- `editors/3d/navigation_feel/translation_sensitivity: float` — The mouse sensitivity to use when panning in the 3D editor.
+- `editors/3d/navigation_feel/zoom_inertia: float` — The inertia to use when zooming in the 3D editor.
+- `editors/3d/primary_grid_color: Color` — The color to use for the primary 3D grid.
+- `editors/3d/primary_grid_steps: int` — If set above 0, where a primary grid line should be drawn.
+- `editors/3d/secondary_grid_color: Color` — The color to use for the secondary 3D grid.
+- `editors/3d/selection_box_color: Color` — The color to use for the selection box that surrounds selected nodes in the 3D editor viewport.
+- `editors/3d/show_gizmo_during_rotation: int` — If checked, the transform gizmo remains visible during rotation in that transform mode.
+- `editors/3d/view_plane_rotation_gizmo_scale: float` — The scale of the outer circle of the rotation gizmo as view plane rotation in the 3D editor.
+- `editors/3d_gizmos/gizmo_colors/aabb: Color` — The color to use for the AABB gizmo that displays the GeometryInstance3D's custom AABB.
+- `editors/3d_gizmos/gizmo_colors/camera: Color` — The 3D editor gizmo color for Camera3Ds.
+- `editors/3d_gizmos/gizmo_colors/csg: Color` — The 3D editor gizmo color for CSG nodes (such as CSGShape3D or CSGBox3D).
+- `editors/3d_gizmos/gizmo_colors/decal: Color` — The 3D editor gizmo color for Decal nodes.
+- `editors/3d_gizmos/gizmo_colors/fog_volume: Color` — The 3D editor gizmo color for FogVolume nodes.
+- `editors/3d_gizmos/gizmo_colors/gridmap_grid: Color` — The 3D editor gizmo color for the GridMap grid.
+- `editors/3d_gizmos/gizmo_colors/ik_chain: Color` — The 3D editor gizmo color for the IKModifier3D guides.
+- `editors/3d_gizmos/gizmo_colors/instantiated: Color` — The color override to use for 3D editor gizmos if the Node3D in question is part of an instantiated scene file (from the perspective of the current scene).
+- `editors/3d_gizmos/gizmo_colors/joint: Color` — The 3D editor gizmo color for Joint3Ds and PhysicalBone3Ds.
+- `editors/3d_gizmos/gizmo_colors/joint_body_a: Color` — Color for representing `Joint3D.node_a` for some Joint3D types.
+- `editors/3d_gizmos/gizmo_colors/joint_body_b: Color` — Color for representing `Joint3D.node_b` for some Joint3D types.
+- `editors/3d_gizmos/gizmo_colors/lightmap_lines: Color` — Color of lines displayed in baked LightmapGI node's grid.
+- `editors/3d_gizmos/gizmo_colors/lightprobe_lines: Color` — The 3D editor gizmo color used for LightmapProbe nodes.
+- `editors/3d_gizmos/gizmo_colors/occluder: Color` — The 3D editor gizmo color used for OccluderInstance3D nodes.
+- `editors/3d_gizmos/gizmo_colors/particle_attractor: Color` — The 3D editor gizmo color used for GPUParticlesAttractor3D nodes.
+- `editors/3d_gizmos/gizmo_colors/particle_collision: Color` — The 3D editor gizmo color used for GPUParticlesCollision3D nodes.
+- `editors/3d_gizmos/gizmo_colors/particles: Color` — The 3D editor gizmo color used for CPUParticles3D and GPUParticles3D nodes.
+- `editors/3d_gizmos/gizmo_colors/path_tilt: Color` — The 3D editor gizmo color used for Path3D tilt circles, which indicate the direction the Curve3D is tilted towards.
+- `editors/3d_gizmos/gizmo_colors/reflection_probe: Color` — The 3D editor gizmo color used for ReflectionProbe nodes.
+- `editors/3d_gizmos/gizmo_colors/selected_bone: Color` — The 3D editor gizmo color used for the currently selected Skeleton3D bone.
+- `editors/3d_gizmos/gizmo_colors/skeleton: Color` — The 3D editor gizmo color used for Skeleton3D nodes.
+- `editors/3d_gizmos/gizmo_colors/spring_bone_collision: Color` — The 3D editor gizmo color used for SpringBoneCollision3D nodes.
+- `editors/3d_gizmos/gizmo_colors/spring_bone_inside_collision: Color` — The 3D editor gizmo color used for SpringBoneCollision3D nodes with inside mode.
+- `editors/3d_gizmos/gizmo_colors/spring_bone_joint: Color` — The 3D editor gizmo color used for SpringBoneSimulator3D nodes.
+- `editors/3d_gizmos/gizmo_colors/stream_player_3d: Color` — The 3D editor gizmo color used for AudioStreamPlayer3D's emission angle.
+- `editors/3d_gizmos/gizmo_colors/visibility_notifier: Color` — The 3D editor gizmo color used for VisibleOnScreenNotifier3D and VisibleOnScreenEnabler3D nodes.
+- `editors/3d_gizmos/gizmo_colors/voxel_gi: Color` — The 3D editor gizmo color used for VoxelGI nodes.
+- `editors/3d_gizmos/gizmo_settings/bone_axis_length: float` — The length of Skeleton3D bone gizmos in the 3D editor.
+- `editors/3d_gizmos/gizmo_settings/bone_shape: int` — The shape of Skeleton3D bone gizmos in the 3D editor.
+- `editors/3d_gizmos/gizmo_settings/lightmap_gi_probe_size: float` — Size of probe gizmos displayed when editing LightmapGI and LightmapProbe nodes.
+- `editors/3d_gizmos/gizmo_settings/path3d_tilt_disk_size: float` — Size of the disk gizmo displayed when editing Path3D's tilt handles.
+- `editors/3d_gizmos/gizmo_settings/show_collision_shapes_only_when_selected: bool` — If `true`, collision shapes in the 3D editor are visible only when selected.
+- `editors/animation/autorename_animation_tracks: bool` — If `true`, automatically updates animation tracks' target paths when renaming or reparenting nodes in the Scene tree dock.
+- `editors/animation/confirm_insert_track: bool` — If `true`, display a confirmation dialog when adding a new track to an animation by pressing the "key" icon next to a property.
+- `editors/animation/default_animation_step: float` — Default step used when creating a new Animation in the Animation bottom panel.
+- `editors/animation/default_create_bezier_tracks: bool` — If `true`, create a Bezier track instead of a standard track when pressing the "key" icon next to a property.
+- `editors/animation/default_create_reset_tracks: bool` — If `true`, create a `RESET` track when creating a new animation track.
+- `editors/animation/default_fps_compatibility: bool` — Controls whether AnimationPlayer will apply snapping to nearest integer FPS when snapping is in Seconds mode.
+- `editors/animation/default_fps_mode: int` — Default step mode for AnimationPlayer (seconds or FPS).
+- `editors/animation/insert_at_current_time: bool` — If `true`, animation keys and markers are inserted at the current time in the animation.
+- `editors/animation/onion_layers_future_color: Color` — The modulate color to use for "future" frames displayed in the animation editor's onion skinning feature.
+- `editors/animation/onion_layers_past_color: Color` — The modulate color to use for "past" frames displayed in the animation editor's onion skinning feature.
+- `editors/audio_buses/active_max_db_color: Color` — The color at the top of the VU meter gradient when it is active.
+- `editors/audio_buses/active_min_db_color: Color` — The color at the bottom of the VU meter gradient when it is active.
+- `editors/audio_buses/active_normalized_db_color: Color` — The color at 0 dB of the VU meter gradient when it is active.
+- `editors/audio_buses/inactive_max_db_color: Color` — The color at the top of the VU meter gradient when it is inactive.
+- `editors/audio_buses/inactive_min_db_color: Color` — The color at the bottom of the VU meter gradient when it is inactive.
+- `editors/audio_buses/inactive_normalized_db_color: Color` — The color at 0 dB of the VU meter gradient when it is inactive.
+- `editors/audio_buses/tint_over_color: Color` — The multiplier color for the VU meter gradient when it is inactive.
+- `editors/audio_buses/tint_under_color: Color` — The multiplier color for the VU meter gradient where audio is not reaching.
+- `editors/bone_mapper/handle_colors/error: Color` — 
+- `editors/bone_mapper/handle_colors/missing: Color` — 
+- `editors/bone_mapper/handle_colors/set: Color` — 
+- `editors/bone_mapper/handle_colors/unset: Color` — 
+- `editors/grid_map/pick_distance: float` — The maximum distance at which tiles can be placed on a GridMap, relative to the camera position (in 3D units).
+- `editors/grid_map/preview_size: int` — Texture size of mesh previews generated for GridMap's MeshLibrary.
+- `editors/panning/2d_editor_pan_speed: int` — The panning speed when using the mouse wheel or touchscreen events in the 2D editor.
+- `editors/panning/2d_editor_panning_scheme: int` — Controls whether the mouse wheel scroll zooms or pans in the 2D editor.
+- `editors/panning/animation_editors_panning_scheme: int` — Controls whether the mouse wheel scroll zooms or pans in the animation track and Bezier editors.
+- `editors/panning/simple_panning: bool` — If `true`, allows panning by holding down `Space` in the 2D editor viewport (in addition to panning with the middle or right mouse buttons).
+- `editors/panning/sub_editors_panning_scheme: int` — Controls whether the mouse wheel scroll zooms or pans in subeditors.
+- `editors/panning/warped_mouse_panning: bool` — If `true`, warps the mouse around the 2D viewport while panning in the 2D editor.
+- `editors/panning/zoom_style: int` — The mouse cursor movement direction to use when drag-zooming in any editor (except 3D scene editor) by moving the mouse.
+- `editors/polygon_editor/auto_bake_delay: float` — The delay in seconds until more complex and performance costly polygon editors commit their outlines, e.g. the 2D navigation polygon editor rebakes the navigation mesh polygons.
+- `editors/polygon_editor/point_grab_radius: int` — The radius in which points can be selected in the Polygon2D and CollisionPolygon2D editors (in pixels).
+- `editors/polygon_editor/show_previous_outline: bool` — If `true`, displays the polygon's previous shape in the 2D polygon editors with an opaque gray outline.
+- `editors/shader_editor/behavior/files/restore_shaders_on_load: bool` — If `true`, reopens shader files that were open in the shader editor when the project was last closed.
+- `editors/tiles_editor/display_grid: bool` — If `true`, displays a grid while the TileMap editor is active.
+- `editors/tiles_editor/grid_color: Color` — The color to use for the TileMap editor's grid.
+- `editors/tiles_editor/highlight_selected_layer: bool` — Highlight the currently selected TileMapLayer by dimming the other ones in the scene.
+- `editors/visual_editors/category_colors/color_color: Color` — The color of a graph node's header when it belongs to the "Color" category.
+- `editors/visual_editors/category_colors/conditional_color: Color` — The color of a graph node's header when it belongs to the "Conditional" category.
+- `editors/visual_editors/category_colors/input_color: Color` — The color of a graph node's header when it belongs to the "Input" category.
+- `editors/visual_editors/category_colors/output_color: Color` — The color of a graph node's header when it belongs to the "Output" category.
+- `editors/visual_editors/category_colors/particle_color: Color` — The color of a graph node's header when it belongs to the "Particle" category.
+- `editors/visual_editors/category_colors/scalar_color: Color` — The color of a graph node's header when it belongs to the "Scalar" category.
+- `editors/visual_editors/category_colors/special_color: Color` — The color of a graph node's header when it belongs to the "Special" category.
+- `editors/visual_editors/category_colors/textures_color: Color` — The color of a graph node's header when it belongs to the "Textures" category.
+- `editors/visual_editors/category_colors/transform_color: Color` — The color of a graph node's header when it belongs to the "Transform" category.
+- `editors/visual_editors/category_colors/utility_color: Color` — The color of a graph node's header when it belongs to the "Utility" category.
+- `editors/visual_editors/category_colors/vector_color: Color` — The color of a graph node's header when it belongs to the "Vector" category.
+- `editors/visual_editors/color_theme: String` — The color theme to use in the visual shader editor.
+- `editors/visual_editors/connection_colors/boolean_color: Color` — The color of a port/connection of boolean type.
+- `editors/visual_editors/connection_colors/sampler_color: Color` — The color of a port/connection of sampler type.
+- `editors/visual_editors/connection_colors/scalar_color: Color` — The color of a port/connection of scalar type (float, int, unsigned int).
+- `editors/visual_editors/connection_colors/transform_color: Color` — The color of a port/connection of transform type.
+- `editors/visual_editors/connection_colors/vector2_color: Color` — The color of a port/connection of Vector2 type.
+- `editors/visual_editors/connection_colors/vector3_color: Color` — The color of a port/connection of Vector3 type.
+- `editors/visual_editors/connection_colors/vector4_color: Color` — The color of a port/connection of Vector4 type.
+- `editors/visual_editors/grid_pattern: int` — The pattern used for the background grid.
+- `editors/visual_editors/lines_curvature: float` — The curvature to use for connection lines in the visual shader editor.
+- `editors/visual_editors/minimap_opacity: float` — The opacity of the minimap displayed in the bottom-right corner of the visual shader editor.
+- `editors/visual_editors/visual_shader/port_preview_size: int` — The size to use for port previews in the visual shader uniforms (toggled by clicking the "eye" icon next to an output).
+- `export/ssh/scp: String` — Path to the SCP (secure copy) executable (used for remote deploy to desktop platforms).
+- `export/ssh/ssh: String` — Path to the SSH executable (used for remote deploy to desktop platforms).
+- `filesystem/directories/autoscan_project_path: String` — The folder where projects should be scanned for (recursively), in a way similar to the project manager's Scan button.
+- `filesystem/directories/default_project_path: String` — The folder where new projects should be created by default when clicking the project manager's New Project button.
+- `filesystem/external_programs/3d_model_editor: String` — The program that opens 3D model scene files when clicking "Open in External Program" option in Filesystem Dock.
+- `filesystem/external_programs/audio_editor: String` — The program that opens audio files when clicking "Open in External Program" option in Filesystem Dock.
+- `filesystem/external_programs/raster_image_editor: String` — The program that opens raster image files when clicking "Open in External Program" option in Filesystem Dock.
+- `filesystem/external_programs/terminal_emulator: String` — The terminal emulator program to use when using Open in Terminal context menu action in the FileSystem dock.
+- `filesystem/external_programs/terminal_emulator_flags: String` — The command-line arguments to pass to the terminal emulator that is run when using Open in Terminal context menu action in the FileSystem dock.
+- `filesystem/external_programs/vector_image_editor: String` — The program that opens vector image files when clicking "Open in External Program" option in Filesystem Dock.
+- `filesystem/file_dialog/display_mode: int` — The display mode to use in the editor's file dialogs. - Thumbnails takes more space, but displays dynamic resource thumbnails, making resources easier to preview without having to open them. - List is more compact but doesn't display dynamic resource thumbnails.
+- `filesystem/file_dialog/show_hidden_files: bool` — If `true`, display hidden files in the editor's file dialogs.
+- `filesystem/file_dialog/thumbnail_size: int` — The thumbnail size to use in the editor's file dialogs (in pixels).
+- `filesystem/file_server/password: String` — Password used for file server when exporting project with remote file system.
+- `filesystem/file_server/port: int` — Port used for file server when exporting project with remote file system.
+- `filesystem/import/blender/blender_path: String` — The path to the Blender executable used for converting the Blender 3D scene files `.blend` to glTF 2.0 format during import.
+- `filesystem/import/blender/rpc_port: int` — The port number used for Remote Procedure Call (RPC) communication with Godot's created process of the blender executable.
+- `filesystem/import/blender/rpc_server_uptime: float` — The maximum idle uptime (in seconds) of the Blender process.
+- `filesystem/import/fbx/fbx2gltf_path: String` — The path to the FBX2glTF executable used for converting Autodesk FBX 3D scene files `.fbx` to glTF 2.0 format during import.
+- `filesystem/on_save/compress_binary_resources: bool` — If `true`, uses lossless compression for binary resources.
+- `filesystem/on_save/safe_save_on_backup_then_rename: bool` — If `true`, when saving a file, the editor will rename the old file to a different name, save a new file, then only remove the old file once the new file has been saved.
+- `filesystem/on_save/warn_on_saving_large_text_resources: bool` — If `true`, displays a warning toast message when saving a text-based scene or resource that is larger than 500 KiB on disk.
+- `filesystem/quick_open_dialog/default_display_mode: int` — If set to `Adaptive`, the dialog opens in list view or grid view depending on the requested type.
+- `filesystem/quick_open_dialog/enable_fuzzy_matching: bool` — If `true`, together with exact matches of a filename, the dialog includes approximate matches.
+- `filesystem/quick_open_dialog/include_addons: bool` — If `true`, results will include files located in the `addons` folder.
+- `filesystem/quick_open_dialog/instant_preview: bool` — If `true`, highlighting a resource will preview it quickly without confirming the selection or closing the dialog.
+- `filesystem/quick_open_dialog/max_fuzzy_misses: int` — The number of missed query characters allowed in a match when fuzzy matching is enabled.
+- `filesystem/quick_open_dialog/max_results: int` — Maximum number of matches to show in dialog.
+- `filesystem/quick_open_dialog/show_search_highlight: bool` — If `true`, results will be highlighted with their search matches.
+- `filesystem/tools/oidn/oidn_denoise_path: String` — The path to the directory containing the Open Image Denoise (OIDN) executable, used optionally for denoising lightmaps.
+- `input/buffering/agile_event_flushing: bool` — If `true`, input events will be flushed just before every idle and physics frame.
+- `input/buffering/use_accumulated_input: bool` — If `true`, similar input events sent by the operating system are accumulated.
+- `interface/accessibility/accessibility_support: int` — Editor accessibility support mode: - Auto (`0`): Accessibility support is enabled, but updates to the accessibility information are processed only if an assistive app (such as a screen reader or a Braille display) is active (default). - Always Active (`1`): Accessibility support is enabled, and updates to the accessibility information are always processed, regardless of the status of assistive apps. - Disabled (`2`): Accessibility support is fully disabled.
+- `interface/accessibility/property_descriptions: bool` — If `true`, editor inspector uses property documentation as an accessible description of the property.
+- `interface/editor/appearance/accept_dialog_cancel_ok_buttons: int` — How to position the Cancel and OK buttons in the editor's AcceptDialog windows.
+- `interface/editor/appearance/collapse_main_menu: bool` — If `true`, the main menu collapses into a MenuButton.
+- `interface/editor/appearance/custom_display_scale: float` — The custom editor scale factor to use.
+- `interface/editor/appearance/display_scale: int` — The display scale factor to use for the editor interface.
+- `interface/editor/appearance/editor_screen: int` — The preferred monitor to display the editor.
+- `interface/editor/appearance/expand_to_title: bool` — Expanding main editor window content to the title, if supported by DisplayServer.
+- `interface/editor/appearance/max_sticky_tree_items: int` — The maximum number of tree items allowed to stick to the top while its children are in view.
+- `interface/editor/appearance/project_manager_screen: int` — The preferred monitor to display the project manager.
+- `interface/editor/appearance/show_renderer_selector: bool` — If `true`, a renderer selector that can be used to change the `ProjectSettings.rendering/renderer/rendering_method` project setting will be shown in the top right of the main editor window.
+- `interface/editor/appearance/show_update_spinner: int` — If enabled, displays an icon in the top-right corner of the editor that spins when the editor redraws a frame.
+- `interface/editor/appearance/use_embedded_menu: bool` — If `true`, editor main menu is using embedded MenuBar instead of system global menu.
+- `interface/editor/appearance/use_native_file_dialogs: bool` — If `true`, editor UI uses OS native file/directory selection dialogs.
+- `interface/editor/behavior/automatically_open_screenshots: bool` — If `true`, automatically opens screenshots with the default program associated to `.png` files after a screenshot is taken using the Editor > Take Screenshot action.
+- `interface/editor/behavior/import_resources_when_unfocused: bool` — If `true`, (re)imports resources even if the editor window is unfocused or minimized.
+- `interface/editor/behavior/save_each_scene_on_quit: bool` — If `false`, the editor will save all scenes when confirming the Save action when quitting the editor or quitting to the project list.
+- `interface/editor/behavior/save_on_focus_loss: bool` — If `true`, scenes and scripts are saved when the editor loses focus.
+- `interface/editor/behavior/separate_distraction_mode: bool` — If `true`, the editor's Script tab will have a separate distraction mode setting from the 2D/3D/Game/AssetLib tabs.
+- `interface/editor/behavior/show_internal_errors_in_toast_notifications: int` — If enabled, displays internal engine errors in toast notifications (toggleable by clicking the "bell" icon at the bottom of the editor).
+- `interface/editor/display/keep_screen_on: bool` — If `true`, keeps the screen on (even in case of inactivity), so the screensaver does not take over.
+- `interface/editor/display/single_window_mode: bool` — If `true`, embed modal windows such as docks inside the main editor window.
+- `interface/editor/display/update_continuously: bool` — If `true`, redraws the editor every frame even if nothing has changed on screen.
+- `interface/editor/display/vsync_mode: int` — Sets the V-Sync mode for the editor.
+- `interface/editor/docks/bottom_dock_tab_style: int` — Tab style of editor docks located at the bottom.
+- `interface/editor/docks/dock_tab_style: int` — Tab style of editor docks, except bottom docks.
+- `interface/editor/docks/main_screen_dock_tab_style: int` — Tab style of editor docks located at the editor's main screen.
+- `interface/editor/fonts/code_font: String` — The font to use for the script editor.
+- `interface/editor/fonts/code_font_contextual_ligatures: int` — The font ligatures to enable for the currently configured code font.
+- `interface/editor/fonts/code_font_custom_opentype_features: String` — List of custom OpenType features to use, if supported by the currently configured code font.
+- `interface/editor/fonts/code_font_custom_variations: String` — List of alternative characters to use, if supported by the currently configured code font.
+- `interface/editor/fonts/code_font_size: int` — The size of the font in the script editor.
+- `interface/editor/fonts/font_allow_msdf: bool` — If set to `true`, MSDF font rendering will be used for the visual shader graph editor.
+- `interface/editor/fonts/font_antialiasing: int` — FreeType's font anti-aliasing mode used to render the editor fonts.
+- `interface/editor/fonts/font_disable_embedded_bitmaps: bool` — If set to `true`, embedded font bitmap loading is disabled (bitmap-only and color fonts ignore this property).
+- `interface/editor/fonts/font_hinting: int` — The font hinting mode to use for the editor fonts.
+- `interface/editor/fonts/font_subpixel_positioning: int` — The subpixel positioning mode to use when rendering editor font glyphs.
+- `interface/editor/fonts/main_font: String` — The font to use for the editor interface.
+- `interface/editor/fonts/main_font_bold: String` — The font to use for bold text in the editor interface.
+- `interface/editor/fonts/main_font_custom_opentype_features: String` — List of custom OpenType features to use, if supported by the currently configured main font.
+- `interface/editor/fonts/main_font_size: int` — The size of the font in the editor interface.
+- `interface/editor/input/mouse_extra_buttons_navigate_history: bool` — If `true`, the mouse's additional side buttons will be usable to navigate in the script editor's file history.
+- `interface/editor/input/tablet_driver: int` — Overrides the tablet driver used by the editor.
+- `interface/editor/localization/editor_language: String` — The language to use for the editor interface.
+- `interface/editor/localization/localize_settings: bool` — If `true`, setting names in the editor are localized when possible.
+- `interface/editor/localization/ui_layout_direction: int` — Editor UI default layout direction.
+- `interface/editor/timers/dragging_hover_wait_seconds: float` — During a drag-and-drop, this is how long to wait over a UI element before it triggers a reaction (e.g. a section unfolds to show nested items).
+- `interface/editor/timers/low_processor_mode_sleep_usec: int` — The amount of sleeping between frames in the editor (in microseconds).
+- `interface/editor/timers/unfocused_low_processor_mode_sleep_usec: int` — When the editor window is unfocused, the amount of sleeping between frames when the low-processor usage mode is enabled (in microseconds).
+- `interface/inspector/auto_unfold_foreign_scenes: bool` — If `true`, automatically unfolds Inspector property groups containing modified values when opening a scene for the first time.
+- `interface/inspector/color_picker_show_intensity: bool` — If `true`, show the intensity slider in the ColorPickers opened in the editor.
+- `interface/inspector/default_color_picker_mode: int` — The default color picker mode to use when opening ColorPickers in the editor.
+- `interface/inspector/default_color_picker_shape: int` — The default color picker shape to use when opening ColorPickers in the editor.
+- `interface/inspector/default_float_step: float` — The floating-point precision to use for properties that don't define an explicit precision step.
+- `interface/inspector/default_property_name_style: int` — The default property name style to display in the Inspector dock.
+- `interface/inspector/delimitate_all_container_and_resources: bool` — If `true`, add a margin around Array, Dictionary, and Resource Editors that are not already colored.
+- `interface/inspector/disable_folding: bool` — If `true`, forces all property groups to be expanded in the Inspector dock and prevents collapsing them.
+- `interface/inspector/float_drag_speed: float` — Base speed for increasing/decreasing float values by dragging them in the inspector.
+- `interface/inspector/horizontal_vector2_editing: bool` — If `true`, Vector2 and Vector2i properties are shown on a single line in the inspector instead of two lines.
+- `interface/inspector/horizontal_vector_types_editing: bool` — If `true`, Vector3, Vector3i, Vector4, Vector4i, Rect2, Rect2i, Plane, and Quaternion properties are shown on a single line in the inspector instead of multiple lines.
+- `interface/inspector/integer_drag_speed: float` — Base speed for increasing/decreasing integer values by dragging them in the inspector.
+- `interface/inspector/max_array_dictionary_items_per_page: int` — The number of Array or Dictionary items to display on each "page" in the inspector.
+- `interface/inspector/nested_color_mode: int` — Control which property editors are colored when they are opened. - Containers & Resources: Color all Array, Dictionary, and Resource Editors. - Resources: Color all Resource Editors. - External Resources: Color Resource Editors that edits an external resource.
+- `interface/inspector/open_resources_in_current_inspector: bool` — If `true`, subresources can be edited in the current inspector view.
+- `interface/inspector/resources_to_open_in_new_inspector: PackedStringArray` — List of resources that should always be opened in a new inspector view, even if `interface/inspector/open_resources_in_current_inspector` is `true`.
+- `interface/inspector/show_low_level_opentype_features: bool` — If `true`, display OpenType features marked as `hidden` by the font file in the Font editor.
+- `interface/multi_window/enable: bool` — If `true`, multiple window support in editor is enabled.
+- `interface/multi_window/maximize_window: bool` — If `true`, when panels are made floating they will be maximized.
+- `interface/multi_window/restore_windows_on_load: bool` — If `true`, the floating panel position, size, and screen will be saved on editor exit.
+- `interface/scene_tabs/auto_select_current_scene_file: bool` — If `true`, the FileSystem dock will automatically navigate to the currently selected scene tab.
+- `interface/scene_tabs/display_close_button: int` — Controls when the Close (X) button is displayed on scene tabs at the top of the editor.
+- `interface/scene_tabs/maximum_width: int` — The maximum width of each scene tab at the top editor (in pixels).
+- `interface/scene_tabs/restore_scenes_on_load: bool` — If `true`, when a project is loaded, restores scenes that were opened on the last editor session.
+- `interface/scene_tabs/show_script_button: bool` — If `true`, show a button next to each scene tab that opens the scene's "dominant" script when clicked.
+- `interface/scene_tabs/show_thumbnail_on_hover: bool` — If `true`, display an automatically-generated thumbnail when hovering scene tabs with the mouse.
+- `interface/theme/accent_color: Color` — The color to use for "highlighted" user interface elements in the editor (pressed and hovered items).
+- `interface/theme/additional_spacing: int` — The extra spacing to add to various GUI elements in the editor (in pixels).
+- `interface/theme/base_color: Color` — The base color to use for user interface elements in the editor.
+- `interface/theme/base_spacing: int` — The base spacing used by various GUI elements in the editor (in pixels).
+- `interface/theme/border_size: int` — The border size to use for interface elements (in pixels).
+- `interface/theme/color_preset: String` — The editor color preset to use.
+- `interface/theme/contrast: float` — The contrast factor to use when deriving the editor theme's base color (see `interface/theme/base_color`).
+- `interface/theme/corner_radius: int` — The corner radius to use for interface elements (in pixels).
+- `interface/theme/custom_theme: String` — The custom theme resource to use for the editor.
+- `interface/theme/draw_extra_borders: bool` — If `true`, draws additional borders around interactive UI elements in the editor.
+- `interface/theme/draw_relationship_lines: int` — What relationship lines to draw in the editor's Tree-based GUIs (such as the Scene tree dock). - None will make it so that no relationship lines are drawn. - Selected Only will only draw them for selected items. - All will always draw them for all items.
+- `interface/theme/follow_system_theme: bool` — If `true`, the editor theme preset will attempt to automatically match the system theme.
+- `interface/theme/icon_and_font_color: int` — The icon and font color scheme to use in the editor. - Auto determines the color scheme to use automatically based on `interface/theme/base_color`. - Dark makes fonts and icons dark (suitable for light themes).
+- `interface/theme/icon_saturation: float` — The saturation to use for editor icons.
+- `interface/theme/relationship_line_opacity: float` — The opacity to use when drawing relationship lines in the editor's Tree-based GUIs (such as the Scene tree dock).
+- `interface/theme/spacing_preset: String` — The editor theme spacing preset to use.
+- `interface/theme/style: String` — The editor theme style to use.
+- `interface/theme/use_monospace_font_for_editor_symbols: bool` — If `true`, use the monospace font for some labels in the editor that display code symbols, such as signals, properties, and methods.
+- `interface/theme/use_system_accent_color: bool` — If `true`, set accent color based on system settings.
+- `interface/touchscreen/enable_long_press_as_right_click: bool` — If `true`, long press on touchscreen is treated as right click.
+- `interface/touchscreen/enable_pan_and_scale_gestures: bool` — If `true`, enable two finger pan and scale gestures on touchscreen devices.
+- `interface/touchscreen/enable_touch_optimizations: bool` — If `true`, increases the scrollbar touch area, enables a larger dragger for split containers, and increases PopupMenu vertical separation to improve usability on touchscreen devices.
+- `interface/touchscreen/haptic_on_long_press: bool` — If `true`, the device will vibrate when a long-press gesture triggers a right-click context menu in the editor.
+- `interface/touchscreen/scale_gizmo_handles: float` — Specify the multiplier to apply to the scale for the editor gizmo handles to improve usability on touchscreen devices.
+- `interface/touchscreen/touch_actions_panel: int` — A touch-friendly panel that provides easy access to common actions such as save, delete, undo, and redo without requiring a keyboard.
+- `network/connection/check_for_updates: int` — Specifies how the engine should check for updates. - Disable Update Checks will block the engine from checking updates (see also `network/connection/network_mode`). - Auto (default) will check for newest stable or unstable version, depending on which version are you currently using.
+- `network/connection/network_mode: int` — Determines whether online features, such as the Asset Store or update checks, are enabled in the editor.
+- `network/debug/remote_host: String` — The address to listen to when starting the remote debugger.
+- `network/debug/remote_port: int` — The port to listen to when starting the remote debugger.
+- `network/http_proxy/host: String` — The host to use to contact the HTTP and HTTPS proxy in the editor (for the asset store and export template downloads).
+- `network/http_proxy/port: int` — The port number to use to contact the HTTP and HTTPS proxy in the editor (for the asset store and export template downloads).
+- `network/language_server/enable_smart_resolve: bool` — If `true` the language server will try to provide additional results when resolving symbols at the cost of showing wrong results.
+- `network/language_server/poll_limit_usec: int` — The upper limit of time, that the language server spends for IO each poll.
+- `network/language_server/remote_host: String` — The host used to listen for language server clients.
+- `network/language_server/remote_port: int` — The port used to listen for language server clients.
+- `network/language_server/show_native_symbols_in_editor: bool` — The declaration of native symbols can't be resolved to a position in the file system.
+- `network/language_server/use_thread: bool` — If `true` the language server will run in a separate thread, if `false` it will run on the main thread.
+- `network/tls/editor_tls_certificates: String` — The TLS certificate bundle to use for HTTP requests made within the editor (e.g. from the Asset Store tab).
+- `network/tls/enable_tls_v1.3: bool` — If `true`, enable TLSv1.3 negotiation.
+- `project_manager/default_renderer: String` — The renderer type that will be checked off by default when creating a new project.
+- `project_manager/directory_naming_convention: int` — Directory naming convention for the project manager.
+- `project_manager/sorting_order: int` — The sorting order to use in the project manager.
+- `run/auto_save/save_before_running: bool` — If `true`, saves all scenes and scripts automatically before running the project.
+- `run/bottom_panel/action_on_play: int` — The action to execute on the bottom panel when running the project.
+- `run/bottom_panel/action_on_stop: int` — The action to execute on the bottom panel when stopping the project.
+- `run/output/always_clear_output_on_play: bool` — If `true`, the editor will clear the Output panel when running the project.
+- `run/output/font_size: int` — The size of the font in the Output panel at the bottom of the editor.
+- `run/output/max_lines: int` — Maximum number of lines to show at any one time in the Output panel.
+- `run/platforms/linuxbsd/prefer_wayland: bool` — If `true`, on Linux/BSD, the editor will check for Wayland first instead of X11 (if available).
+- `run/window_placement/android_window: int` — Specifies how the Play window is launched relative to the Android editor. - Auto (based on screen size) (default) will automatically choose how to launch the Play window based on the device and screen metrics.
+- `run/window_placement/game_embed_mode: int` — Overrides game embedding setting for all newly opened projects.
+- `run/window_placement/rect: int` — The window mode to use to display the project when starting the project from the editor.
+- `run/window_placement/rect_custom_position: Vector2` — The custom position to use when starting the project from the editor (in pixels from the top-left corner).
+- `run/window_placement/screen: int` — The monitor to display the project on when starting the project from the editor.
+- `text_editor/appearance/caret/caret_blink: bool` — If `true`, makes the caret blink according to `text_editor/appearance/caret/caret_blink_interval`.
+- `text_editor/appearance/caret/caret_blink_interval: float` — The interval at which the caret will blink (in seconds).
+- `text_editor/appearance/caret/highlight_all_occurrences: bool` — If `true`, highlights all occurrences of the currently selected text in the script editor.
+- `text_editor/appearance/caret/highlight_current_line: bool` — If `true`, colors the background of the line the caret is currently on with `text_editor/theme/highlighting/current_line_color`.
+- `text_editor/appearance/caret/type: int` — The shape of the caret to use in the script editor.
+- `text_editor/appearance/drag_and_drop_info/show_drag_and_drop_info: bool` — If `true`, shows an info label listing available drop options when dragging an object into the script text editor.
+- `text_editor/appearance/enable_inline_color_picker: bool` — If `true`, displays a colored button before any Color constructor in the script editor.
+- `text_editor/appearance/guidelines/line_length_guideline_hard_column: int` — The column at which to display a subtle line as a line length guideline for scripts.
+- `text_editor/appearance/guidelines/line_length_guideline_soft_column: int` — The column at which to display a very subtle line as a line length guideline for scripts.
+- `text_editor/appearance/guidelines/show_line_length_guidelines: bool` — If `true`, displays line length guidelines to help you keep line lengths in check.
+- `text_editor/appearance/gutters/highlight_type_safe_lines: bool` — If `true`, highlights type-safe lines by displaying their line number color with `text_editor/theme/highlighting/safe_line_number_color` instead of `text_editor/theme/highlighting/line_number_color`.
+- `text_editor/appearance/gutters/line_numbers_zero_padded: bool` — If `true`, displays line numbers with zero padding (e.g.
+- `text_editor/appearance/gutters/show_info_gutter: bool` — If `true`, displays a gutter at the left containing icons for methods with signal connections and for overridden methods.
+- `text_editor/appearance/gutters/show_line_numbers: bool` — If `true`, displays line numbers in a gutter at the left.
+- `text_editor/appearance/lines/autowrap_mode: int` — If `text_editor/appearance/lines/word_wrap` is set to `1`, sets text wrapping mode.
+- `text_editor/appearance/lines/code_folding: bool` — If `true`, displays the folding arrows next to indented code sections and allows code folding.
+- `text_editor/appearance/lines/word_wrap: int` — If `true`, wraps long lines over multiple lines to avoid horizontal scrolling.
+- `text_editor/appearance/minimap/minimap_width: int` — The width of the minimap in the script editor (in pixels).
+- `text_editor/appearance/minimap/show_minimap: bool` — If `true`, draws an overview of the script near the scroll bar.
+- `text_editor/appearance/whitespace/draw_spaces: bool` — If `true`, draws space characters as centered points.
+- `text_editor/appearance/whitespace/draw_tabs: bool` — If `true`, draws tab characters as chevrons.
+- `text_editor/appearance/whitespace/line_spacing: int` — The space to add between lines (in pixels).
+- `text_editor/behavior/diagnostics/enable_tooltips: bool` — If `true`, warning and error messages will appear in tooltips when hovering over code.
+- `text_editor/behavior/documentation/enable_tooltips: bool` — If `true`, documentation tooltips will appear when hovering over a symbol.
+- `text_editor/behavior/files/auto_reload_and_parse_scripts_on_save: bool` — If `true`, tool scripts will be automatically soft-reloaded after they are saved.
+- `text_editor/behavior/files/auto_reload_scripts_on_external_change: bool` — If `true`, automatically reloads scripts and text-based shaders in the editor when they have been modified and saved by external editors or tools and the editor regains focus.
+- `text_editor/behavior/files/autosave_interval_secs: int` — If set to a value greater than `0`, automatically saves the current script following the specified interval (in seconds).
+- `text_editor/behavior/files/convert_indent_on_save: bool` — If `true`, converts indentation to match the script editor's indentation settings when saving a script.
+- `text_editor/behavior/files/drop_preload_resources_as_uid: bool` — If `true`, when dropping a Resource file to script editor while `Ctrl` is held, the resource will be preloaded with a UID.
+- `text_editor/behavior/files/open_dominant_script_on_scene_change: bool` — If `true`, opening a scene automatically opens the script attached to the root node, or the topmost node if the root has no script.
+- `text_editor/behavior/files/restore_scripts_on_load: bool` — If `true`, reopens scripts that were opened in the last session when the editor is reopened on a given project.
+- `text_editor/behavior/files/trim_final_newlines_on_save: bool` — If `true`, trims all empty newlines after the final newline when saving a script.
+- `text_editor/behavior/files/trim_trailing_whitespace_on_save: bool` — If `true`, trims trailing whitespace when saving a script.
+- `text_editor/behavior/general/empty_selection_clipboard: bool` — If `true`, copying or cutting without a selection is performed on all lines with a caret.
+- `text_editor/behavior/general/find_in_file_extensions: PackedStringArray` — Text-based file extensions to include in the editor's "Find in Files" feature.
+- `text_editor/behavior/indent/auto_indent: bool` — If `true`, automatically indents code when pressing the `Enter` key based on blocks above the new line.
+- `text_editor/behavior/indent/indent_wrapped_lines: bool` — If `true`, all wrapped lines are indented to the same amount as the unwrapped line.
+- `text_editor/behavior/indent/size: int` — When using tab indentation, determines the length of each tab.
+- `text_editor/behavior/indent/type: int` — The indentation style to use (tabs or spaces).
+- `text_editor/behavior/navigation/custom_word_separators: String` — The characters to consider as word delimiters if `text_editor/behavior/navigation/use_custom_word_separators` is `true`.
+- `text_editor/behavior/navigation/drag_and_drop_selection: bool` — If `true`, allows drag-and-dropping text in the script editor to move text.
+- `text_editor/behavior/navigation/move_caret_on_right_click: bool` — If `true`, the caret will be moved when right-clicking somewhere in the script editor (like when left-clicking or middle-clicking).
+- `text_editor/behavior/navigation/open_script_when_connecting_signal_to_existing_method: bool` — If `true`, opens the script editor when connecting a signal to an existing script method from the Signals dock.
+- `text_editor/behavior/navigation/scroll_past_end_of_file: bool` — If `true`, allows scrolling past the end of the file.
+- `text_editor/behavior/navigation/smooth_scrolling: bool` — If `true`, enables a smooth scrolling animation when using the mouse wheel to scroll.
+- `text_editor/behavior/navigation/stay_in_script_editor_on_node_selected: bool` — If `true`, prevents automatically switching between the Script and 2D/3D screens when selecting a node in the Scene tree dock.
+- `text_editor/behavior/navigation/use_custom_word_separators: bool` — If `true`, uses the characters in `text_editor/behavior/navigation/custom_word_separators` as word separators for word navigation and operations.
+- `text_editor/behavior/navigation/use_default_word_separators: bool` — If `true`, uses the characters in `!"#$%&'()*+,-./:;<=>?@[\]^`{|}~`, the Unicode General Punctuation table, and the Unicode CJK Punctuation table as word separators for word navigation and operations.
+- `text_editor/behavior/navigation/v_scroll_speed: int` — The speed of scrolling in lines per second when `text_editor/behavior/navigation/smooth_scrolling` is `true`.
+- `text_editor/completion/add_node_path_literals: bool` — If `true`, uses NodePath instead of String when appropriate for code autocompletion or for drag and dropping object properties into the script editor.
+- `text_editor/completion/add_string_name_literals: bool` — If `true`, uses StringName instead of String when appropriate for code autocompletion.
+- `text_editor/completion/add_type_hints: bool` — If `true`, automatically adds GDScript static typing (such as `-> void` and `: int`) in many situations where it's possible to, including when: - Accepting a suggestion from code autocompletion; - Creating a new script from a template; - Connecting signals from the Signals dock; - Creating variables prefixed with `@GDScript.@onready`, by dropping nodes from the Scene dock into the script editor while holding `Ctrl`.
+- `text_editor/completion/auto_brace_complete: bool` — If `true`, automatically inserts the matching closing brace when the opening brace is inserted by typing or autocompletion.
+- `text_editor/completion/code_complete_delay: float` — The delay in seconds after which autocompletion suggestions should be displayed when the user stops typing.
+- `text_editor/completion/code_complete_enabled: bool` — If `true`, code completion will be triggered automatically after `text_editor/completion/code_complete_delay`.
+- `text_editor/completion/colorize_suggestions: bool` — If `true` enables the coloring for some items in the autocompletion suggestions, like vector components.
+- `text_editor/completion/complete_file_paths: bool` — If `true`, provides autocompletion suggestions for file paths in methods such as `load()` and `preload()`.
+- `text_editor/completion/idle_parse_delay: float` — The delay in seconds after which the script editor should check for errors when the user stops typing.
+- `text_editor/completion/idle_parse_delay_with_errors_found: float` — The delay used instead of `text_editor/completion/idle_parse_delay`, when the parser has found errors.
+- `text_editor/completion/put_callhint_tooltip_below_current_line: bool` — If `true`, the code completion tooltip will appear below the current line unless there is no space on screen below the current line.
+- `text_editor/completion/use_single_quotes: bool` — If `true`, performs string autocompletion with single quotes.
+- `text_editor/external/exec_flags: String` — The command-line arguments to pass to the external text editor that is run when `text_editor/external/use_external_editor` is `true`.
+- `text_editor/external/exec_path: String` — The path to the text editor executable used to edit text files if `text_editor/external/use_external_editor` is `true`.
+- `text_editor/external/use_external_editor: bool` — If `true`, uses an external editor instead of the built-in Script Editor.
+- `text_editor/help/class_reference_examples: int` — Controls which multi-line code blocks should be displayed in the editor help.
+- `text_editor/help/help_font_size: int` — The font size to use for the editor help (built-in class reference).
+- `text_editor/help/help_source_font_size: int` — The font size to use for code samples in the editor help (built-in class reference).
+- `text_editor/help/help_title_font_size: int` — The font size to use for headings in the editor help (built-in class reference).
+- `text_editor/help/show_help_index: bool` — If `true`, displays a table of contents at the left of the editor help (at the location where the members overview would appear when editing a script).
+- `text_editor/help/show_property_setters_and_getters: bool` — If `true`, shows property setters and getters from the editor help.
+- `text_editor/help/sort_functions_alphabetically: bool` — If `true`, the script's method list in the Script Editor is sorted alphabetically.
+- `text_editor/script_list/group_help_pages: bool` — If `true`, class reference pages are grouped together at the bottom of the Script Editor's script list.
+- `text_editor/script_list/highlight_scene_scripts: bool` — If `true`, the scripts that are used by the current scene are highlighted in the Script Editor's script list.
+- `text_editor/script_list/list_script_names_as: int` — Specifies how script paths should be displayed in Script Editor's script list.
+- `text_editor/script_list/script_temperature_enabled: bool` — If `true`, the names of recently opened scripts in the Script Editor are highlighted with the accent color, with its intensity based on how recently they were opened.
+- `text_editor/script_list/script_temperature_history_size: int` — How many script names can be highlighted at most, if `text_editor/script_list/script_temperature_enabled` is `true`.
+- `text_editor/script_list/show_members_overview: bool` — If `true`, displays an overview of the current script's member functions at the left of the script editor.
+- `text_editor/script_list/sort_members_outline_alphabetically: bool` — If `true`, sorts the members outline (located at the left of the script editor) using alphabetical order.
+- `text_editor/script_list/sort_scripts_by: int` — Specifies sorting used for Script Editor's open script list.
+- `text_editor/theme/color_theme: String` — The syntax theme to use in the script editor.
+- `text_editor/theme/highlighting/background_color: Color` — The script editor's background color.
+- `text_editor/theme/highlighting/base_type_color: Color` — The script editor's base type color (used for types like Vector2, Vector3, Color, ...).
+- `text_editor/theme/highlighting/bookmark_color: Color` — The script editor's bookmark icon color (displayed in the gutter).
+- `text_editor/theme/highlighting/brace_mismatch_color: Color` — The script editor's brace mismatch color.
+- `text_editor/theme/highlighting/breakpoint_color: Color` — The script editor's breakpoint icon color (displayed in the gutter).
+- `text_editor/theme/highlighting/caret_background_color: Color` — The script editor's caret background color.
+- `text_editor/theme/highlighting/caret_color: Color` — The script editor's caret color.
+- `text_editor/theme/highlighting/code_folding_color: Color` — The script editor's color for the code folding icon (displayed in the gutter).
+- `text_editor/theme/highlighting/comment_color: Color` — The script editor's comment color.
+- `text_editor/theme/highlighting/comment_markers/critical_color: Color` — The script editor's critical comment marker text color.
+- `text_editor/theme/highlighting/comment_markers/critical_list: String` — A comma-separated list of case-sensitive words to highlight in comments.
+- `text_editor/theme/highlighting/comment_markers/notice_color: Color` — The script editor's notice comment marker text color.
+- `text_editor/theme/highlighting/comment_markers/notice_list: String` — A comma-separated list of case-sensitive words to highlight in comments.
+- `text_editor/theme/highlighting/comment_markers/warning_color: Color` — The script editor's warning comment marker text color.
+- `text_editor/theme/highlighting/comment_markers/warning_list: String` — A comma-separated list of case-sensitive words to highlight in comments.
+- `text_editor/theme/highlighting/completion_background_color: Color` — The script editor's autocompletion box background color.
+- `text_editor/theme/highlighting/completion_existing_color: Color` — The script editor's autocompletion box background color to highlight existing characters in the completion results.
+- `text_editor/theme/highlighting/completion_font_color: Color` — The script editor's autocompletion box text color.
+- `text_editor/theme/highlighting/completion_scroll_color: Color` — The script editor's autocompletion box scroll bar color.
+- `text_editor/theme/highlighting/completion_scroll_hovered_color: Color` — The script editor's autocompletion box scroll bar color when hovered or pressed with the mouse.
+- `text_editor/theme/highlighting/completion_selected_color: Color` — The script editor's autocompletion box background color for the currently selected line.
+- `text_editor/theme/highlighting/control_flow_keyword_color: Color` — The script editor's control flow keyword color (used for keywords like `if`, `for`, `return`, ...).
+- `text_editor/theme/highlighting/current_line_color: Color` — The script editor's background color for the line the caret is currently on.
+- `text_editor/theme/highlighting/doc_comment_color: Color` — The script editor's documentation comment color.
+- `text_editor/theme/highlighting/engine_type_color: Color` — The script editor's engine type color (Object, Mesh, Node, ...).
+- `text_editor/theme/highlighting/error_underline_color: Color` — The script editor's color for the squiggly lines shown under code producing errors.
+- `text_editor/theme/highlighting/executing_line_color: Color` — The script editor's color for the debugger's executing line icon (displayed in the gutter).
+- `text_editor/theme/highlighting/folded_code_region_color: Color` — The script editor's background line highlighting color for folded code region.
+- `text_editor/theme/highlighting/function_color: Color` — The script editor's function call color.
+- `text_editor/theme/highlighting/gdscript/annotation_color: Color` — The GDScript syntax highlighter text color for annotations (e.g.
+- `text_editor/theme/highlighting/gdscript/function_definition_color: Color` — The GDScript syntax highlighter text color for function definitions (e.g. the `_ready` in `func _ready():`).
+- `text_editor/theme/highlighting/gdscript/global_function_color: Color` — The GDScript syntax highlighter text color for global functions, such as the ones in @GlobalScope (e.g.
+- `text_editor/theme/highlighting/gdscript/node_path_color: Color` — The GDScript syntax highlighter text color for NodePath literals (e.g.
+- `text_editor/theme/highlighting/gdscript/node_reference_color: Color` — The GDScript syntax highlighter text color for node reference literals (e.g.
+- `text_editor/theme/highlighting/gdscript/string_name_color: Color` — The GDScript syntax highlighter text color for StringName literals (e.g.
+- `text_editor/theme/highlighting/keyword_color: Color` — The script editor's non-control flow keyword color (used for keywords like `var`, `func`, `extends`, ...).
+- `text_editor/theme/highlighting/line_length_guideline_color: Color` — The script editor's color for the line length guideline.
+- `text_editor/theme/highlighting/line_number_color: Color` — The script editor's color for line numbers.
+- `text_editor/theme/highlighting/mark_color: Color` — The script editor's background color for lines with errors.
+- `text_editor/theme/highlighting/member_variable_color: Color` — The script editor's color for member variables on objects (e.g.
+- `text_editor/theme/highlighting/number_color: Color` — The script editor's color for numbers (integer and floating-point).
+- `text_editor/theme/highlighting/safe_line_number_color: Color` — The script editor's color for type-safe line numbers.
+- `text_editor/theme/highlighting/search_result_border_color: Color` — The script editor's color for the border of search results.
+- `text_editor/theme/highlighting/search_result_color: Color` — The script editor's background color for search results.
+- `text_editor/theme/highlighting/selection_color: Color` — The script editor's background color for the currently selected text.
+- `text_editor/theme/highlighting/string_color: Color` — The script editor's color for strings (single-line and multi-line).
+- `text_editor/theme/highlighting/string_placeholder_color: Color` — The script editor's color for string placeholders, such as `%s` and `{_}`.
+- `text_editor/theme/highlighting/symbol_color: Color` — The script editor's color for operators (`( ) [ ] { } + - * /`, ...).
+- `text_editor/theme/highlighting/text_color: Color` — The script editor's color for text not highlighted by any syntax highlighting rule.
+- `text_editor/theme/highlighting/text_selected_color: Color` — The script editor's background color for text.
+- `text_editor/theme/highlighting/user_type_color: Color` — The script editor's color for user-defined types (using `class_name`).
+- `text_editor/theme/highlighting/warning_color: Color` — The script editor's background color for lines with warnings.
+- `text_editor/theme/highlighting/warning_underline_color: Color` — The script editor's color for the squiggly lines shown under code producing warnings.
+- `text_editor/theme/highlighting/word_highlighted_color: Color` — The script editor's color for words highlighted by selecting them.
+- `version_control/ssh_private_key_path: String` — Path to private SSH key file for the editor's Version Control integration credentials.
+- `version_control/ssh_public_key_path: String` — Path to public SSH key file for the editor's Version Control integration credentials.
+- `version_control/username: String` — Default username for editor's Version Control integration.
+
+## Methods
+
+- `add_property_info(info: Dictionary) -> void` — Adds a custom property info to a property.
+- `add_shortcut(path: String, shortcut: Shortcut) -> void` — Adds a `shortcut` whose path is specified by `path`.
+- `check_changed_settings_in_group(setting_prefix: String) -> bool` *const* — Checks if any settings with the prefix `setting_prefix` exist in the set of changed settings.
+- `erase(property: String) -> void` — Erases the setting whose name is specified by `property`.
+- `get_changed_settings() -> PackedStringArray` *const* — Gets an array of the settings which have been changed since the last save.
+- `get_favorites() -> PackedStringArray` *const* — Returns the list of favorite files and directories for this project.
+- `get_project_metadata(section: String, key: String, default: Variant = null) -> Variant` *const* — Returns project-specific metadata for the `section` and `key` specified.
+- `get_recent_dirs() -> PackedStringArray` *const* — Returns the list of recently visited folders in the file dialog for this project.
+- `get_setting(name: String) -> Variant` *const* — Returns the value of the setting specified by `name`.
+- `get_shortcut(path: String) -> Shortcut` *const* — Returns the shortcut specified by `path`.
+- `get_shortcut_list() -> PackedStringArray` — Returns the list of stored shortcut paths.
+- `has_setting(name: String) -> bool` *const* — Returns `true` if the setting specified by `name` exists, `false` otherwise.
+- `has_shortcut(path: String) -> bool` *const* — Returns `true` if the shortcut specified by `path` exists, `false` otherwise.
+- `is_shortcut(path: String, event: InputEvent) -> bool` *const* — Returns `true` if the shortcut specified by `path` matches the event specified by `event`, `false` otherwise.
+- `mark_setting_changed(setting: String) -> void` — Marks the passed editor setting as being changed, see `get_changed_settings`.
+- `remove_shortcut(path: String) -> void` — Removes the shortcut specified by `path`.
+- `set_builtin_action_override(name: String, actions_list: InputEvent[]) -> void` — Overrides the built-in editor action `name` with the input actions defined in `actions_list`.
+- `set_favorites(dirs: PackedStringArray) -> void` — Sets the list of favorite files and directories for this project.
+- `set_initial_value(name: StringName, value: Variant, update_current: bool) -> void` — Sets the initial value of the setting specified by `name` to `value`.
+- `set_project_metadata(section: String, key: String, data: Variant) -> void` — Sets project-specific metadata with the `section`, `key` and `data` specified.
+- `set_recent_dirs(dirs: PackedStringArray) -> void` — Sets the list of recently visited folders in the file dialog for this project.
+- `set_setting(name: String, value: Variant) -> void` — Sets the `value` of the setting specified by `name`.
+
+## Signals
+
+- `settings_changed()` — Emitted after any editor setting has changed.
+
+## Constants
+
+- `NOTIFICATION_EDITOR_SETTINGS_CHANGED = 10000` — Emitted after any editor setting has changed.

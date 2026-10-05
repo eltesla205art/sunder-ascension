@@ -18,6 +18,7 @@ all in one dependency-free HTML file that runs on phones and computers.
 | `supabase.sql` | One-shot setup for the online leaderboard / signups / comments |
 | `skills/sunder-ascension-dev/` | Claude Agent Skill — dev/test/balance/deploy workflow for this project |
 | `skills/prompt-optimizer/` | Claude Agent Skill — optimize, iterate, and evaluate AI prompts (method from linshenkx/prompt-optimizer) |
+| `skills/godot-engine/` | Claude Agent Skill — Godot 4 expert with the full offline class reference (1,112 classes) built from [godotengine/godot](https://github.com/godotengine/godot), MIT — see `skills/godot-engine/GODOT-LICENSE.txt` |
 | `skills/threejs-*/` | Three.js game skill pack (9 skills, start with `threejs-game-director`) from [majidmanzarpour/threejs-game-skills](https://github.com/majidmanzarpour/threejs-game-skills), MIT — see `skills/THREEJS-GAME-SKILLS-LICENSE` |
 
 ## Battle math (the balance law)

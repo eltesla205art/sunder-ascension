@@ -1,0 +1,11 @@
+# CSharpScript
+
+**Inherits:** Script
+
+A script implemented in the C# programming language, saved with the `.cs` extension (Mono-enabled builds only).
+
+This class represents a C# script. It is the C# equivalent of the GDScript class and is only available in Mono-enabled Godot builds.
+
+## Methods
+
+- `new() -> Variant` *vararg* — Returns a new instance of the script.

@@ -1,0 +1,11 @@
+# QuadOccluder3D
+
+**Inherits:** Occluder3D
+
+Flat plane shape for use with occlusion culling in OccluderInstance3D.
+
+QuadOccluder3D stores a flat plane shape that can be used by the engine's occlusion culling system. See also PolygonOccluder3D if you need to customize the quad's shape. See OccluderInstance3D's documentation for instructions on setting up occlusion culling.
+
+## Properties
+
+- `size: Vector2` = `Vector2(1, 1)` — The quad's size in 3D units.

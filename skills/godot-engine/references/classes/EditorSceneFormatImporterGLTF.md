@@ -1,0 +1,3 @@
+# EditorSceneFormatImporterGLTF
+
+**Inherits:** EditorSceneFormatImporter

@@ -1,0 +1,217 @@
+# EditorExportPlatformAndroid
+
+**Inherits:** EditorExportPlatform
+
+Exporter for Android.
+
+
+
+## Properties
+
+- `architectures/arm64-v8a: bool` — If `true`, `arm64` binaries are included into exported project.
+- `architectures/armeabi-v7a: bool` — If `true`, `arm32` binaries are included into exported project.
+- `architectures/x86: bool` — If `true`, `x86_32` binaries are included into exported project.
+- `architectures/x86_64: bool` — If `true`, `x86_64` binaries are included into exported project.
+- `command_line/extra_args: String` — A list of additional command line arguments, separated by space, which the exported project will receive when started.
+- `custom_template/debug: String` — Path to an APK file to use as a custom export template for debug exports.
+- `custom_template/release: String` — Path to an APK file to use as a custom export template for release exports.
+- `gesture/swipe_to_dismiss: bool` — If `true`, Swipe to dismiss will be enabled.
+- `gradle_build/android_source_template: String` — Path to a ZIP file holding the source for the export template used in a Gradle build.
+- `gradle_build/compress_native_libraries: bool` — If `true`, native libraries are compressed when performing a Gradle build.
+- `gradle_build/custom_theme_attributes: Dictionary` — A dictionary of custom theme attributes to include in the exported Android project.
+- `gradle_build/export_format: int` — Application export format (`*.apk`, `*.aab`, or `*.aar`).
+- `gradle_build/gradle_build_directory: String` — Path to the Gradle build directory.
+- `gradle_build/min_sdk: String` — Minimum Android API level required for the application to run (used during Gradle build).
+- `gradle_build/minification: bool` — If `true`, enables R8 code minification and obfuscation for release Gradle builds.
+- `gradle_build/target_sdk: String` — The Android API level on which the application is designed to run (used during Gradle build).
+- `gradle_build/use_gradle_build: bool` — If `true`, Gradle build is used instead of pre-built APK.
+- `graphics/opengl_debug: bool` — If `true`, OpenGL ES debug context will be created (additional runtime checking, validation, and logging).
+- `keystore/debug: String` — Path of the debug keystore file.
+- `keystore/debug_password: String` — Password for the debug keystore file.
+- `keystore/debug_user: String` — User name for the debug keystore file.
+- `keystore/release: String` — Path of the release keystore file.
+- `keystore/release_password: String` — Password for the release keystore file.
+- `keystore/release_user: String` — User name for the release keystore file.
+- `launcher_icons/adaptive_background_432x432: String` — Background layer of the application adaptive icon file.
+- `launcher_icons/adaptive_foreground_432x432: String` — Foreground layer of the application adaptive icon file.
+- `launcher_icons/adaptive_monochrome_432x432: String` — Monochrome layer of the application adaptive icon file.
+- `launcher_icons/main_192x192: String` — Application icon file.
+- `package/app_category: int` — Application category for the Google Play Store.
+- `package/exclude_from_recents: bool` — If `true`, task initiated by main activity will be excluded from the list of recently used applications.
+- `package/name: String` — Name of the application.
+- `package/retain_data_on_uninstall: bool` — If `true`, when the user uninstalls an app, a prompt to keep the app's data will be shown.
+- `package/show_as_launcher_app: bool` — If `true`, the user will be able to set this app as the system launcher in Android preferences.
+- `package/show_in_android_tv: bool` — If `true`, this app will show in Android TV launcher UI.
+- `package/show_in_app_library: bool` — If `true`, this app will show in the device's app library.
+- `package/signed: bool` — If `true`, package signing is enabled.
+- `package/unique_name: String` — Unique application identifier in a reverse-DNS format.
+- `permissions/access_checkin_properties: bool` — Allows read/write access to the "properties" table in the checkin database.
+- `permissions/access_coarse_location: bool` — Allows access to the approximate location information.
+- `permissions/access_fine_location: bool` — Allows access to the precise location information.
+- `permissions/access_location_extra_commands: bool` — Allows access to the extra location provider commands.
+- `permissions/access_media_location: bool` — Allows an application to access any geographic locations persisted in the user's shared collection.
+- `permissions/access_mock_location: bool` — Allows an application to create mock location providers for testing.
+- `permissions/access_network_state: bool` — Allows access to the information about networks.
+- `permissions/access_surface_flinger: bool` — Allows an application to use SurfaceFlinger's low level features.
+- `permissions/access_wifi_state: bool` — Allows access to the information about Wi-Fi networks.
+- `permissions/account_manager: bool` — Allows applications to call into AccountAuthenticators.
+- `permissions/add_voicemail: bool` — Allows an application to add voicemails into the system.
+- `permissions/authenticate_accounts: bool` — Allows an application to act as an AccountAuthenticator for the AccountManager.
+- `permissions/battery_stats: bool` — Allows an application to collect battery statistics.
+- `permissions/bind_accessibility_service: bool` — Must be required by an AccessibilityService, to ensure that only the system can bind to it.
+- `permissions/bind_appwidget: bool` — Allows an application to tell the AppWidget service which application can access AppWidget's data.
+- `permissions/bind_device_admin: bool` — Must be required by device administration receiver, to ensure that only the system can interact with it.
+- `permissions/bind_input_method: bool` — Must be required by an InputMethodService, to ensure that only the system can bind to it.
+- `permissions/bind_nfc_service: bool` — Must be required by a HostApduService or OffHostApduService to ensure that only the system can bind to it.
+- `permissions/bind_notification_listener_service: bool` — Must be required by a NotificationListenerService, to ensure that only the system can bind to it.
+- `permissions/bind_print_service: bool` — Must be required by a PrintService, to ensure that only the system can bind to it.
+- `permissions/bind_remoteviews: bool` — Must be required by a RemoteViewsService, to ensure that only the system can bind to it.
+- `permissions/bind_text_service: bool` — Must be required by a TextService (e.g.
+- `permissions/bind_vpn_service: bool` — Must be required by a VpnService, to ensure that only the system can bind to it.
+- `permissions/bind_wallpaper: bool` — Must be required by a WallpaperService, to ensure that only the system can bind to it.
+- `permissions/bluetooth: bool` — Allows applications to connect to paired bluetooth devices.
+- `permissions/bluetooth_admin: bool` — Allows applications to discover and pair bluetooth devices.
+- `permissions/bluetooth_privileged: bool` — Allows applications to pair bluetooth devices without user interaction, and to allow or disallow phonebook access or message access.
+- `permissions/brick: bool` — Required to be able to disable the device (very dangerous!).
+- `permissions/broadcast_package_removed: bool` — Allows an application to broadcast a notification that an application package has been removed.
+- `permissions/broadcast_sms: bool` — Allows an application to broadcast an SMS receipt notification.
+- `permissions/broadcast_sticky: bool` — Allows an application to broadcast sticky intents.
+- `permissions/broadcast_wap_push: bool` — Allows an application to broadcast a WAP PUSH receipt notification.
+- `permissions/call_phone: bool` — Allows an application to initiate a phone call without going through the Dialer user interface.
+- `permissions/call_privileged: bool` — Allows an application to call any phone number, including emergency numbers, without going through the Dialer user interface.
+- `permissions/camera: bool` — Required to be able to access the camera device.
+- `permissions/capture_audio_output: bool` — Allows an application to capture audio output.
+- `permissions/capture_secure_video_output: bool` — Allows an application to capture secure video output.
+- `permissions/capture_video_output: bool` — Allows an application to capture video output.
+- `permissions/change_component_enabled_state: bool` — Allows an application to change whether an application component (other than its own) is enabled or not.
+- `permissions/change_configuration: bool` — Allows an application to modify the current configuration, such as locale.
+- `permissions/change_network_state: bool` — Allows applications to change network connectivity state.
+- `permissions/change_wifi_multicast_state: bool` — Allows applications to enter Wi-Fi Multicast mode.
+- `permissions/change_wifi_state: bool` — Allows applications to change Wi-Fi connectivity state.
+- `permissions/clear_app_cache: bool` — Allows an application to clear the caches of all installed applications on the device.
+- `permissions/clear_app_user_data: bool` — Allows an application to clear user data.
+- `permissions/control_location_updates: bool` — Allows enabling/disabling location update notifications from the radio.
+- `permissions/custom_permissions: PackedStringArray` — Array of custom permission strings.
+- `permissions/delete_cache_files: bool` *(deprecated)* — 
+- `permissions/delete_packages: bool` — Allows an application to delete packages.
+- `permissions/device_power: bool` — Allows low-level access to power management.
+- `permissions/diagnostic: bool` — Allows applications to RW to diagnostic resources.
+- `permissions/disable_keyguard: bool` — Allows applications to disable the keyguard if it is not secure.
+- `permissions/dump: bool` — Allows an application to retrieve state dump information from system services.
+- `permissions/expand_status_bar: bool` — Allows an application to expand or collapse the status bar.
+- `permissions/factory_test: bool` — Run as a manufacturer test application, running as the root user.
+- `permissions/flashlight: bool` — Allows access to the flashlight.
+- `permissions/force_back: bool` — Allows an application to force a BACK operation on whatever is the top activity.
+- `permissions/get_accounts: bool` — Allows access to the list of accounts in the Accounts Service.
+- `permissions/get_package_size: bool` — Allows an application to find out the space used by any package.
+- `permissions/get_tasks: bool` *(deprecated)* — 
+- `permissions/get_top_activity_info: bool` — Allows an application to retrieve private information about the current top activity.
+- `permissions/global_search: bool` — Used on content providers to allow the global search system to access their data.
+- `permissions/hardware_test: bool` — Allows access to hardware peripherals.
+- `permissions/inject_events: bool` — Allows an application to inject user events (keys, touch, trackball) into the event stream and deliver them to ANY window.
+- `permissions/install_location_provider: bool` — Allows an application to install a location provider into the Location Manager.
+- `permissions/install_packages: bool` — Allows an application to install packages.
+- `permissions/install_shortcut: bool` — Allows an application to install a shortcut in Launcher.
+- `permissions/internal_system_window: bool` — Allows an application to open windows that are for use by parts of the system user interface.
+- `permissions/internet: bool` — Allows applications to open network sockets.
+- `permissions/kill_background_processes: bool` — Allows an application to call ActivityManager.killBackgroundProcesses(String).
+- `permissions/location_hardware: bool` — Allows an application to use location features in hardware, such as the geofencing api.
+- `permissions/manage_accounts: bool` — Allows an application to manage the list of accounts in the AccountManager.
+- `permissions/manage_app_tokens: bool` — Allows an application to manage (create, destroy, Z-order) application tokens in the window manager.
+- `permissions/manage_documents: bool` — Allows an application to manage access to documents, usually as part of a document picker.
+- `permissions/manage_external_storage: bool` — Allows an application a broad access to external storage in scoped storage.
+- `permissions/manage_media: bool` — Allows an application to modify and delete media files on this device or any connected storage device without user confirmation.
+- `permissions/master_clear: bool` — See MASTER_CLEAR.
+- `permissions/media_content_control: bool` — Allows an application to know what content is playing and control its playback.
+- `permissions/modify_audio_settings: bool` — Allows an application to modify global audio settings.
+- `permissions/modify_phone_state: bool` — Allows modification of the telephony state - power on, mmi, etc.
+- `permissions/mount_format_filesystems: bool` — Allows formatting file systems for removable storage.
+- `permissions/mount_unmount_filesystems: bool` — Allows mounting and unmounting file systems for removable storage.
+- `permissions/nfc: bool` — Allows applications to perform I/O operations over NFC.
+- `permissions/persistent_activity: bool` *(deprecated)* — Allows an application to make its activities persistent.
+- `permissions/post_notifications: bool` — Allows an application to post notifications.
+- `permissions/process_outgoing_calls: bool` *(deprecated)* — Allows an application to see the number being dialed during an outgoing call with the option to redirect the call to a different number or abort the call altogether.
+- `permissions/read_calendar: bool` — Allows an application to read the user's calendar data.
+- `permissions/read_call_log: bool` — Allows an application to read the user's call log.
+- `permissions/read_contacts: bool` — Allows an application to read the user's contacts data.
+- `permissions/read_external_storage: bool` *(deprecated)* — Allows an application to read from external storage.
+- `permissions/read_frame_buffer: bool` — Allows an application to take screen shots and more generally get access to the frame buffer data.
+- `permissions/read_history_bookmarks: bool` — Allows an application to read (but not write) the user's browsing history and bookmarks.
+- `permissions/read_input_state: bool` *(deprecated)* — 
+- `permissions/read_logs: bool` — Allows an application to read the low-level system log files.
+- `permissions/read_media_audio: bool` — Allows an application to read audio files from external storage.
+- `permissions/read_media_images: bool` — Allows an application to read image files from external storage.
+- `permissions/read_media_video: bool` — Allows an application to read video files from external storage.
+- `permissions/read_media_visual_user_selected: bool` — Allows an application to read image or video files from external storage that a user has selected via the permission prompt photo picker.
+- `permissions/read_phone_state: bool` — Allows read only access to phone state.
+- `permissions/read_profile: bool` — Allows an application to read the user's personal profile data.
+- `permissions/read_sms: bool` — Allows an application to read SMS messages.
+- `permissions/read_social_stream: bool` — Allows an application to read from the user's social stream.
+- `permissions/read_sync_settings: bool` — Allows applications to read the sync settings.
+- `permissions/read_sync_stats: bool` — Allows applications to read the sync stats.
+- `permissions/read_user_dictionary: bool` — Allows an application to read the user dictionary.
+- `permissions/reboot: bool` — Required to be able to reboot the device.
+- `permissions/receive_boot_completed: bool` — Allows an application to receive the Intent.ACTION_BOOT_COMPLETED that is broadcast after the system finishes booting.
+- `permissions/receive_mms: bool` — Allows an application to monitor incoming MMS messages.
+- `permissions/receive_sms: bool` — Allows an application to receive SMS messages.
+- `permissions/receive_wap_push: bool` — Allows an application to receive WAP push messages.
+- `permissions/record_audio: bool` — Allows an application to record audio.
+- `permissions/reorder_tasks: bool` — Allows an application to change the Z-order of tasks.
+- `permissions/restart_packages: bool` *(deprecated)* — 
+- `permissions/send_respond_via_message: bool` — Allows an application (Phone) to send a request to other applications to handle the respond-via-message action during incoming calls.
+- `permissions/send_sms: bool` — Allows an application to send SMS messages.
+- `permissions/set_activity_watcher: bool` — Allows an application to watch and control how activities are started globally in the system.
+- `permissions/set_alarm: bool` — Allows an application to broadcast an Intent to set an alarm for the user.
+- `permissions/set_always_finish: bool` — Allows an application to control whether activities are immediately finished when put in the background.
+- `permissions/set_animation_scale: bool` — Allows to modify the global animation scaling factor.
+- `permissions/set_debug_app: bool` — Configure an application for debugging.
+- `permissions/set_orientation: bool` — Allows low-level access to setting the orientation (actually rotation) of the screen.
+- `permissions/set_pointer_speed: bool` — Allows low-level access to setting the pointer speed.
+- `permissions/set_preferred_applications: bool` *(deprecated)* — 
+- `permissions/set_process_limit: bool` — Allows an application to set the maximum number of (not needed) application processes that can be running.
+- `permissions/set_time: bool` — Allows applications to set the system time directly.
+- `permissions/set_time_zone: bool` — Allows applications to set the system time zone directly.
+- `permissions/set_wallpaper: bool` — Allows applications to set the wallpaper.
+- `permissions/set_wallpaper_hints: bool` — Allows applications to set the wallpaper hints.
+- `permissions/signal_persistent_processes: bool` — Allow an application to request that a signal be sent to all persistent processes.
+- `permissions/status_bar: bool` — Allows an application to open, close, or disable the status bar and its icons.
+- `permissions/subscribed_feeds_read: bool` — Allows an application to allow access the subscribed feeds ContentProvider.
+- `permissions/subscribed_feeds_write: bool` *(deprecated)* — 
+- `permissions/system_alert_window: bool` — Allows an app to create windows using the type WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY, shown on top of all other apps.
+- `permissions/transmit_ir: bool` — Allows using the device's IR transmitter, if available.
+- `permissions/uninstall_shortcut: bool` *(deprecated)* — 
+- `permissions/update_device_stats: bool` — Allows an application to update device statistics.
+- `permissions/use_credentials: bool` — Allows an application to request authtokens from the AccountManager.
+- `permissions/use_sip: bool` — Allows an application to use SIP service.
+- `permissions/vibrate: bool` — Allows access to the vibrator.
+- `permissions/wake_lock: bool` — Allows using PowerManager WakeLocks to keep processor from sleeping or screen from dimming.
+- `permissions/write_apn_settings: bool` — Allows applications to write the apn settings and read sensitive fields of an existing apn settings like user and password.
+- `permissions/write_calendar: bool` — Allows an application to write the user's calendar data.
+- `permissions/write_call_log: bool` — Allows an application to write (but not read) the user's call log data.
+- `permissions/write_contacts: bool` — Allows an application to write the user's contacts data.
+- `permissions/write_external_storage: bool` — Allows an application to write to external storage.
+- `permissions/write_gservices: bool` — Allows an application to modify the Google service map.
+- `permissions/write_history_bookmarks: bool` — Allows an application to write (but not read) the user's browsing history and bookmarks.
+- `permissions/write_profile: bool` — Allows an application to write (but not read) the user's personal profile data.
+- `permissions/write_secure_settings: bool` — Allows an application to read or write the secure system settings.
+- `permissions/write_settings: bool` — Allows an application to read or write the system settings.
+- `permissions/write_sms: bool` — Allows an application to write SMS messages.
+- `permissions/write_social_stream: bool` — Allows an application to write (but not read) the user's social stream data.
+- `permissions/write_sync_settings: bool` — Allows applications to write the sync settings.
+- `permissions/write_user_dictionary: bool` — Allows an application to write to the user dictionary.
+- `screen/background_color: Color` — The background color used for the root window.
+- `screen/edge_to_edge: bool` — If `true`, this makes the navigation and status bars translucent and allows the application content to extend edge to edge.
+- `screen/immersive_mode: bool` — If `true`, hides the navigation and status bar.
+- `screen/support_large: bool` — Indicates whether the application supports larger screen form-factors.
+- `screen/support_normal: bool` — Indicates whether an application supports the "normal" screen form-factors.
+- `screen/support_small: bool` — Indicates whether the application supports smaller screen form-factors.
+- `screen/support_xlarge: bool` — Indicates whether the application supports extra large screen form-factors.
+- `shader_baker/enabled: bool` — If `true`, shaders will be compiled and embedded in the application.
+- `splash_screen/background_color: Color` — The background color used for the system splash screen window.
+- `splash_screen/branding_image: String` — System splash screen branding image file.
+- `splash_screen/disable_godot_boot_splash: bool` — If `true`, Godot's boot splash will not be shown, and the system boot splash will remain visible for a longer time, until the mainloop starts.
+- `splash_screen/icon: String` — System splash screen icon file.
+- `user_data_backup/allow: bool` — If `true`, allows the application to participate in the backup and restore infrastructure.
+- `version/code: int` — Machine-readable application version.
+- `version/name: String` — Application version visible to the user.
+- `xr_features/xr_mode: int` — The extended reality (XR) mode for this application.

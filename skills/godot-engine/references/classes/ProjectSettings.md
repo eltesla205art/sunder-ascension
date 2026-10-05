@@ -1,0 +1,1010 @@
+# ProjectSettings
+
+**Inherits:** Object
+
+Stores globally-accessible variables.
+
+Stores variables that can be accessed from everywhere. Use `get_setting`, `set_setting` or `has_setting` to access them. Variables stored in `project.godot` are also loaded into ProjectSettings, making this object very useful for reading custom game configuration options. When naming a Project Settings property, use the full path to the setting including the category.
+
+## Properties
+
+- `accessibility/general/accessibility_driver: String` = `"accesskit"` — Accessibility driver: -accesskit (default): AccessKit driver. -dummy: Dummy driver, screen reader support is disabled.
+- `accessibility/general/accessibility_support: int` = `0` — Accessibility support mode: - Auto (`0`): Accessibility support is enabled, but updates to the accessibility information are processed only if an assistive app (such as a screen reader or a Braille display) is active (default). - Always Active (`1`): Accessibility support is enabled, and updates to the accessibility information are always processed, regardless of the status of assistive apps. - Disabled (`2`): Accessibility support is fully disabled.
+- `accessibility/general/updates_per_second: int` = `60` — The number of accessibility information updates per second.
+- `animation/compatibility/default_parent_skeleton_in_mesh_instance_3d: bool` = `false` — If `true`, `MeshInstance3D.skeleton` will point to the parent node (`..`) by default, which was the behavior before Godot 4.6.
+- `animation/warnings/check_angle_interpolation_type_conflicting: bool` = `true` — If `true`, AnimationMixer prints the warning of interpolation being forced to choose the shortest rotation path due to multiple angle interpolation types being mixed in the AnimationMixer cache.
+- `animation/warnings/check_invalid_skeleton_modifier_node_paths: bool` = `true` — If `true`, SkeletonModifier3D prints a warning if there's no matching object for the track path in the scene when assigning.
+- `animation/warnings/check_invalid_track_paths: bool` = `true` — If `true`, AnimationMixer prints the warning of no matching object of the track path in the scene.
+- `application/boot_splash/bg_color: Color` = `Color(0.14, 0.14, 0.14, 1)` — Background color for the boot splash.
+- `application/boot_splash/image: String` = `""` — Path to an image used as the boot splash.
+- `application/boot_splash/minimum_display_time: int` = `0` — Minimum boot splash display time (in milliseconds).
+- `application/boot_splash/show_image: bool` = `true` — If `true`, displays the image specified in `application/boot_splash/image` when the engine starts.
+- `application/boot_splash/stretch_mode: int` = `1` — Specifies how the splash image will be stretched.
+- `application/boot_splash/use_filter: bool` = `true` — If `true`, applies linear filtering when scaling the image (recommended for high-resolution artwork).
+- `application/config/auto_accept_quit: bool` = `true` — If `true`, the application automatically accepts quitting requests.
+- `application/config/custom_user_dir_name: String` = `""` — This user directory is used for storing persistent data (`user://` filesystem).
+- `application/config/description: String` = `""` — The project's description, displayed as a tooltip in the Project Manager when hovering the project.
+- `application/config/disable_project_settings_override: bool` = `false` — If `true`, disables loading of project settings overrides (file defined in `application/config/project_settings_override` and `res://override.cfg`) and related CLI arguments.
+- `application/config/icon: String` = `""` — Icon used for the project, set when project loads.
+- `application/config/macos_native_icon: String` = `""` — Icon set in `.icns` format used on macOS to set the game's icon.
+- `application/config/name: String` = `""` — The project's name.
+- `application/config/name_localized: Dictionary` = `{}` — Translations of the project's name.
+- `application/config/project_settings_override: String` = `""` — Specifies a file to override project settings.
+- `application/config/quit_on_go_back: bool` = `true` — If `true`, the application quits automatically when navigating back (e.g. using the system "Back" button on Android).
+- `application/config/use_custom_user_dir: bool` = `false` — If `true`, the project will save user data to its own user directory.
+- `application/config/use_hidden_project_data_directory: bool` = `true` — If `true`, the project will use a hidden directory (`.godot`) for storing project-specific data (metadata, shader cache, etc.).
+- `application/config/version: String` = `""` — The project's human-readable version identifier.
+- `application/config/windows_native_icon: String` = `""` — Icon set in `.ico` format used on Windows to set the game's icon.
+- `application/run/delta_smoothing: bool` = `true` — Time samples for frame deltas are subject to random variation introduced by the platform, even when frames are displayed at regular intervals thanks to V-Sync.
+- `application/run/disable_stderr: bool` = `false` — If `true`, disables printing to standard error.
+- `application/run/disable_stdout: bool` = `false` — If `true`, disables printing to standard output.
+- `application/run/enable_alt_space_menu: bool` = `false` — If `true`, allows the `Alt + Space` keys to display the window menu.
+- `application/run/flush_stdout_on_print: bool` = `false` — If `true`, flushes the standard output stream every time a line is printed.
+- `application/run/flush_stdout_on_print.debug: bool` = `true` — Debug build override for `application/run/flush_stdout_on_print`, as performance is less important during debugging.
+- `application/run/frame_delay_msec: int` = `0` — Forces a constant delay between frames in the main loop (in milliseconds).
+- `application/run/load_shell_environment: bool` = `false` — If `true`, loads the default shell and copies environment variables set by the shell startup scripts to the app environment.
+- `application/run/low_processor_mode: bool` = `false` — If `true`, enables low-processor usage mode.
+- `application/run/low_processor_mode_sleep_usec: int` = `6900` — Amount of sleeping between frames when the low-processor usage mode is enabled (in microseconds).
+- `application/run/main_loop_type: String` = `"SceneTree"` — The name of the type implementing the engine's main loop.
+- `application/run/main_scene: String` = `""` — Path to the main scene file that will be loaded when the project runs.
+- `application/run/max_fps: int` = `0` — Maximum number of frames per second allowed.
+- `application/run/print_header: bool` = `true` — If `true`, the engine header is printed in the console on startup.
+- `application/run/use_game_mode: bool` = `true` — If `true`, the engine will request GameMode to be activated.
+- `audio/buses/channel_disable_threshold_db: float` = `-60.0` — Audio buses will disable automatically when sound goes below a given dB threshold for a given time.
+- `audio/buses/channel_disable_time: float` = `2.0` — Audio buses will disable automatically when sound goes below a given dB threshold for a given time.
+- `audio/buses/default_bus_layout: String` = `"res://default_bus_layout.tres"` — Default AudioBusLayout resource file to use in the project, unless overridden by the scene.
+- `audio/buses/gui_theme_bus: StringName` = `&"Master"` — The name of the audio bus to play GUI theme audio in (case-sensitive).
+- `audio/driver/driver: String` — Specifies the audio driver to use.
+- `audio/driver/enable_input: bool` = `false` — If `true`, microphone input will be allowed.
+- `audio/driver/mix_rate: int` = `44100` — Target mixing rate used for audio (in Hz).
+- `audio/driver/mix_rate.web: int` = `0` — Safer override for `audio/driver/mix_rate` in the Web platform.
+- `audio/driver/output_latency: int` = `15` — Specifies the preferred output latency in milliseconds for audio.
+- `audio/driver/output_latency.web: int` = `50` — Safer override for `audio/driver/output_latency` in the Web platform, to avoid audio issues especially on mobile devices.
+- `audio/general/2d_panning_strength: float` = `0.5` — The base strength of the panning effect for all AudioStreamPlayer2D nodes.
+- `audio/general/3d_panning_strength: float` = `0.5` — The base strength of the panning effect for all AudioStreamPlayer3D nodes.
+- `audio/general/default_playback_type: int` = `0` — Specifies the default playback type of the platform.
+- `audio/general/default_playback_type.web: int` = `1` — Specifies the default playback type of the Web platform.
+- `audio/general/ios/mix_with_others: bool` = `false` — Sets the mixWithOthers option for the AVAudioSession on iOS.
+- `audio/general/ios/session_category: int` = `0` — Sets the AVAudioSessionCategory on iOS.
+- `audio/general/text_to_speech: bool` = `false` — If `true`, text-to-speech support is enabled on startup, otherwise it is enabled the first time any TTS method is used.
+- `audio/video/video_delay_compensation_ms: int` = `0` — Setting to hardcode audio delay when playing video.
+- `collada/use_ambient: bool` = `false` — If `true`, ambient lights will be imported from COLLADA models as DirectionalLight3D.
+- `compression/formats/gzip/compression_level: int` = `-1` — The default compression level for gzip.
+- `compression/formats/zlib/compression_level: int` = `-1` — The default compression level for Zlib.
+- `compression/formats/zstd/compression_level: int` = `3` — The default compression level for Zstandard.
+- `compression/formats/zstd/long_distance_matching: bool` = `false` — Enables long-distance matching in Zstandard.
+- `compression/formats/zstd/window_log_size: int` = `27` — Largest size limit (in power of 2) allowed when compressing using long-distance matching with Zstandard.
+- `debug/canvas_items/debug_redraw_color: Color` = `Color(1, 0.2, 0.2, 0.5)` — If canvas item redraw debugging is active, this color will be flashed on canvas items when they redraw.
+- `debug/canvas_items/debug_redraw_time: float` = `1.0` — If canvas item redraw debugging is active, this will be the time the flash will last each time they redraw.
+- `debug/file_logging/enable_file_logging: bool` = `false` — If `true`, logs all output and error messages to files.
+- `debug/file_logging/enable_file_logging.pc: bool` = `true` — Desktop override for `debug/file_logging/enable_file_logging`, as log files are not readily accessible on mobile/Web platforms.
+- `debug/file_logging/log_path: String` = `"user://logs/godot.log"` — Path at which to store log files for the project.
+- `debug/file_logging/max_log_files: int` = `5` — Specifies the maximum number of log files allowed (used for rotation).
+- `debug/gdscript/warnings/assert_always_false: int` = `1` — When set to Warn or Error, produces a warning or an error respectively when an `assert` call always evaluates to `false`.
+- `debug/gdscript/warnings/assert_always_true: int` = `1` — When set to Warn or Error, produces a warning or an error respectively when an `assert` call always evaluates to `true`.
+- `debug/gdscript/warnings/confusable_capture_reassignment: int` = `1` — When set to Warn or Error, produces a warning or an error respectively when a local variable captured by a lambda is reassigned, since this does not modify the outer local variable.
+- `debug/gdscript/warnings/confusable_identifier: int` = `1` — When set to Warn or Error, produces a warning or an error respectively when an identifier contains characters that can be confused with something else, like when mixing different alphabets.
+- `debug/gdscript/warnings/confusable_local_declaration: int` = `1` — When set to Warn or Error, produces a warning or an error respectively when an identifier declared in the nested block has the same name as an identifier declared below in the parent block.
+- `debug/gdscript/warnings/confusable_local_usage: int` = `1` — When set to Warn or Error, produces a warning or an error respectively when an identifier that will be shadowed below in the block is used.
+- `debug/gdscript/warnings/confusable_temporary_modification: int` = `1` — When set to Warn or Error, produces a warning or an error respectively when a built-in property of type `Packed*Array` is modified using a complex assignment chain or a non-`const` method call.
+- `debug/gdscript/warnings/deprecated_keyword: int` = `1` — When set to Warn or Error, produces a warning or an error respectively when deprecated keywords are used.
+- `debug/gdscript/warnings/directory_rules: Dictionary` = `{ "res://addons": 0 }` — The rules for including or excluding scripts when generating warnings, as a dictionary.
+- `debug/gdscript/warnings/empty_file: int` = `1` — When set to Warn or Error, produces a warning or an error respectively when an empty file is parsed.
+- `debug/gdscript/warnings/enable: bool` = `true` — If `true`, enables specific GDScript warnings (see `debug/gdscript/warnings/*` settings).
+- `debug/gdscript/warnings/enum_variable_without_default: int` = `1` — When set to Warn or Error, produces a warning or an error respectively when a variable has an enum type but no explicit default value, but only if the enum does not contain `0` as a valid value.
+- `debug/gdscript/warnings/get_node_default_without_onready: int` = `2` — When set to Warn or Error, produces a warning or an error respectively when `Node.get_node` (or the shorthand `$`) is used as default value of a class variable without the `@onready` annotation.
+- `debug/gdscript/warnings/incompatible_ternary: int` = `1` — When set to Warn or Error, produces a warning or an error respectively when a ternary operator may emit values with incompatible types.
+- `debug/gdscript/warnings/inference_on_variant: int` = `2` — When set to Warn or Error, produces a warning or an error respectively when a static inferred type uses a Variant as initial value, which makes the static type to also be Variant.
+- `debug/gdscript/warnings/inferred_declaration: int` = `0` — When set to Warn or Error, produces a warning or an error respectively when a variable, constant, or parameter has an implicitly inferred static type.
+- `debug/gdscript/warnings/int_as_enum_without_cast: int` = `1` — When set to Warn or Error, produces a warning or an error respectively when trying to use an integer as an enum without an explicit cast.
+- `debug/gdscript/warnings/int_as_enum_without_match: int` = `1` — When set to Warn or Error, produces a warning or an error respectively when trying to use an integer as an enum when there is no matching enum member for that numeric value.
+- `debug/gdscript/warnings/integer_division: int` = `1` — When set to Warn or Error, produces a warning or an error respectively when dividing an integer by another integer (the decimal part will be discarded).
+- `debug/gdscript/warnings/missing_await: int` = `0` — When set to Warn or Error, produces a warning or an error respectively when calling a coroutine without `await`.
+- `debug/gdscript/warnings/missing_tool: int` = `1` — When set to Warn or Error, produces a warning or an error respectively when the base class script has the `@tool` annotation, but the current class script does not have it.
+- `debug/gdscript/warnings/narrowing_conversion: int` = `1` — When set to Warn or Error, produces a warning or an error respectively when passing a floating-point value to a function that expects an integer (it will be converted and lose precision).
+- `debug/gdscript/warnings/native_method_override: int` = `2` — When set to Warn or Error, produces a warning or an error respectively when a method in the script overrides a native method, because it may not behave as expected.
+- `debug/gdscript/warnings/onready_with_cast: int` = `1` — When set to Warn or Error, produces a warning or an error respectively when an `@onready` initializer uses a cast on a `$GetNodeLiteral`, because it may unexpectedly assign `null`.
+- `debug/gdscript/warnings/onready_with_export: int` = `2` — When set to Warn or Error, produces a warning or an error respectively when the `@onready` annotation is used together with the `@export` annotation, since it may not behave as expected.
+- `debug/gdscript/warnings/redundant_await: int` = `1` — When set to Warn or Error, produces a warning or an error respectively when a function that is not a coroutine is called with await.
+- `debug/gdscript/warnings/redundant_static_unload: int` = `1` — When set to Warn or Error, produces a warning or an error respectively when the `@static_unload` annotation is used in a script without any static variables.
+- `debug/gdscript/warnings/renamed_in_godot_4_hint: bool` = `true` — When enabled, using a property, enum, or function that was renamed since Godot 3 will produce a hint if an error occurs.
+- `debug/gdscript/warnings/return_value_discarded: int` = `0` — When set to Warn or Error, produces a warning or an error respectively when calling a function without using its return value (by assigning it to a variable or using it as a function argument).
+- `debug/gdscript/warnings/shadowed_global_identifier: int` = `1` — When set to Warn or Error, produces a warning or an error respectively when defining a local or member variable, signal, or enum that would have the same name as a built-in function or global class name, thus shadowing it.
+- `debug/gdscript/warnings/shadowed_variable: int` = `1` — When set to Warn or Error, produces a warning or an error respectively when a local variable or local constant shadows a member declared in the current class.
+- `debug/gdscript/warnings/shadowed_variable_base_class: int` = `1` — When set to Warn or Error, produces a warning or an error respectively when a local variable or local constant shadows a member declared in a base class.
+- `debug/gdscript/warnings/standalone_expression: int` = `1` — When set to Warn or Error, produces a warning or an error respectively when calling an expression that may have no effect on the surrounding code, such as writing `2 + 2` as a statement.
+- `debug/gdscript/warnings/standalone_ternary: int` = `1` — When set to Warn or Error, produces a warning or an error respectively when calling a ternary expression that may have no effect on the surrounding code, such as writing `42 if active else 0` as a statement.
+- `debug/gdscript/warnings/static_called_on_instance: int` = `1` — When set to Warn or Error, produces a warning or an error respectively when calling a static method from an instance of a class instead of from the class directly.
+- `debug/gdscript/warnings/unassigned_variable: int` = `1` — When set to Warn or Error, produces a warning or an error respectively when using a variable that wasn't previously assigned.
+- `debug/gdscript/warnings/unassigned_variable_op_assign: int` = `1` — When set to Warn or Error, produces a warning or an error respectively when assigning a variable using an assignment operator like `+=` if the variable wasn't previously assigned.
+- `debug/gdscript/warnings/unreachable_code: int` = `1` — When set to Warn or Error, produces a warning or an error respectively when unreachable code is detected (such as after a `return` statement that will always be executed).
+- `debug/gdscript/warnings/unreachable_pattern: int` = `1` — When set to Warn or Error, produces a warning or an error respectively when an unreachable `match` pattern is detected.
+- `debug/gdscript/warnings/unsafe_call_argument: int` = `0` — When set to Warn or Error, produces a warning or an error respectively when using an expression whose type may not be compatible with the function parameter expected.
+- `debug/gdscript/warnings/unsafe_cast: int` = `0` — When set to Warn or Error, produces a warning or an error respectively when a Variant value is cast to a non-Variant.
+- `debug/gdscript/warnings/unsafe_method_access: int` = `0` — When set to Warn or Error, produces a warning or an error respectively when calling a method whose presence is not guaranteed at compile-time in the class.
+- `debug/gdscript/warnings/unsafe_property_access: int` = `0` — When set to Warn or Error, produces a warning or an error respectively when accessing a property whose presence is not guaranteed at compile-time in the class.
+- `debug/gdscript/warnings/unsafe_void_return: int` = `1` — When set to Warn or Error, produces a warning or an error respectively when returning a call from a `void` function when such call cannot be guaranteed to be also `void`.
+- `debug/gdscript/warnings/untyped_declaration: int` = `0` — When set to Warn or Error, produces a warning or an error respectively when a variable or parameter has no static type, or if a function has no static return type.
+- `debug/gdscript/warnings/unused_local_constant: int` = `1` — When set to Warn or Error, produces a warning or an error respectively when a local constant is never used.
+- `debug/gdscript/warnings/unused_parameter: int` = `1` — When set to Warn or Error, produces a warning or an error respectively when a function parameter is never used.
+- `debug/gdscript/warnings/unused_private_class_variable: int` = `1` — When set to Warn or Error, produces a warning or an error respectively when a private member variable is never used.
+- `debug/gdscript/warnings/unused_signal: int` = `1` — When set to Warn or Error, produces a warning or an error respectively when a signal is declared but never explicitly used in the class.
+- `debug/gdscript/warnings/unused_variable: int` = `1` — When set to Warn or Error, produces a warning or an error respectively when a local variable is unused.
+- `debug/settings/crash_handler/message: String` = `"Please include this when reporting the bug to the project developer."` — Message to be displayed before the backtrace when the engine crashes.
+- `debug/settings/crash_handler/message.editor: String` = `"Please include this when reporting the bug on: https://github.com/godotengine/godot/issues"` — Editor-only override for `debug/settings/crash_handler/message`.
+- `debug/settings/gdscript/always_track_call_stacks: bool` = `false` — Whether GDScript call stacks will be tracked in release builds, thus allowing `Engine.capture_script_backtraces` to function.
+- `debug/settings/gdscript/always_track_local_variables: bool` = `false` — Whether GDScript local variables will be tracked in all builds, including export builds, thus allowing `Engine.capture_script_backtraces` to capture them when enabling its `include_variables` parameter.
+- `debug/settings/gdscript/max_call_stack: int` = `1024` — Maximum call stack allowed for debugging GDScript.
+- `debug/settings/physics_interpolation/enable_warnings: bool` = `true` — If `true`, enables warnings which can help pinpoint where nodes are being incorrectly updated, which will result in incorrect interpolation and visual glitches.
+- `debug/settings/profiler/max_functions: int` = `16384` — Maximum number of functions per frame allowed when profiling.
+- `debug/settings/profiler/max_timestamp_query_elements: int` = `256` — Maximum number of timestamp query elements allowed per frame for visual profiling.
+- `debug/settings/stdout/print_fps: bool` = `false` — Print frames per second to standard output every second.
+- `debug/settings/stdout/print_gpu_profile: bool` = `false` — Print GPU profile information to standard output every second.
+- `debug/settings/stdout/verbose_stdout: bool` = `false` — Print more information to standard output when running.
+- `debug/shader_language/warnings/device_limit_exceeded: bool` = `true` — When set to `true`, produces a warning when the shader exceeds certain device limits.
+- `debug/shader_language/warnings/enable: bool` = `true` — If `true`, enables specific shader warnings (see `debug/shader_language/warnings/*` settings).
+- `debug/shader_language/warnings/float_comparison: bool` = `true` — When set to `true`, produces a warning when two floating-point numbers are compared directly with the `==` operator or the `!=` operator.
+- `debug/shader_language/warnings/formatting_error: bool` = `true` — When set to `true`, produces a warning upon encountering certain formatting errors.
+- `debug/shader_language/warnings/magic_position_write: bool` = `true` — When set to `true`, produces a warning when the shader contains `POSITION = vec4(vertex,` as this was very common code written in Godot 4.2 and earlier that was paired with a QuadMesh to produce a full screen post processes pass.
+- `debug/shader_language/warnings/treat_warnings_as_errors: bool` = `false` — When set to `true`, warnings are treated as errors.
+- `debug/shader_language/warnings/unused_constant: bool` = `true` — When set to `true`, produces a warning when a constant is never used.
+- `debug/shader_language/warnings/unused_function: bool` = `true` — When set to `true`, produces a warning when a function is never used.
+- `debug/shader_language/warnings/unused_local_variable: bool` = `true` — When set to `true`, produces a warning when a local variable is never used.
+- `debug/shader_language/warnings/unused_struct: bool` = `true` — When set to `true`, produces a warning when a struct is never used.
+- `debug/shader_language/warnings/unused_uniform: bool` = `true` — When set to `true`, produces a warning when a uniform is never used.
+- `debug/shader_language/warnings/unused_varying: bool` = `true` — When set to `true`, produces a warning when a varying is never used.
+- `debug/shapes/avoidance/2d/agents_radius_color: Color` = `Color(1, 1, 0, 0.25)` — Color of the avoidance agents' radius, visible when "Visible Avoidance" is enabled in the Debug menu.
+- `debug/shapes/avoidance/2d/enable_agents_radius: bool` = `true` — If enabled, displays avoidance agents' radius when "Visible Avoidance" is enabled in the Debug menu.
+- `debug/shapes/avoidance/2d/enable_obstacles_radius: bool` = `true` — If enabled, displays avoidance obstacles radius when "Visible Avoidance" is enabled in the Debug menu.
+- `debug/shapes/avoidance/2d/enable_obstacles_static: bool` = `true` — If enabled, displays static avoidance obstacles when "Visible Avoidance" is enabled in the Debug menu.
+- `debug/shapes/avoidance/2d/obstacles_radius_color: Color` = `Color(1, 0.5, 0, 0.25)` — Color of the avoidance obstacles radius, visible when "Visible Avoidance" is enabled in the Debug menu.
+- `debug/shapes/avoidance/2d/obstacles_static_edge_pushin_color: Color` = `Color(1, 0, 0, 1)` — Color of the static avoidance obstacles edges when their vertices are winded in order to push agents in, visible when "Visible Avoidance" is enabled in the Debug menu.
+- `debug/shapes/avoidance/2d/obstacles_static_edge_pushout_color: Color` = `Color(1, 1, 0, 1)` — Color of the static avoidance obstacles edges when their vertices are winded in order to push agents out, visible when "Visible Avoidance" is enabled in the Debug menu.
+- `debug/shapes/avoidance/2d/obstacles_static_face_pushin_color: Color` = `Color(1, 0, 0, 0)` — Color of the static avoidance obstacles faces when their vertices are winded in order to push agents in, visible when "Visible Avoidance" is enabled in the Debug menu.
+- `debug/shapes/avoidance/2d/obstacles_static_face_pushout_color: Color` = `Color(1, 1, 0, 0.5)` — Color of the static avoidance obstacles faces when their vertices are winded in order to push agents out, visible when "Visible Avoidance" is enabled in the Debug menu.
+- `debug/shapes/avoidance/3d/agents_radius_color: Color` = `Color(1, 1, 0, 0.25)` — Color of the avoidance agents' radius, visible when "Visible Avoidance" is enabled in the Debug menu.
+- `debug/shapes/avoidance/3d/enable_agents_radius: bool` = `true` — If enabled, displays avoidance agents' radius when "Visible Avoidance" is enabled in the Debug menu.
+- `debug/shapes/avoidance/3d/enable_obstacles_radius: bool` = `true` — If enabled, displays avoidance obstacles radius when "Visible Avoidance" is enabled in the Debug menu.
+- `debug/shapes/avoidance/3d/enable_obstacles_static: bool` = `true` — If enabled, displays static avoidance obstacles when "Visible Avoidance" is enabled in the Debug menu.
+- `debug/shapes/avoidance/3d/obstacles_radius_color: Color` = `Color(1, 0.5, 0, 0.25)` — Color of the avoidance obstacles radius, visible when "Visible Avoidance" is enabled in the Debug menu.
+- `debug/shapes/avoidance/3d/obstacles_static_edge_pushin_color: Color` = `Color(1, 0, 0, 1)` — Color of the static avoidance obstacles edges when their vertices are winded in order to push agents in, visible when "Visible Avoidance" is enabled in the Debug menu.
+- `debug/shapes/avoidance/3d/obstacles_static_edge_pushout_color: Color` = `Color(1, 1, 0, 1)` — Color of the static avoidance obstacles edges when their vertices are winded in order to push agents out, visible when "Visible Avoidance" is enabled in the Debug menu.
+- `debug/shapes/avoidance/3d/obstacles_static_face_pushin_color: Color` = `Color(1, 0, 0, 0)` — Color of the static avoidance obstacles faces when their vertices are winded in order to push agents in, visible when "Visible Avoidance" is enabled in the Debug menu.
+- `debug/shapes/avoidance/3d/obstacles_static_face_pushout_color: Color` = `Color(1, 1, 0, 0.5)` — Color of the static avoidance obstacles faces when their vertices are winded in order to push agents out, visible when "Visible Avoidance" is enabled in the Debug menu.
+- `debug/shapes/collision/contact_color: Color` = `Color(1, 0.2, 0.1, 0.8)` — Color of the contact points between collision shapes, visible when "Visible Collision Shapes" is enabled in the Debug menu.
+- `debug/shapes/collision/draw_2d_outlines: bool` = `true` — Sets whether 2D physics will display collision outlines in game when "Visible Collision Shapes" is enabled in the Debug menu.
+- `debug/shapes/collision/max_contacts_displayed: int` = `10000` — Maximum number of contact points between collision shapes to display when "Visible Collision Shapes" is enabled in the Debug menu.
+- `debug/shapes/collision/shape_color: Color` = `Color(0, 0.6, 0.7, 0.42)` — Color of the collision shapes, visible when "Visible Collision Shapes" is enabled in the Debug menu.
+- `debug/shapes/navigation/2d/agent_path_color: Color` = `Color(1, 0, 0, 1)` — Color to display enabled navigation agent paths when an agent has debug enabled.
+- `debug/shapes/navigation/2d/agent_path_point_size: float` = `4.0` — Rasterized size (pixel) used to render navigation agent path points when an agent has debug enabled.
+- `debug/shapes/navigation/2d/edge_connection_color: Color` = `Color(1, 0, 1, 1)` — Color to display edge connections between navigation regions, visible when "Visible Navigation" is enabled in the Debug menu.
+- `debug/shapes/navigation/2d/enable_agent_paths: bool` = `true` — If enabled, displays navigation agent paths when an agent has debug enabled.
+- `debug/shapes/navigation/2d/enable_edge_connections: bool` = `true` — If enabled, displays edge connections between navigation regions when "Visible Navigation" is enabled in the Debug menu.
+- `debug/shapes/navigation/2d/enable_edge_lines: bool` = `true` — If enabled, displays navigation mesh polygon edges when "Visible Navigation" is enabled in the Debug menu.
+- `debug/shapes/navigation/2d/enable_geometry_face_random_color: bool` = `true` — If enabled, colorizes each navigation mesh polygon face with a random color when "Visible Navigation" is enabled in the Debug menu.
+- `debug/shapes/navigation/2d/enable_link_connections: bool` = `true` — If enabled, displays navigation link connections when "Visible Navigation" is enabled in the Debug menu.
+- `debug/shapes/navigation/2d/geometry_edge_color: Color` = `Color(0.5, 1, 1, 1)` — Color to display enabled navigation mesh polygon edges, visible when "Visible Navigation" is enabled in the Debug menu.
+- `debug/shapes/navigation/2d/geometry_edge_disabled_color: Color` = `Color(0.5, 0.5, 0.5, 1)` — Color to display disabled navigation mesh polygon edges, visible when "Visible Navigation" is enabled in the Debug menu.
+- `debug/shapes/navigation/2d/geometry_face_color: Color` = `Color(0.5, 1, 1, 0.4)` — Color to display enabled navigation mesh polygon faces, visible when "Visible Navigation" is enabled in the Debug menu.
+- `debug/shapes/navigation/2d/geometry_face_disabled_color: Color` = `Color(0.5, 0.5, 0.5, 0.4)` — Color to display disabled navigation mesh polygon faces, visible when "Visible Navigation" is enabled in the Debug menu.
+- `debug/shapes/navigation/2d/link_connection_color: Color` = `Color(1, 0.5, 1, 1)` — Color to use to display navigation link connections, visible when "Visible Navigation" is enabled in the Debug menu.
+- `debug/shapes/navigation/2d/link_connection_disabled_color: Color` = `Color(0.5, 0.5, 0.5, 1)` — Color to use to display disabled navigation link connections, visible when "Visible Navigation" is enabled in the Debug menu.
+- `debug/shapes/navigation/3d/agent_path_color: Color` = `Color(1, 0, 0, 1)` — Color to display enabled navigation agent paths when an agent has debug enabled.
+- `debug/shapes/navigation/3d/agent_path_point_size: float` = `4.0` — Rasterized size (pixel) used to render navigation agent path points when an agent has debug enabled.
+- `debug/shapes/navigation/3d/edge_connection_color: Color` = `Color(1, 0, 1, 1)` — Color to display edge connections between navigation regions, visible when "Visible Navigation" is enabled in the Debug menu.
+- `debug/shapes/navigation/3d/enable_agent_paths: bool` = `true` — If enabled, displays navigation agent paths when an agent has debug enabled.
+- `debug/shapes/navigation/3d/enable_agent_paths_xray: bool` = `true` — If enabled, displays navigation agent paths through geometry when an agent has debug enabled.
+- `debug/shapes/navigation/3d/enable_edge_connections: bool` = `true` — If enabled, displays edge connections between navigation regions when "Visible Navigation" is enabled in the Debug menu.
+- `debug/shapes/navigation/3d/enable_edge_connections_xray: bool` = `true` — If enabled, displays edge connections between navigation regions through geometry when "Visible Navigation" is enabled in the Debug menu.
+- `debug/shapes/navigation/3d/enable_edge_lines: bool` = `true` — If enabled, displays navigation mesh polygon edges when "Visible Navigation" is enabled in the Debug menu.
+- `debug/shapes/navigation/3d/enable_edge_lines_xray: bool` = `true` — If enabled, displays navigation mesh polygon edges through geometry when "Visible Navigation" is enabled in the Debug menu.
+- `debug/shapes/navigation/3d/enable_geometry_face_random_color: bool` = `true` — If enabled, colorizes each navigation mesh polygon face with a random color when "Visible Navigation" is enabled in the Debug menu.
+- `debug/shapes/navigation/3d/enable_link_connections: bool` = `true` — If enabled, displays navigation link connections when "Visible Navigation" is enabled in the Debug menu.
+- `debug/shapes/navigation/3d/enable_link_connections_xray: bool` = `true` — If enabled, displays navigation link connections through geometry when "Visible Navigation" is enabled in the Debug menu.
+- `debug/shapes/navigation/3d/geometry_edge_color: Color` = `Color(0.5, 1, 1, 1)` — Color to display enabled navigation mesh polygon edges, visible when "Visible Navigation" is enabled in the Debug menu.
+- `debug/shapes/navigation/3d/geometry_edge_disabled_color: Color` = `Color(0.5, 0.5, 0.5, 1)` — Color to display disabled navigation mesh polygon edges, visible when "Visible Navigation" is enabled in the Debug menu.
+- `debug/shapes/navigation/3d/geometry_face_color: Color` = `Color(0.5, 1, 1, 0.4)` — Color to display enabled navigation mesh polygon faces, visible when "Visible Navigation" is enabled in the Debug menu.
+- `debug/shapes/navigation/3d/geometry_face_disabled_color: Color` = `Color(0.5, 0.5, 0.5, 0.4)` — Color to display disabled navigation mesh polygon faces, visible when "Visible Navigation" is enabled in the Debug menu.
+- `debug/shapes/navigation/3d/link_connection_color: Color` = `Color(1, 0.5, 1, 1)` — Color to use to display navigation link connections, visible when "Visible Navigation" is enabled in the Debug menu.
+- `debug/shapes/navigation/3d/link_connection_disabled_color: Color` = `Color(0.5, 0.5, 0.5, 1)` — Color to use to display disabled navigation link connections, visible when "Visible Navigation" is enabled in the Debug menu.
+- `debug/shapes/paths/geometry_color: Color` = `Color(0.1, 1, 0.7, 0.4)` — Color of the curve path geometry, visible when "Visible Paths" is enabled in the Debug menu.
+- `debug/shapes/paths/geometry_width: float` = `2.0` — Line width of the curve path geometry, visible when "Visible Paths" is enabled in the Debug menu.
+- `display/display_server/driver: String` — Sets the driver to be used by the display server.
+- `display/display_server/driver.android: String` — Android override for `display/display_server/driver`.
+- `display/display_server/driver.ios: String` — iOS override for `display/display_server/driver`.
+- `display/display_server/driver.linuxbsd: String` — LinuxBSD override for `display/display_server/driver`.
+- `display/display_server/driver.macos: String` — MacOS override for `display/display_server/driver`.
+- `display/display_server/driver.visionos: String` — visionOS override for `display/display_server/driver`.
+- `display/display_server/driver.windows: String` — Windows override for `display/display_server/driver`.
+- `display/mouse_cursor/custom_image: String` = `""` — Custom image for the mouse cursor (limited to 256×256).
+- `display/mouse_cursor/custom_image_hotspot: Vector2` = `Vector2(0, 0)` — Hotspot for the custom mouse cursor image.
+- `display/mouse_cursor/tooltip_position_offset: Vector2` = `Vector2(10, 10)` — Position offset for tooltips, relative to the mouse cursor's hotspot.
+- `display/window/dpi/allow_hidpi: bool` = `true` — If `true`, allows HiDPI display on Windows, macOS, Android, iOS and Web.
+- `display/window/energy_saving/keep_screen_on: bool` = `true` — If `true`, keeps the screen on (even in case of inactivity), so the screensaver does not take over.
+- `display/window/frame_pacing/android/enable_frame_pacing: bool` = `true` — Enable Swappy for stable frame pacing on Android.
+- `display/window/frame_pacing/android/swappy_mode: int` = `2` — Swappy mode to use.
+- `display/window/handheld/orientation: int` = `0` — The default screen orientation to use on mobile devices.
+- `display/window/hdr/request_hdr_output: bool` = `false` — If `true`, HDR output is requested for the main window and the editor.
+- `display/window/ios/allow_high_refresh_rate: bool` = `true` — If `true`, iOS devices that support high refresh rate/"ProMotion" will be allowed to render at up to 120 frames per second.
+- `display/window/ios/hide_home_indicator: bool` = `true` — If `true`, the home indicator is hidden automatically.
+- `display/window/ios/hide_status_bar: bool` = `true` — If `true`, the status bar is hidden while the app is running.
+- `display/window/ios/suppress_ui_gesture: bool` = `true` — If `true`, it will require two swipes to access iOS UI that uses gestures.
+- `display/window/per_pixel_transparency/allowed: bool` = `false` — If `true`, allows per-pixel transparency for the window background.
+- `display/window/size/always_on_top: bool` = `false` — Forces the main window to be always on top.
+- `display/window/size/borderless: bool` = `false` — Forces the main window to be borderless.
+- `display/window/size/enable_toggle_fullscreen_shortcut: bool` = `true` — If `true`, allows the user to toggle fullscreen mode by pressing the shortcut defined in `input/ui_toggle_fullscreen` (`Alt + Enter` by default).
+- `display/window/size/extend_to_title: bool` = `false` — Main window content is expanded to the full size of the window.
+- `display/window/size/initial_position: Vector2i` = `Vector2i(0, 0)` — Main window initial position (in virtual desktop coordinates), this setting is used only if `display/window/size/initial_position_type` is set to "Absolute" (`0`).
+- `display/window/size/initial_position_type: int` = `1` — Main window initial position.
+- `display/window/size/initial_screen: int` = `0` — Main window initial screen, this setting is used only if `display/window/size/initial_position_type` is set to "Other Screen Center" (`2`).
+- `display/window/size/maximize_disabled: bool` = `false` — If `true`, the main window's maximize button is disabled.
+- `display/window/size/minimize_disabled: bool` = `false` — If `true`, the main window's minimize button is disabled.
+- `display/window/size/mode: int` = `0` — Main window mode.
+- `display/window/size/no_focus: bool` = `false` — Main window can't be focused.
+- `display/window/size/resizable: bool` = `true` — If `true`, allows the window to be resizable by default.
+- `display/window/size/sharp_corners: bool` = `false` — If `true`, the main window uses sharp corners by default.
+- `display/window/size/transparent: bool` = `false` — If `true`, enables a window manager hint that the main window background can be transparent.
+- `display/window/size/viewport_height: int` = `648` — Sets the game's main viewport height.
+- `display/window/size/viewport_width: int` = `1152` — Sets the game's main viewport width.
+- `display/window/size/window_height_override: int` = `0` — On desktop platforms, overrides the game's initial window height.
+- `display/window/size/window_width_override: int` = `0` — On desktop platforms, overrides the game's initial window width.
+- `display/window/stretch/aspect: String` = `"keep"` — Defines how the aspect ratio of the base size is preserved when stretching to fit the resolution of the window or screen.
+- `display/window/stretch/mode: String` = `"disabled"` — Defines how the base size is stretched to fit the resolution of the window or screen.
+- `display/window/stretch/scale: float` = `1.0` — The scale factor multiplier to use for 2D elements.
+- `display/window/stretch/scale_mode: String` = `"fractional"` — The policy to use to determine the final scale factor for 2D elements.
+- `display/window/subwindows/embed_subwindows: bool` = `true` — If `true`, subwindows are embedded in the main window (this is also called single-window mode).
+- `display/window/vsync/vsync_mode: int` = `1` — Sets the V-Sync mode for the main game window.
+- `dotnet/project/assembly_name: String` = `""` — Name of the .NET assembly.
+- `dotnet/project/assembly_reload_attempts: int` = `3` — Number of times to attempt assembly reloading after rebuilding .NET assemblies.
+- `dotnet/project/solution_directory: String` = `""` — Directory that contains the `.sln` file.
+- `editor/export/convert_text_resources_to_binary: bool` = `true` — If `true`, text resource (`tres`) and text scene (`tscn`) files are converted to their corresponding binary format on export.
+- `editor/import/atlas_max_width: int` = `2048` — The maximum width to use when importing textures as an atlas.
+- `editor/import/reimport_missing_imported_files: bool` = `true` — 
+- `editor/import/use_multiple_threads: bool` = `true` — If `true` importing of resources is run on multiple threads.
+- `editor/movie_writer/audio_bit_depth: int` = `16` — Number of bits per audio sample written to the `.avi` file.
+- `editor/movie_writer/disable_vsync: bool` = `false` — If `true`, requests V-Sync to be disabled when writing a movie (similar to setting `display/window/vsync/vsync_mode` to Disabled).
+- `editor/movie_writer/fps: int` = `60` — The number of frames per second to record in the video when writing a movie.
+- `editor/movie_writer/mix_rate: int` = `48000` — The audio mix rate to use in the recorded audio when writing a movie (in Hz).
+- `editor/movie_writer/movie_file: String` = `""` — The output path for the movie.
+- `editor/movie_writer/ogv/audio_quality: float` = `0.5` — The audio encoding quality to use when writing Vorbis audio to a file, between `-0.1` and `1.0` (inclusive).
+- `editor/movie_writer/ogv/encoding_speed: int` = `4` — The tradeoff between encoding speed and compression efficiency.
+- `editor/movie_writer/ogv/keyframe_interval: int` = `64` — Forces keyframes at the specified interval (in frame count).
+- `editor/movie_writer/speaker_mode: int` = `0` — The speaker mode to use in the recorded audio when writing a movie.
+- `editor/movie_writer/video_quality: float` = `0.75` — The video encoding quality to use when writing a Theora or AVI (MJPEG) video to a file, between `0.0` and `1.0` (inclusive).
+- `editor/naming/default_signal_callback_name: String` = `"_on_{node_name}_{signal_name}"` — The format of the default signal callback name (in the Signal Connection Dialog).
+- `editor/naming/default_signal_callback_to_self_name: String` = `"_on_{signal_name}"` — The format of the default signal callback name when a signal connects to the same node that emits it (in the Signal Connection Dialog).
+- `editor/naming/node_name_casing: int` = `0` — When creating node names automatically, set the type of casing to use in this project.
+- `editor/naming/node_name_num_separator: int` = `0` — What to use to separate node name from number.
+- `editor/naming/scene_name_casing: int` = `2` — When generating scene file names from scene root node, set the type of casing to use in this project.
+- `editor/naming/script_name_casing: int` = `0` — When generating script file names from the selected node, set the type of casing to use in this project.
+- `editor/run/main_run_args: String` = `""` — The command-line arguments to append to Godot's own command line when running the project.
+- `editor/script/templates_search_path: String` = `"res://script_templates"` — Search path for project-specific script templates.
+- `editor/version_control/autoload_on_startup: bool` = `false` — 
+- `editor/version_control/plugin_name: String` = `""` — 
+- `filesystem/import/blender/enabled: bool` = `true` — If `true`, Blender 3D scene files with the `.blend` extension will be imported by converting them to glTF 2.0.
+- `filesystem/import/blender/enabled.android: bool` = `false` — Override for `filesystem/import/blender/enabled` on Android where Blender can't easily be accessed from Godot.
+- `filesystem/import/blender/enabled.web: bool` = `false` — Override for `filesystem/import/blender/enabled` on the Web where Blender can't easily be accessed from Godot.
+- `filesystem/import/fbx2gltf/enabled: bool` = `true` — If `true`, Autodesk FBX 3D scene files with the `.fbx` extension will be imported by converting them to glTF 2.0.
+- `filesystem/import/fbx2gltf/enabled.android: bool` = `false` — Override for `filesystem/import/fbx2gltf/enabled` on Android where FBX2glTF can't easily be accessed from Godot.
+- `filesystem/import/fbx2gltf/enabled.web: bool` = `false` — Override for `filesystem/import/fbx2gltf/enabled` on the Web where FBX2glTF can't easily be accessed from Godot.
+- `gui/common/auto_focus_strategy: int` = `0` — Determines what strategy to use when inferring the top/left/right/bottom Control to focus if no neighbor is defined. - Legacy is the old focus strategy up until Godot 4.8.
+- `gui/common/default_scroll_deadzone: int` = `0` — Default value for `ScrollContainer.scroll_deadzone`, which will be used for all ScrollContainers unless overridden.
+- `gui/common/drag_threshold: int` = `10` — The minimum distance the mouse cursor must move while pressed before a drag operation begins in the default viewport.
+- `gui/common/show_focus_state_on_pointer_event: int` = `1` — Determines whether a Control should visually indicate focus when that focus is gained using a mouse or touch input. - Never (`0`) show the focused state for mouse/touch input. - Text Input Controls (`1`) show the focused state even if that focus was gained via mouse/touch input (similar to browser behavior). - Always (`2`) show the focused state, even if that focus was gained via mouse/touch input.
+- `gui/common/snap_controls_to_pixels: bool` = `true` — If `true`, snaps Control node vertices to the nearest pixel to ensure they remain crisp even when the camera moves or zooms.
+- `gui/common/swap_cancel_ok: int` = `0` — How to position the Cancel and OK buttons in the project's AcceptDialog windows.
+- `gui/common/text_edit_undo_stack_max_size: int` = `1024` — Maximum undo/redo history size for TextEdit fields.
+- `gui/fonts/compatibility/msdf_legacy_scaling: bool` = `false` — If set to `true`, multichannel signed distance field (MSDF) glyph shapes are scaled using the divisor used before Godot 4.8, which was incorrect and made MSDF text render about 6.67% larger than intended.
+- `gui/fonts/dynamic_fonts/use_oversampling: bool` = `true` — If set to `true` and `display/window/stretch/mode` is set to `"canvas_items"`, font and DPITexture oversampling is enabled in the main window.
+- `gui/theme/custom: String` = `""` — Path to a custom Theme resource file to use for the project (`.theme` or generic `.tres`/`.res` extension).
+- `gui/theme/custom_font: String` = `""` — Path to a custom Font resource to use as default for all GUI elements of the project.
+- `gui/theme/default_font_antialiasing: int` = `1` — Font anti-aliasing mode for the default project font.
+- `gui/theme/default_font_generate_mipmaps: bool` = `false` — If set to `true`, the default font will have mipmaps generated.
+- `gui/theme/default_font_hinting: int` = `1` — Font hinting mode for the default project font.
+- `gui/theme/default_font_multichannel_signed_distance_field: bool` = `false` — If set to `true`, the default font will use multichannel signed distance field (MSDF) for crisp rendering at any size.
+- `gui/theme/default_font_subpixel_positioning: int` = `1` — Font glyph subpixel positioning mode for the default project font.
+- `gui/theme/default_theme_scale: float` = `1.0` — The default scale factor for Controls, when not overridden by a Theme.
+- `gui/theme/lcd_subpixel_layout: int` = `1` — LCD subpixel layout used for font anti-aliasing.
+- `gui/timers/button_shortcut_feedback_highlight_time: float` = `0.2` — When `BaseButton.shortcut_feedback` is enabled, this is the time the BaseButton will remain highlighted after a shortcut.
+- `gui/timers/incremental_search_max_interval_msec: int` = `2000` — Timer setting for incremental search in Tree, ItemList, etc. controls (in milliseconds).
+- `gui/timers/text_edit_idle_detect_sec: float` = `3` — Timer for detecting idle in TextEdit (in seconds).
+- `gui/timers/tooltip_delay_sec: float` = `0.5` — Default delay for tooltips (in seconds).
+- `gui/timers/tooltip_delay_sec.editor_hint: float` = `0.5` — Delay for tooltips in the editor.
+- `input/ui_accept: Dictionary` — Default InputEventAction to confirm a focused button, menu or list item, or validate input.
+- `input/ui_accessibility_drag_and_drop: Dictionary` — Default InputEventAction to start or end a drag-and-drop operation without using mouse.
+- `input/ui_cancel: Dictionary` — Default InputEventAction to discard a modal or pending input.
+- `input/ui_close_dialog: Dictionary` — Default InputEventAction to close a dialog window.
+- `input/ui_close_dialog.macos: Dictionary` — macOS specific override for the shortcut to close a dialog window.
+- `input/ui_colorpicker_delete_preset: Dictionary` — Default InputEventAction to delete a color preset in a ColorPicker.
+- `input/ui_copy: Dictionary` — Default InputEventAction to copy a selection to the clipboard.
+- `input/ui_cut: Dictionary` — Default InputEventAction to cut a selection to the clipboard.
+- `input/ui_down: Dictionary` — Default InputEventAction to move down in the UI.
+- `input/ui_end: Dictionary` — Default InputEventAction to go to the end position of a Control (e.g. last item in an ItemList or a Tree), matching the behavior of `KEY_END` on typical desktop UI systems.
+- `input/ui_filedialog_delete: Dictionary` — Default InputEventAction to delete the selected file in a FileDialog.
+- `input/ui_filedialog_find: Dictionary` — Default InputEventAction to open file filter in a FileDialog.
+- `input/ui_filedialog_focus_path: Dictionary` — Default InputEventAction to focus path edit field in a FileDialog.
+- `input/ui_filedialog_focus_path.macos: Dictionary` — macOS specific override for the shortcut to focus path edit field in FileDialog.
+- `input/ui_filedialog_refresh: Dictionary` — Default InputEventAction to refresh the contents of the current directory of a FileDialog.
+- `input/ui_filedialog_show_hidden: Dictionary` — Default InputEventAction to toggle showing hidden files and directories in a FileDialog.
+- `input/ui_filedialog_up_one_level: Dictionary` — Default InputEventAction to go up one directory in a FileDialog.
+- `input/ui_focus_mode: Dictionary` — Default InputEventAction to switch TextEdit `input/ui_text_indent` between moving keyboard focus to the next Control in the scene and inputting a `Tab` character.
+- `input/ui_focus_next: Dictionary` — Default InputEventAction to focus the next Control in the scene.
+- `input/ui_focus_prev: Dictionary` — Default InputEventAction to focus the previous Control in the scene.
+- `input/ui_graph_delete: Dictionary` — Default InputEventAction to delete a GraphNode in a GraphEdit.
+- `input/ui_graph_duplicate: Dictionary` — Default InputEventAction to duplicate a GraphNode in a GraphEdit.
+- `input/ui_graph_follow_left: Dictionary` — Default InputEventAction to follow a GraphNode input port connection.
+- `input/ui_graph_follow_left.macos: Dictionary` — macOS specific override for the shortcut to follow a GraphNode input port connection.
+- `input/ui_graph_follow_right: Dictionary` — Default InputEventAction to follow a GraphNode output port connection.
+- `input/ui_graph_follow_right.macos: Dictionary` — macOS specific override for the shortcut to follow a GraphNode output port connection.
+- `input/ui_home: Dictionary` — Default InputEventAction to go to the start position of a Control (e.g. first item in an ItemList or a Tree), matching the behavior of `KEY_HOME` on typical desktop UI systems.
+- `input/ui_left: Dictionary` — Default InputEventAction to move left in the UI.
+- `input/ui_menu: Dictionary` — Default InputEventAction to open a context menu in a text field.
+- `input/ui_page_down: Dictionary` — Default InputEventAction to go down a page in a Control (e.g. in an ItemList or a Tree), matching the behavior of `KEY_PAGEDOWN` on typical desktop UI systems.
+- `input/ui_page_up: Dictionary` — Default InputEventAction to go up a page in a Control (e.g. in an ItemList or a Tree), matching the behavior of `KEY_PAGEUP` on typical desktop UI systems.
+- `input/ui_paste: Dictionary` — Default InputEventAction to paste from the clipboard.
+- `input/ui_redo: Dictionary` — Default InputEventAction to redo an undone action.
+- `input/ui_right: Dictionary` — Default InputEventAction to move right in the UI.
+- `input/ui_select: Dictionary` — Default InputEventAction to select an item in a Control (e.g. in an ItemList or a Tree).
+- `input/ui_swap_input_direction: Dictionary` — Default InputEventAction to swap input direction, i.e. change between left-to-right to right-to-left modes.
+- `input/ui_text_add_selection_for_next_occurrence: Dictionary` — If a selection is currently active with the last caret in text fields, searches for the next occurrence of the selection, adds a caret and selects the next occurrence.
+- `input/ui_text_backspace: Dictionary` — Default InputEventAction to delete the character before the text cursor.
+- `input/ui_text_backspace_all_to_left: Dictionary` — Default InputEventAction to delete all text before the text cursor.
+- `input/ui_text_backspace_all_to_left.macos: Dictionary` — macOS specific override for the shortcut to delete all text before the text cursor.
+- `input/ui_text_backspace_word: Dictionary` — Default InputEventAction to delete all characters before the cursor up until a whitespace or punctuation character.
+- `input/ui_text_backspace_word.macos: Dictionary` — macOS specific override for the shortcut to delete a word.
+- `input/ui_text_caret_add_above: Dictionary` — Default InputEventAction to add an additional caret above every caret of a text.
+- `input/ui_text_caret_add_above.macos: Dictionary` — macOS specific override for the shortcut to add a caret above every caret.
+- `input/ui_text_caret_add_below: Dictionary` — Default InputEventAction to add an additional caret below every caret of a text.
+- `input/ui_text_caret_add_below.macos: Dictionary` — macOS specific override for the shortcut to add a caret below every caret.
+- `input/ui_text_caret_document_end: Dictionary` — Default InputEventAction to move the text cursor to the end of the text.
+- `input/ui_text_caret_document_end.macos: Dictionary` — macOS specific override for the shortcut to move the text cursor to the end of the text.
+- `input/ui_text_caret_document_start: Dictionary` — Default InputEventAction to move the text cursor to the start of the text.
+- `input/ui_text_caret_document_start.macos: Dictionary` — macOS specific override for the shortcut to move the text cursor to the start of the text.
+- `input/ui_text_caret_down: Dictionary` — Default InputEventAction to move the text cursor down.
+- `input/ui_text_caret_left: Dictionary` — Default InputEventAction to move the text cursor left.
+- `input/ui_text_caret_line_end: Dictionary` — Default InputEventAction to move the text cursor to the end of the line.
+- `input/ui_text_caret_line_end.macos: Dictionary` — macOS specific override for the shortcut to move the text cursor to the end of the line.
+- `input/ui_text_caret_line_start: Dictionary` — Default InputEventAction to move the text cursor to the start of the line.
+- `input/ui_text_caret_line_start.macos: Dictionary` — macOS specific override for the shortcut to move the text cursor to the start of the line.
+- `input/ui_text_caret_page_down: Dictionary` — Default InputEventAction to move the text cursor down one page.
+- `input/ui_text_caret_page_up: Dictionary` — Default InputEventAction to move the text cursor up one page.
+- `input/ui_text_caret_right: Dictionary` — Default InputEventAction to move the text cursor right.
+- `input/ui_text_caret_up: Dictionary` — Default InputEventAction to move the text cursor up.
+- `input/ui_text_caret_word_left: Dictionary` — Default InputEventAction to move the text cursor left to the next whitespace or punctuation.
+- `input/ui_text_caret_word_left.macos: Dictionary` — macOS specific override for the shortcut to move the text cursor back one word.
+- `input/ui_text_caret_word_right: Dictionary` — Default InputEventAction to move the text cursor right to the next whitespace or punctuation.
+- `input/ui_text_caret_word_right.macos: Dictionary` — macOS specific override for the shortcut to move the text cursor forward one word.
+- `input/ui_text_clear_carets_and_selection: Dictionary` — If there's only one caret active and with a selection, clears the selection.
+- `input/ui_text_completion_accept: Dictionary` — Default InputEventAction to accept an autocompletion hint.
+- `input/ui_text_completion_query: Dictionary` — Default InputEventAction to request autocompletion.
+- `input/ui_text_completion_replace: Dictionary` — Default InputEventAction to accept an autocompletion hint, replacing existing text.
+- `input/ui_text_dedent: Dictionary` — Default InputEventAction to unindent text.
+- `input/ui_text_delete: Dictionary` — Default InputEventAction to delete the character after the text cursor.
+- `input/ui_text_delete_all_to_right: Dictionary` — Default InputEventAction to delete all text after the text cursor.
+- `input/ui_text_delete_all_to_right.macos: Dictionary` — macOS specific override for the shortcut to delete all text after the text cursor.
+- `input/ui_text_delete_word: Dictionary` — Default InputEventAction to delete all characters after the cursor up until a whitespace or punctuation character.
+- `input/ui_text_delete_word.macos: Dictionary` — macOS specific override for the shortcut to delete a word after the text cursor.
+- `input/ui_text_indent: Dictionary` — Default InputEventAction to indent the current line.
+- `input/ui_text_newline: Dictionary` — Default InputEventAction to insert a new line at the position of the text cursor.
+- `input/ui_text_newline_above: Dictionary` — Default InputEventAction to insert a new line before the current one.
+- `input/ui_text_newline_blank: Dictionary` — Default InputEventAction to insert a new line after the current one.
+- `input/ui_text_scroll_down: Dictionary` — Default InputEventAction to scroll down one line of text.
+- `input/ui_text_scroll_down.macos: Dictionary` — macOS specific override for the shortcut to scroll down one line.
+- `input/ui_text_scroll_up: Dictionary` — Default InputEventAction to scroll up one line of text.
+- `input/ui_text_scroll_up.macos: Dictionary` — macOS specific override for the shortcut to scroll up one line.
+- `input/ui_text_select_all: Dictionary` — Default InputEventAction to select all text.
+- `input/ui_text_select_word_under_caret: Dictionary` — If no selection is currently active, selects the word currently under the caret in text fields.
+- `input/ui_text_select_word_under_caret.macos: Dictionary` — macOS specific override for the shortcut to select the word currently under the caret.
+- `input/ui_text_skip_selection_for_next_occurrence: Dictionary` — If no selection is currently active with the last caret in text fields, searches for the next occurrence of the word currently under the caret and moves the caret to the next occurrence.
+- `input/ui_text_submit: Dictionary` — Default InputEventAction to submit a text field.
+- `input/ui_text_toggle_insert_mode: Dictionary` — Default InputEventAction to toggle insert mode in a text field.
+- `input/ui_toggle_fullscreen: Dictionary` — Default InputEventAction to toggle fullscreen mode on the main window.
+- `input/ui_toggle_fullscreen.macos: Dictionary` — macOS specific override for the shortcut to toggle fullscreen mode on the main window.
+- `input/ui_undo: Dictionary` — Default InputEventAction to undo the most recent action.
+- `input/ui_unicode_start: Dictionary` — Default InputEventAction to start Unicode character hexadecimal code input in a text field.
+- `input/ui_up: Dictionary` — Default InputEventAction to move up in the UI.
+- `input_devices/buffering/agile_event_flushing: bool` = `false` — If `true`, key/touch/joystick events will be flushed just before every idle and physics frame.
+- `input_devices/compatibility/legacy_just_pressed_behavior: bool` = `false` — If `true`, `Input.is_action_just_pressed` and `Input.is_action_just_released` will only return `true` if the action is still in the respective state, i.e. an action that is pressed and released on the same frame will be missed.
+- `input_devices/joypads/ignore_joypad_on_unfocused_application: bool` = `false` — If `true`, joypad input (including motion sensors) and LED light changes will be ignored and joypad vibration will be stopped when the application is not focused.
+- `input_devices/pen_tablet/driver: String` — Specifies the tablet driver to use.
+- `input_devices/pen_tablet/driver.windows: String` — Override for `input_devices/pen_tablet/driver` on Windows.
+- `input_devices/pointing/android/disable_scroll_deadzone: bool` = `false` — If `true`, disables the scroll deadzone on Android, allowing even very small scroll movements to be registered.
+- `input_devices/pointing/android/enable_long_press_as_right_click: bool` = `false` *(deprecated)* — If `true`, long press events on an Android touchscreen are transformed into right click events.
+- `input_devices/pointing/android/enable_pan_and_scale_gestures: bool` = `false` — If `true`, multi-touch pan and scale gestures are enabled on Android devices.
+- `input_devices/pointing/android/override_volume_buttons: bool` = `false` — If `true`, system volume changes are disabled when the buttons are used within the app.
+- `input_devices/pointing/android/rotary_input_scroll_axis: int` = `1` — On Wear OS devices, defines which axis of the mouse wheel rotary input is mapped to.
+- `input_devices/pointing/emulate_mouse_from_touch: bool` = `true` — If `true`, sends mouse input events when tapping or swiping on the touchscreen.
+- `input_devices/pointing/emulate_touch_from_mouse: bool` = `false` — If `true`, sends touch input events when clicking or dragging the mouse.
+- `input_devices/sensors/enable_accelerometer: bool` = `false` — If `true`, the accelerometer sensor is enabled and `Input.get_accelerometer` returns valid data.
+- `input_devices/sensors/enable_device_orientation: bool` = `false` — If `true`, the device orientation sensor is enabled and `Input.get_device_orientation` returns valid data.
+- `input_devices/sensors/enable_gravity: bool` = `false` — If `true`, the gravity sensor is enabled and `Input.get_gravity` returns valid data.
+- `input_devices/sensors/enable_gyroscope: bool` = `false` — If `true`, the gyroscope sensor is enabled and `Input.get_gyroscope` returns valid data.
+- `input_devices/sensors/enable_magnetometer: bool` = `false` — If `true`, the magnetometer sensor is enabled and `Input.get_magnetometer` returns valid data.
+- `internationalization/locale/fallback: String` = `"en"` — The locale to fall back to if a translation isn't available in a given language.
+- `internationalization/locale/include_text_server_data: bool` = `false` — If `true`, text server break iteration rule sets, dictionaries and other optional data are included in the exported project.
+- `internationalization/locale/line_breaking_strictness: int` = `0` — Default strictness of line-breaking rules.
+- `internationalization/locale/test: String` = `""` — If non-empty, this locale will be used instead of the automatically detected system locale.
+- `internationalization/pseudolocalization/double_vowels: bool` = `false` — Double vowels in strings during pseudolocalization to simulate the lengthening of text due to localization.
+- `internationalization/pseudolocalization/expansion_ratio: float` = `0.0` — The expansion ratio to use during pseudolocalization.
+- `internationalization/pseudolocalization/fake_bidi: bool` = `false` — If `true`, emulate bidirectional (right-to-left) text when pseudolocalization is enabled.
+- `internationalization/pseudolocalization/override: bool` = `false` — Replace all characters in the string with `*`.
+- `internationalization/pseudolocalization/prefix: String` = `"["` — Prefix that will be prepended to the pseudolocalized string.
+- `internationalization/pseudolocalization/replace_with_accents: bool` = `true` — Replace all characters with their accented variants during pseudolocalization.
+- `internationalization/pseudolocalization/skip_placeholders: bool` = `true` — Skip placeholders for string formatting like `%s` or `%f` during pseudolocalization.
+- `internationalization/pseudolocalization/suffix: String` = `"]"` — Suffix that will be appended to the pseudolocalized string.
+- `internationalization/pseudolocalization/use_pseudolocalization: bool` = `false` — If `true`, enables pseudolocalization for the project.
+- `internationalization/rendering/force_right_to_left_layout_direction: bool` = `false` — Force layout direction and text writing direction to RTL for all controls, even if the current locale is intended to use a left-to-right layout and text writing direction.
+- `internationalization/rendering/root_node_auto_translate: bool` = `true` — If `true`, root node will use `Node.AUTO_TRANSLATE_MODE_ALWAYS`, otherwise `Node.AUTO_TRANSLATE_MODE_DISABLED` will be used.
+- `internationalization/rendering/root_node_layout_direction: int` = `0` — Root node default layout direction.
+- `internationalization/rendering/text_driver: String` = `""` — Specifies the TextServer to use.
+- `layer_names/2d_navigation/layer_1: String` = `""` — Optional name for the 2D navigation layer 1.
+- `layer_names/2d_navigation/layer_2: String` = `""` — Optional name for the 2D navigation layer 2.
+- `layer_names/2d_navigation/layer_3: String` = `""` — Optional name for the 2D navigation layer 3.
+- `layer_names/2d_navigation/layer_4: String` = `""` — Optional name for the 2D navigation layer 4.
+- `layer_names/2d_navigation/layer_5: String` = `""` — Optional name for the 2D navigation layer 5.
+- `layer_names/2d_navigation/layer_6: String` = `""` — Optional name for the 2D navigation layer 6.
+- `layer_names/2d_navigation/layer_7: String` = `""` — Optional name for the 2D navigation layer 7.
+- `layer_names/2d_navigation/layer_8: String` = `""` — Optional name for the 2D navigation layer 8.
+- `layer_names/2d_navigation/layer_9: String` = `""` — Optional name for the 2D navigation layer 9.
+- `layer_names/2d_navigation/layer_10: String` = `""` — Optional name for the 2D navigation layer 10.
+- `layer_names/2d_navigation/layer_11: String` = `""` — Optional name for the 2D navigation layer 11.
+- `layer_names/2d_navigation/layer_12: String` = `""` — Optional name for the 2D navigation layer 12.
+- `layer_names/2d_navigation/layer_13: String` = `""` — Optional name for the 2D navigation layer 13.
+- `layer_names/2d_navigation/layer_14: String` = `""` — Optional name for the 2D navigation layer 14.
+- `layer_names/2d_navigation/layer_15: String` = `""` — Optional name for the 2D navigation layer 15.
+- `layer_names/2d_navigation/layer_16: String` = `""` — Optional name for the 2D navigation layer 16.
+- `layer_names/2d_navigation/layer_17: String` = `""` — Optional name for the 2D navigation layer 17.
+- `layer_names/2d_navigation/layer_18: String` = `""` — Optional name for the 2D navigation layer 18.
+- `layer_names/2d_navigation/layer_19: String` = `""` — Optional name for the 2D navigation layer 19.
+- `layer_names/2d_navigation/layer_20: String` = `""` — Optional name for the 2D navigation layer 20.
+- `layer_names/2d_navigation/layer_21: String` = `""` — Optional name for the 2D navigation layer 21.
+- `layer_names/2d_navigation/layer_22: String` = `""` — Optional name for the 2D navigation layer 22.
+- `layer_names/2d_navigation/layer_23: String` = `""` — Optional name for the 2D navigation layer 23.
+- `layer_names/2d_navigation/layer_24: String` = `""` — Optional name for the 2D navigation layer 24.
+- `layer_names/2d_navigation/layer_25: String` = `""` — Optional name for the 2D navigation layer 25.
+- `layer_names/2d_navigation/layer_26: String` = `""` — Optional name for the 2D navigation layer 26.
+- `layer_names/2d_navigation/layer_27: String` = `""` — Optional name for the 2D navigation layer 27.
+- `layer_names/2d_navigation/layer_28: String` = `""` — Optional name for the 2D navigation layer 28.
+- `layer_names/2d_navigation/layer_29: String` = `""` — Optional name for the 2D navigation layer 29.
+- `layer_names/2d_navigation/layer_30: String` = `""` — Optional name for the 2D navigation layer 30.
+- `layer_names/2d_navigation/layer_31: String` = `""` — Optional name for the 2D navigation layer 31.
+- `layer_names/2d_navigation/layer_32: String` = `""` — Optional name for the 2D navigation layer 32.
+- `layer_names/2d_physics/layer_1: String` = `""` — Optional name for the 2D physics layer 1.
+- `layer_names/2d_physics/layer_2: String` = `""` — Optional name for the 2D physics layer 2.
+- `layer_names/2d_physics/layer_3: String` = `""` — Optional name for the 2D physics layer 3.
+- `layer_names/2d_physics/layer_4: String` = `""` — Optional name for the 2D physics layer 4.
+- `layer_names/2d_physics/layer_5: String` = `""` — Optional name for the 2D physics layer 5.
+- `layer_names/2d_physics/layer_6: String` = `""` — Optional name for the 2D physics layer 6.
+- `layer_names/2d_physics/layer_7: String` = `""` — Optional name for the 2D physics layer 7.
+- `layer_names/2d_physics/layer_8: String` = `""` — Optional name for the 2D physics layer 8.
+- `layer_names/2d_physics/layer_9: String` = `""` — Optional name for the 2D physics layer 9.
+- `layer_names/2d_physics/layer_10: String` = `""` — Optional name for the 2D physics layer 10.
+- `layer_names/2d_physics/layer_11: String` = `""` — Optional name for the 2D physics layer 11.
+- `layer_names/2d_physics/layer_12: String` = `""` — Optional name for the 2D physics layer 12.
+- `layer_names/2d_physics/layer_13: String` = `""` — Optional name for the 2D physics layer 13.
+- `layer_names/2d_physics/layer_14: String` = `""` — Optional name for the 2D physics layer 14.
+- `layer_names/2d_physics/layer_15: String` = `""` — Optional name for the 2D physics layer 15.
+- `layer_names/2d_physics/layer_16: String` = `""` — Optional name for the 2D physics layer 16.
+- `layer_names/2d_physics/layer_17: String` = `""` — Optional name for the 2D physics layer 17.
+- `layer_names/2d_physics/layer_18: String` = `""` — Optional name for the 2D physics layer 18.
+- `layer_names/2d_physics/layer_19: String` = `""` — Optional name for the 2D physics layer 19.
+- `layer_names/2d_physics/layer_20: String` = `""` — Optional name for the 2D physics layer 20.
+- `layer_names/2d_physics/layer_21: String` = `""` — Optional name for the 2D physics layer 21.
+- `layer_names/2d_physics/layer_22: String` = `""` — Optional name for the 2D physics layer 22.
+- `layer_names/2d_physics/layer_23: String` = `""` — Optional name for the 2D physics layer 23.
+- `layer_names/2d_physics/layer_24: String` = `""` — Optional name for the 2D physics layer 24.
+- `layer_names/2d_physics/layer_25: String` = `""` — Optional name for the 2D physics layer 25.
+- `layer_names/2d_physics/layer_26: String` = `""` — Optional name for the 2D physics layer 26.
+- `layer_names/2d_physics/layer_27: String` = `""` — Optional name for the 2D physics layer 27.
+- `layer_names/2d_physics/layer_28: String` = `""` — Optional name for the 2D physics layer 28.
+- `layer_names/2d_physics/layer_29: String` = `""` — Optional name for the 2D physics layer 29.
+- `layer_names/2d_physics/layer_30: String` = `""` — Optional name for the 2D physics layer 30.
+- `layer_names/2d_physics/layer_31: String` = `""` — Optional name for the 2D physics layer 31.
+- `layer_names/2d_physics/layer_32: String` = `""` — Optional name for the 2D physics layer 32.
+- `layer_names/2d_render/layer_1: String` = `""` — Optional name for the 2D render layer 1.
+- `layer_names/2d_render/layer_2: String` = `""` — Optional name for the 2D render layer 2.
+- `layer_names/2d_render/layer_3: String` = `""` — Optional name for the 2D render layer 3.
+- `layer_names/2d_render/layer_4: String` = `""` — Optional name for the 2D render layer 4.
+- `layer_names/2d_render/layer_5: String` = `""` — Optional name for the 2D render layer 5.
+- `layer_names/2d_render/layer_6: String` = `""` — Optional name for the 2D render layer 6.
+- `layer_names/2d_render/layer_7: String` = `""` — Optional name for the 2D render layer 7.
+- `layer_names/2d_render/layer_8: String` = `""` — Optional name for the 2D render layer 8.
+- `layer_names/2d_render/layer_9: String` = `""` — Optional name for the 2D render layer 9.
+- `layer_names/2d_render/layer_10: String` = `""` — Optional name for the 2D render layer 10.
+- `layer_names/2d_render/layer_11: String` = `""` — Optional name for the 2D render layer 11.
+- `layer_names/2d_render/layer_12: String` = `""` — Optional name for the 2D render layer 12.
+- `layer_names/2d_render/layer_13: String` = `""` — Optional name for the 2D render layer 13.
+- `layer_names/2d_render/layer_14: String` = `""` — Optional name for the 2D render layer 14.
+- `layer_names/2d_render/layer_15: String` = `""` — Optional name for the 2D render layer 15.
+- `layer_names/2d_render/layer_16: String` = `""` — Optional name for the 2D render layer 16.
+- `layer_names/2d_render/layer_17: String` = `""` — Optional name for the 2D render layer 17.
+- `layer_names/2d_render/layer_18: String` = `""` — Optional name for the 2D render layer 18.
+- `layer_names/2d_render/layer_19: String` = `""` — Optional name for the 2D render layer 19.
+- `layer_names/2d_render/layer_20: String` = `""` — Optional name for the 2D render layer 20.
+- `layer_names/3d_navigation/layer_1: String` = `""` — Optional name for the 3D navigation layer 1.
+- `layer_names/3d_navigation/layer_2: String` = `""` — Optional name for the 3D navigation layer 2.
+- `layer_names/3d_navigation/layer_3: String` = `""` — Optional name for the 3D navigation layer 3.
+- `layer_names/3d_navigation/layer_4: String` = `""` — Optional name for the 3D navigation layer 4.
+- `layer_names/3d_navigation/layer_5: String` = `""` — Optional name for the 3D navigation layer 5.
+- `layer_names/3d_navigation/layer_6: String` = `""` — Optional name for the 3D navigation layer 6.
+- `layer_names/3d_navigation/layer_7: String` = `""` — Optional name for the 3D navigation layer 7.
+- `layer_names/3d_navigation/layer_8: String` = `""` — Optional name for the 3D navigation layer 8.
+- `layer_names/3d_navigation/layer_9: String` = `""` — Optional name for the 3D navigation layer 9.
+- `layer_names/3d_navigation/layer_10: String` = `""` — Optional name for the 3D navigation layer 10.
+- `layer_names/3d_navigation/layer_11: String` = `""` — Optional name for the 3D navigation layer 11.
+- `layer_names/3d_navigation/layer_12: String` = `""` — Optional name for the 3D navigation layer 12.
+- `layer_names/3d_navigation/layer_13: String` = `""` — Optional name for the 3D navigation layer 13.
+- `layer_names/3d_navigation/layer_14: String` = `""` — Optional name for the 3D navigation layer 14.
+- `layer_names/3d_navigation/layer_15: String` = `""` — Optional name for the 3D navigation layer 15.
+- `layer_names/3d_navigation/layer_16: String` = `""` — Optional name for the 3D navigation layer 16.
+- `layer_names/3d_navigation/layer_17: String` = `""` — Optional name for the 3D navigation layer 17.
+- `layer_names/3d_navigation/layer_18: String` = `""` — Optional name for the 3D navigation layer 18.
+- `layer_names/3d_navigation/layer_19: String` = `""` — Optional name for the 3D navigation layer 19.
+- `layer_names/3d_navigation/layer_20: String` = `""` — Optional name for the 3D navigation layer 20.
+- `layer_names/3d_navigation/layer_21: String` = `""` — Optional name for the 3D navigation layer 21.
+- `layer_names/3d_navigation/layer_22: String` = `""` — Optional name for the 3D navigation layer 22.
+- `layer_names/3d_navigation/layer_23: String` = `""` — Optional name for the 3D navigation layer 23.
+- `layer_names/3d_navigation/layer_24: String` = `""` — Optional name for the 3D navigation layer 24.
+- `layer_names/3d_navigation/layer_25: String` = `""` — Optional name for the 3D navigation layer 25.
+- `layer_names/3d_navigation/layer_26: String` = `""` — Optional name for the 3D navigation layer 26.
+- `layer_names/3d_navigation/layer_27: String` = `""` — Optional name for the 3D navigation layer 27.
+- `layer_names/3d_navigation/layer_28: String` = `""` — Optional name for the 3D navigation layer 28.
+- `layer_names/3d_navigation/layer_29: String` = `""` — Optional name for the 3D navigation layer 29.
+- `layer_names/3d_navigation/layer_30: String` = `""` — Optional name for the 3D navigation layer 30.
+- `layer_names/3d_navigation/layer_31: String` = `""` — Optional name for the 3D navigation layer 31.
+- `layer_names/3d_navigation/layer_32: String` = `""` — Optional name for the 3D navigation layer 32.
+- `layer_names/3d_physics/layer_1: String` = `""` — Optional name for the 3D physics layer 1.
+- `layer_names/3d_physics/layer_2: String` = `""` — Optional name for the 3D physics layer 2.
+- `layer_names/3d_physics/layer_3: String` = `""` — Optional name for the 3D physics layer 3.
+- `layer_names/3d_physics/layer_4: String` = `""` — Optional name for the 3D physics layer 4.
+- `layer_names/3d_physics/layer_5: String` = `""` — Optional name for the 3D physics layer 5.
+- `layer_names/3d_physics/layer_6: String` = `""` — Optional name for the 3D physics layer 6.
+- `layer_names/3d_physics/layer_7: String` = `""` — Optional name for the 3D physics layer 7.
+- `layer_names/3d_physics/layer_8: String` = `""` — Optional name for the 3D physics layer 8.
+- `layer_names/3d_physics/layer_9: String` = `""` — Optional name for the 3D physics layer 9.
+- `layer_names/3d_physics/layer_10: String` = `""` — Optional name for the 3D physics layer 10.
+- `layer_names/3d_physics/layer_11: String` = `""` — Optional name for the 3D physics layer 11.
+- `layer_names/3d_physics/layer_12: String` = `""` — Optional name for the 3D physics layer 12.
+- `layer_names/3d_physics/layer_13: String` = `""` — Optional name for the 3D physics layer 13.
+- `layer_names/3d_physics/layer_14: String` = `""` — Optional name for the 3D physics layer 14.
+- `layer_names/3d_physics/layer_15: String` = `""` — Optional name for the 3D physics layer 15.
+- `layer_names/3d_physics/layer_16: String` = `""` — Optional name for the 3D physics layer 16.
+- `layer_names/3d_physics/layer_17: String` = `""` — Optional name for the 3D physics layer 17.
+- `layer_names/3d_physics/layer_18: String` = `""` — Optional name for the 3D physics layer 18.
+- `layer_names/3d_physics/layer_19: String` = `""` — Optional name for the 3D physics layer 19.
+- `layer_names/3d_physics/layer_20: String` = `""` — Optional name for the 3D physics layer 20.
+- `layer_names/3d_physics/layer_21: String` = `""` — Optional name for the 3D physics layer 21.
+- `layer_names/3d_physics/layer_22: String` = `""` — Optional name for the 3D physics layer 22.
+- `layer_names/3d_physics/layer_23: String` = `""` — Optional name for the 3D physics layer 23.
+- `layer_names/3d_physics/layer_24: String` = `""` — Optional name for the 3D physics layer 24.
+- `layer_names/3d_physics/layer_25: String` = `""` — Optional name for the 3D physics layer 25.
+- `layer_names/3d_physics/layer_26: String` = `""` — Optional name for the 3D physics layer 26.
+- `layer_names/3d_physics/layer_27: String` = `""` — Optional name for the 3D physics layer 27.
+- `layer_names/3d_physics/layer_28: String` = `""` — Optional name for the 3D physics layer 28.
+- `layer_names/3d_physics/layer_29: String` = `""` — Optional name for the 3D physics layer 29.
+- `layer_names/3d_physics/layer_30: String` = `""` — Optional name for the 3D physics layer 30.
+- `layer_names/3d_physics/layer_31: String` = `""` — Optional name for the 3D physics layer 31.
+- `layer_names/3d_physics/layer_32: String` = `""` — Optional name for the 3D physics layer 32.
+- `layer_names/3d_render/layer_1: String` = `""` — Optional name for the 3D render layer 1.
+- `layer_names/3d_render/layer_2: String` = `""` — Optional name for the 3D render layer 2.
+- `layer_names/3d_render/layer_3: String` = `""` — Optional name for the 3D render layer 3.
+- `layer_names/3d_render/layer_4: String` = `""` — Optional name for the 3D render layer 4.
+- `layer_names/3d_render/layer_5: String` = `""` — Optional name for the 3D render layer 5.
+- `layer_names/3d_render/layer_6: String` = `""` — Optional name for the 3D render layer 6.
+- `layer_names/3d_render/layer_7: String` = `""` — Optional name for the 3D render layer 7.
+- `layer_names/3d_render/layer_8: String` = `""` — Optional name for the 3D render layer 8.
+- `layer_names/3d_render/layer_9: String` = `""` — Optional name for the 3D render layer 9.
+- `layer_names/3d_render/layer_10: String` = `""` — Optional name for the 3D render layer 10.
+- `layer_names/3d_render/layer_11: String` = `""` — Optional name for the 3D render layer 11.
+- `layer_names/3d_render/layer_12: String` = `""` — Optional name for the 3D render layer 12.
+- `layer_names/3d_render/layer_13: String` = `""` — Optional name for the 3D render layer 13.
+- `layer_names/3d_render/layer_14: String` = `""` — Optional name for the 3D render layer 14.
+- `layer_names/3d_render/layer_15: String` = `""` — Optional name for the 3D render layer 15.
+- `layer_names/3d_render/layer_16: String` = `""` — Optional name for the 3D render layer 16.
+- `layer_names/3d_render/layer_17: String` = `""` — Optional name for the 3D render layer 17.
+- `layer_names/3d_render/layer_18: String` = `""` — Optional name for the 3D render layer 18.
+- `layer_names/3d_render/layer_19: String` = `""` — Optional name for the 3D render layer 19.
+- `layer_names/3d_render/layer_20: String` = `""` — Optional name for the 3D render layer 20.
+- `layer_names/avoidance/layer_1: String` = `""` — Optional name for the navigation avoidance layer 1.
+- `layer_names/avoidance/layer_2: String` = `""` — Optional name for the navigation avoidance layer 2.
+- `layer_names/avoidance/layer_3: String` = `""` — Optional name for the navigation avoidance layer 3.
+- `layer_names/avoidance/layer_4: String` = `""` — Optional name for the navigation avoidance layer 4.
+- `layer_names/avoidance/layer_5: String` = `""` — Optional name for the navigation avoidance layer 5.
+- `layer_names/avoidance/layer_6: String` = `""` — Optional name for the navigation avoidance layer 6.
+- `layer_names/avoidance/layer_7: String` = `""` — Optional name for the navigation avoidance layer 7.
+- `layer_names/avoidance/layer_8: String` = `""` — Optional name for the navigation avoidance layer 8.
+- `layer_names/avoidance/layer_9: String` = `""` — Optional name for the navigation avoidance layer 9.
+- `layer_names/avoidance/layer_10: String` = `""` — Optional name for the navigation avoidance layer 10.
+- `layer_names/avoidance/layer_11: String` = `""` — Optional name for the navigation avoidance layer 11.
+- `layer_names/avoidance/layer_12: String` = `""` — Optional name for the navigation avoidance layer 12.
+- `layer_names/avoidance/layer_13: String` = `""` — Optional name for the navigation avoidance layer 13.
+- `layer_names/avoidance/layer_14: String` = `""` — Optional name for the navigation avoidance layer 14.
+- `layer_names/avoidance/layer_15: String` = `""` — Optional name for the navigation avoidance layer 15.
+- `layer_names/avoidance/layer_16: String` = `""` — Optional name for the navigation avoidance layer 16.
+- `layer_names/avoidance/layer_17: String` = `""` — Optional name for the navigation avoidance layer 17.
+- `layer_names/avoidance/layer_18: String` = `""` — Optional name for the navigation avoidance layer 18.
+- `layer_names/avoidance/layer_19: String` = `""` — Optional name for the navigation avoidance layer 19.
+- `layer_names/avoidance/layer_20: String` = `""` — Optional name for the navigation avoidance layer 20.
+- `layer_names/avoidance/layer_21: String` = `""` — Optional name for the navigation avoidance layer 21.
+- `layer_names/avoidance/layer_22: String` = `""` — Optional name for the navigation avoidance layer 22.
+- `layer_names/avoidance/layer_23: String` = `""` — Optional name for the navigation avoidance layer 23.
+- `layer_names/avoidance/layer_24: String` = `""` — Optional name for the navigation avoidance layer 24.
+- `layer_names/avoidance/layer_25: String` = `""` — Optional name for the navigation avoidance layer 25.
+- `layer_names/avoidance/layer_26: String` = `""` — Optional name for the navigation avoidance layer 26.
+- `layer_names/avoidance/layer_27: String` = `""` — Optional name for the navigation avoidance layer 27.
+- `layer_names/avoidance/layer_28: String` = `""` — Optional name for the navigation avoidance layer 28.
+- `layer_names/avoidance/layer_29: String` = `""` — Optional name for the navigation avoidance layer 29.
+- `layer_names/avoidance/layer_30: String` = `""` — Optional name for the navigation avoidance layer 30.
+- `layer_names/avoidance/layer_31: String` = `""` — Optional name for the navigation avoidance layer 31.
+- `layer_names/avoidance/layer_32: String` = `""` — Optional name for the navigation avoidance layer 32.
+- `memory/limits/message_queue/max_size_mb: int` = `32` — Godot uses a message queue to defer some function calls.
+- `navigation/2d/default_cell_size: float` = `1.0` — Default cell size for 2D navigation maps.
+- `navigation/2d/default_edge_connection_margin: float` = `1.0` — Default edge connection margin for 2D navigation maps.
+- `navigation/2d/default_link_connection_radius: float` = `4.0` — Default link connection radius for 2D navigation maps.
+- `navigation/2d/merge_rasterizer_cell_scale: float` = `1.0` — Default merge rasterizer cell scale for 2D navigation maps.
+- `navigation/2d/navigation_engine: String` = `"DEFAULT"` — Sets which navigation engine to use for 2D navigation.
+- `navigation/2d/use_edge_connections: bool` = `true` — If enabled 2D navigation regions will use edge connections to connect with other navigation regions within proximity of the navigation map edge connection margin.
+- `navigation/2d/warnings/navmesh_cell_size_mismatch: bool` = `true` — If `true`, the navigation system will print warnings when a navigation mesh with a small cell size is used on a navigation map with a larger size as this commonly causes rasterization errors.
+- `navigation/2d/warnings/navmesh_edge_merge_errors: bool` = `true` — If `true`, the navigation system will print warnings about navigation mesh edge merge errors occurring in navigation regions or maps.
+- `navigation/3d/default_cell_height: float` = `0.25` — Default cell height for 3D navigation maps.
+- `navigation/3d/default_cell_size: float` = `0.25` — Default cell size for 3D navigation maps.
+- `navigation/3d/default_edge_connection_margin: float` = `0.25` — Default edge connection margin for 3D navigation maps.
+- `navigation/3d/default_link_connection_radius: float` = `1.0` — Default link connection radius for 3D navigation maps.
+- `navigation/3d/default_up: Vector3` = `Vector3(0, 1, 0)` — Default up orientation for 3D navigation maps.
+- `navigation/3d/merge_rasterizer_cell_scale: float` = `1.0` — Default merge rasterizer cell scale for 3D navigation maps.
+- `navigation/3d/navigation_engine: String` = `"DEFAULT"` — Sets which navigation engine to use for 3D navigation.
+- `navigation/3d/use_edge_connections: bool` = `true` — If enabled 3D navigation regions will use edge connections to connect with other navigation regions within proximity of the navigation map edge connection margin.
+- `navigation/3d/warnings/navmesh_cell_size_mismatch: bool` = `true` — If `true`, the navigation system will print warnings when a navigation mesh with a small cell size (or in 3D height) is used on a navigation map with a larger size as this commonly causes rasterization errors.
+- `navigation/3d/warnings/navmesh_edge_merge_errors: bool` = `true` — If `true`, the navigation system will print warnings about navigation mesh edge merge errors occurring in navigation regions or maps.
+- `navigation/avoidance/thread_model/avoidance_use_high_priority_threads: bool` = `true` — If enabled and avoidance calculations use multiple threads the threads run with high priority.
+- `navigation/avoidance/thread_model/avoidance_use_multiple_threads: bool` = `true` — If enabled the avoidance calculations use multiple threads.
+- `navigation/baking/thread_model/baking_use_high_priority_threads: bool` = `true` — If enabled and async navmesh baking uses multiple threads the threads run with high priority.
+- `navigation/baking/thread_model/baking_use_multiple_threads: bool` = `true` — If enabled the async navmesh baking uses multiple threads.
+- `navigation/baking/use_crash_prevention_checks: bool` = `true` — If enabled, and baking would potentially lead to an engine crash, the baking will be interrupted and an error message with explanation will be raised.
+- `navigation/pathfinding/max_threads: int` = `4` — Maximum number of threads that can run pathfinding queries simultaneously on the same pathfinding graph, for example the same navigation map.
+- `navigation/world/map_use_async_iterations: bool` = `true` — If enabled, navigation map synchronization uses an async process that runs on a background thread.
+- `navigation/world/region_use_async_iterations: bool` = `true` — If enabled, navigation region synchronization uses an async process that runs on a background thread.
+- `network/limits/debugger/max_chars_per_second: int` = `32768` — Maximum number of characters allowed to send as output from the debugger.
+- `network/limits/debugger/max_errors_per_second: int` = `400` — Maximum number of errors allowed to be sent from the debugger.
+- `network/limits/debugger/max_queued_messages: int` = `2048` — Maximum number of messages in the debugger queue.
+- `network/limits/debugger/max_warnings_per_second: int` = `400` — Maximum number of warnings allowed to be sent from the debugger.
+- `network/limits/packet_peer_stream/max_buffer_po2: int` = `16` — Default size of packet peer stream for deserializing Godot data (in bytes, specified as a power of two).
+- `network/limits/tcp/connect_timeout_seconds: int` = `30` — Timeout (in seconds) for connection attempts using TCP.
+- `network/limits/unix/connect_timeout_seconds: int` = `30` — Timeout (in seconds) for connection attempts using UNIX domain socket.
+- `network/limits/webrtc/max_channel_in_buffer_kb: int` = `64` — Maximum size (in kiB) for the WebRTCDataChannel input buffer.
+- `network/tls/certificate_bundle_override: String` = `""` — The CA certificates bundle to use for TLS connections.
+- `network/tls/enable_tls_v1.3: bool` = `true` — If `true`, enable TLSv1.3 negotiation.
+- `physics/2d/default_angular_damp: float` = `1.0` — The default rotational motion damping in 2D.
+- `physics/2d/default_gravity: float` = `980.0` — The default gravity strength in 2D (in pixels per second squared).
+- `physics/2d/default_gravity_vector: Vector2` = `Vector2(0, 1)` — The default gravity direction in 2D.
+- `physics/2d/default_linear_damp: float` = `0.1` — The default linear motion damping in 2D.
+- `physics/2d/physics_engine: String` = `"DEFAULT"` — Sets which physics engine to use for 2D physics.
+- `physics/2d/run_on_separate_thread: bool` = `false` — If `true`, the 2D physics server runs on a separate thread, making better use of multi-core CPUs.
+- `physics/2d/sleep_threshold_angular: float` = `0.13962634` — Threshold angular velocity under which a 2D physics body will be considered inactive.
+- `physics/2d/sleep_threshold_linear: float` = `2.0` — Threshold linear velocity under which a 2D physics body will be considered inactive.
+- `physics/2d/solver/contact_max_allowed_penetration: float` = `0.3` — Maximum distance a shape can penetrate another shape before it is considered a collision.
+- `physics/2d/solver/contact_max_separation: float` = `1.5` — Maximum distance a shape can be from another before they are considered separated and the contact is discarded.
+- `physics/2d/solver/contact_recycle_radius: float` = `1.0` — Maximum distance a pair of bodies has to move before their collision status has to be recalculated.
+- `physics/2d/solver/default_constraint_bias: float` = `0.2` — Default solver bias for all physics constraints.
+- `physics/2d/solver/default_contact_bias: float` = `0.8` — Default solver bias for all physics contacts.
+- `physics/2d/solver/solver_iterations: int` = `16` — Number of solver iterations for all contacts and constraints.
+- `physics/2d/time_before_sleep: float` = `0.5` — Time (in seconds) of inactivity before which a 2D physics body will put to sleep.
+- `physics/3d/default_angular_damp: float` = `0.1` — The default rotational motion damping in 3D.
+- `physics/3d/default_gravity: float` = `9.8` — The default gravity strength in 3D (in meters per second squared).
+- `physics/3d/default_gravity_vector: Vector3` = `Vector3(0, -1, 0)` — The default gravity direction in 3D.
+- `physics/3d/default_linear_damp: float` = `0.1` — The default linear motion damping in 3D.
+- `physics/3d/physics_engine: String` = `"DEFAULT"` — Sets which physics engine to use for 3D physics.
+- `physics/3d/physics_interpolation/scene_traversal: String` = `"DEFAULT"` — The approach used for 3D scene traversal when physics interpolation is enabled. - `DEFAULT`: The default optimized method. - `Legacy`: The previous reference method used for scene tree traversal, which is slower. - `Debug`: Swaps between `DEFAULT` and `Legacy` methods on alternating frames, and provides logging information (which in turn makes it slower).
+- `physics/3d/run_on_separate_thread: bool` = `false` — If `true`, the 3D physics server runs on a separate thread, making better use of multi-core CPUs.
+- `physics/3d/sleep_threshold_angular: float` = `0.13962634` — Threshold angular velocity under which a 3D physics body will be considered inactive.
+- `physics/3d/sleep_threshold_linear: float` = `0.1` — Threshold linear velocity under which a 3D physics body will be considered inactive.
+- `physics/3d/solver/contact_max_allowed_penetration: float` = `0.01` — Maximum distance a shape can penetrate another shape before it is considered a collision.
+- `physics/3d/solver/contact_max_separation: float` = `0.05` — Maximum distance a shape can be from another before they are considered separated and the contact is discarded.
+- `physics/3d/solver/contact_recycle_radius: float` = `0.01` — Maximum distance a pair of bodies has to move before their collision status has to be recalculated.
+- `physics/3d/solver/default_contact_bias: float` = `0.8` — Default solver bias for all physics contacts.
+- `physics/3d/solver/solver_iterations: int` = `16` — Number of solver iterations for all contacts and constraints.
+- `physics/3d/time_before_sleep: float` = `0.5` — Time (in seconds) of inactivity before which a 3D physics body will put to sleep.
+- `physics/common/enable_object_picking: bool` = `true` — Enables `Viewport.physics_object_picking` on the root viewport.
+- `physics/common/max_physics_steps_per_frame: int` = `8` — Controls the maximum number of physics steps that can be simulated each rendered frame.
+- `physics/common/physics_interpolation: bool` = `false` — If `true`, the renderer will interpolate the transforms of objects (both physics and non-physics) between the last two transforms, so that smooth motion is seen even when physics ticks do not coincide with rendered frames.
+- `physics/common/physics_jitter_fix: float` = `0.5` — Controls how much physics ticks are synchronized with real time.
+- `physics/common/physics_ticks_per_second: int` = `60` — The number of fixed iterations per second.
+- `physics/jolt_physics_3d/collisions/active_edge_threshold: float` = `0.87266463` — The maximum angle, in radians, between two adjacent triangles in a ConcavePolygonShape3D or HeightMapShape3D for which the edge between those triangles is considered inactive.
+- `physics/jolt_physics_3d/collisions/collision_margin_fraction: float` = `0.08` — The amount of collision margin to use for certain convex collision shapes, such as BoxShape3D, CylinderShape3D and ConvexPolygonShape3D, as a fraction of the shape's shortest axis, with `Shape3D.margin` as the upper bound.
+- `physics/jolt_physics_3d/joints/world_node: int` = `0` — Which of the two nodes bound by a joint should represent the world when one of the two is omitted, as either `Joint3D.node_a` or `Joint3D.node_b`.
+- `physics/jolt_physics_3d/limits/max_angular_velocity: float` = `47.12389` — The maximum angular velocity that a RigidBody3D can reach, in radians per second.
+- `physics/jolt_physics_3d/limits/max_bodies: int` = `10240` — The maximum number of PhysicsBody3D to support at the same time, awake or sleeping.
+- `physics/jolt_physics_3d/limits/max_body_pairs: int` = `65536` — The maximum number of body pairs to allow processing of.
+- `physics/jolt_physics_3d/limits/max_contact_constraints: int` = `20480` — The maximum number of contact constraints to allow processing of.
+- `physics/jolt_physics_3d/limits/max_linear_velocity: float` = `500.0` — The maximum linear velocity that a RigidBody3D can reach, in meters per second.
+- `physics/jolt_physics_3d/limits/temporary_memory_buffer_size: int` = `32` — The amount of memory to pre-allocate for the stack allocator used within Jolt, in MiB.
+- `physics/jolt_physics_3d/limits/world_boundary_shape_size: float` = `2000.0` — The size of WorldBoundaryShape3D boundaries, for all three dimensions.
+- `physics/jolt_physics_3d/motion_queries/recovery_amount: float` = `0.4` — Fraction of the total penetration to depenetrate per iteration during motion queries.
+- `physics/jolt_physics_3d/motion_queries/recovery_iterations: int` = `4` — The number of iterations to run when depenetrating during motion queries.
+- `physics/jolt_physics_3d/motion_queries/use_enhanced_internal_edge_removal: bool` = `true` — If `true`, enables Jolt's enhanced internal edge removal during motion queries.
+- `physics/jolt_physics_3d/queries/enable_ray_cast_face_index: bool` = `false` — If `true`, populates the `face_index` field in the results of `PhysicsDirectSpaceState3D.intersect_ray`, also accessed through `RayCast3D.get_collision_face_index`.
+- `physics/jolt_physics_3d/queries/use_enhanced_internal_edge_removal: bool` = `false` — If `true`, enables Jolt's enhanced internal edge removal during shape queries.
+- `physics/jolt_physics_3d/simulation/allow_sleep: bool` = `true` — If `true`, RigidBody3D nodes are allowed to go to sleep if their velocity is below the threshold defined in `physics/jolt_physics_3d/simulation/sleep_velocity_threshold` for the duration set in `physics/jolt_physics_3d/simulation/sleep_time_threshold`.
+- `physics/jolt_physics_3d/simulation/baumgarte_stabilization_factor: float` = `0.2` — How much of the position error of a RigidBody3D to fix during a physics step, where `0.0` is none and `1.0` is the full amount.
+- `physics/jolt_physics_3d/simulation/body_pair_contact_cache_angle_threshold: float` = `0.034906585` — The maximum relative angle by which a body pair can move and still reuse the collision results from the previous physics step, in radians.
+- `physics/jolt_physics_3d/simulation/body_pair_contact_cache_distance_threshold: float` = `0.001` — The maximum relative distance by which a body pair can move and still reuse the collision results from the previous physics step, in meters.
+- `physics/jolt_physics_3d/simulation/body_pair_contact_cache_enabled: bool` = `true` — If `true`, enables the body pair contact cache, which removes the need for potentially expensive collision detection when the relative orientation between two bodies hasn't changed much.
+- `physics/jolt_physics_3d/simulation/bounce_velocity_threshold: float` = `1.0` — The minimum velocity needed before a collision can be bouncy, in meters per second.
+- `physics/jolt_physics_3d/simulation/continuous_cd_max_penetration: float` = `0.25` — Fraction of a body's inner radius that may penetrate another body while using continuous collision detection.
+- `physics/jolt_physics_3d/simulation/continuous_cd_movement_threshold: float` = `0.75` — Fraction of a body's inner radius that the body must move per step to make use of continuous collision detection.
+- `physics/jolt_physics_3d/simulation/generate_all_kinematic_contacts: bool` = `false` — If `true`, a RigidBody3D frozen with `RigidBody3D.FREEZE_MODE_KINEMATIC` is able to collide with other kinematic and static bodies, and therefore generate contacts for them.
+- `physics/jolt_physics_3d/simulation/penetration_slop: float` = `0.02` — How much bodies are allowed to penetrate each other, in meters.
+- `physics/jolt_physics_3d/simulation/position_steps: int` = `2` — Number of solver position iterations.
+- `physics/jolt_physics_3d/simulation/sleep_time_threshold: float` = `0.5` — Time in seconds a RigidBody3D will spend below the sleep velocity threshold before going to sleep.
+- `physics/jolt_physics_3d/simulation/sleep_velocity_threshold: float` = `0.03` — The linear velocity of specific points on the bounding box of a RigidBody3D, below which it can be put to sleep, in meters per second.
+- `physics/jolt_physics_3d/simulation/soft_body_point_radius: float` = `0.01` — How big the points of a SoftBody3D are, in meters.
+- `physics/jolt_physics_3d/simulation/speculative_contact_distance: float` = `0.02` — Radius around physics bodies, inside which speculative contact points will be detected, in meters.
+- `physics/jolt_physics_3d/simulation/use_enhanced_internal_edge_removal: bool` = `true` — If `true`, enables Jolt's enhanced internal edge removal for RigidBody3D.
+- `physics/jolt_physics_3d/simulation/velocity_steps: int` = `10` — Number of solver velocity iterations.
+- `rendering/2d/batching/item_buffer_size: int` = `16384` — Maximum number of canvas item commands that can be batched into a single draw call.
+- `rendering/2d/batching/uniform_set_cache_size: int` = `4096` — Maximum number of uniform sets that will be cached by the 2D renderer when batching draw calls.
+- `rendering/2d/sdf/oversize: int` = `1` — Controls how much of the original viewport size should be covered by the 2D signed distance field.
+- `rendering/2d/sdf/scale: int` = `1` — The resolution scale to use for the 2D signed distance field.
+- `rendering/2d/shadow_atlas/size: int` = `2048` — The size of the 2D shadow atlas in pixels.
+- `rendering/2d/snap/snap_2d_transforms_to_pixel: bool` = `false` — If `true`, CanvasItem nodes will internally snap to full pixels.
+- `rendering/2d/snap/snap_2d_vertices_to_pixel: bool` = `false` — If `true`, vertices of CanvasItem nodes will snap to full pixels.
+- `rendering/anti_aliasing/quality/msaa_2d: int` = `0` — Sets the number of multisample antialiasing (MSAA) samples to use for 2D/Canvas rendering (as a power of two).
+- `rendering/anti_aliasing/quality/msaa_3d: int` = `0` — Sets the number of multisample antialiasing (MSAA) samples to use for 3D rendering (as a power of two).
+- `rendering/anti_aliasing/quality/screen_space_aa: int` = `0` — Sets the screen-space antialiasing mode for the default screen Viewport.
+- `rendering/anti_aliasing/quality/smaa_edge_detection_threshold: float` = `0.05` — Sets the sensitivity to edges when using SMAA for antialiasing.
+- `rendering/anti_aliasing/quality/use_debanding: bool` = `false` — If `true`, uses a fast dithering filter just before transforming floating point color values to integer color values to make banding significantly less visible.
+- `rendering/anti_aliasing/quality/use_taa: bool` = `false` — Enables temporal antialiasing for the default screen Viewport.
+- `rendering/anti_aliasing/screen_space_roughness_limiter/amount: float` = `0.25` — Note: This property is only read when the project starts.
+- `rendering/anti_aliasing/screen_space_roughness_limiter/enabled: bool` = `true` — If `true`, enables a spatial filter to limit roughness in areas with high-frequency detail.
+- `rendering/anti_aliasing/screen_space_roughness_limiter/limit: float` = `0.18` — Note: This property is only read when the project starts.
+- `rendering/camera/depth_of_field/depth_of_field_bokeh_quality: int` = `1` — Sets the quality of the depth of field effect.
+- `rendering/camera/depth_of_field/depth_of_field_bokeh_shape: int` = `1` — Sets the depth of field shape.
+- `rendering/camera/depth_of_field/depth_of_field_use_jitter: bool` = `false` — If `true`, jitters DOF samples to make effect slightly blurrier and hide lines created from low sample rates.
+- `rendering/driver/depth_prepass/disable_for_vendors: String` = `"PowerVR,Mali,Adreno,Apple"` — Disables `rendering/driver/depth_prepass/enable` conditionally for certain vendors.
+- `rendering/driver/depth_prepass/enable: bool` = `true` — If `true`, performs a previous depth pass before rendering 3D materials.
+- `rendering/driver/threads/thread_model: int` = `1` — The thread model to use for rendering.
+- `rendering/environment/defaults/default_clear_color: Color` = `Color(0.3, 0.3, 0.3, 1)` — Default background clear color.
+- `rendering/environment/defaults/default_environment: String` = `""` — Environment that will be used as a fallback environment in case a scene does not specify its own environment.
+- `rendering/environment/fog/use_legacy_blending: bool` = `false` — Enables legacy fog blending behavior from version 4.5 and earlier.
+- `rendering/environment/glow/upscale_mode: int` = `1` — Sets how the glow effect is upscaled before being copied onto the screen.
+- `rendering/environment/glow/upscale_mode.mobile: int` = `0` — Lower-end override for `rendering/environment/glow/upscale_mode` on mobile devices, due to performance concerns or driver support.
+- `rendering/environment/screen_space_reflection/half_size: bool` = `true` — If `true`, screen-space reflections will be rendered at half size and then upscaled before being added to the scene.
+- `rendering/environment/ssao/adaptive_target: float` = `0.5` — Quality target to use when `rendering/environment/ssao/quality` is set to `Ultra`.
+- `rendering/environment/ssao/blur_passes: int` = `2` — Number of blur passes to use when computing screen-space ambient occlusion.
+- `rendering/environment/ssao/fadeout_from: float` = `50.0` — Distance at which the screen-space ambient occlusion effect starts to fade out.
+- `rendering/environment/ssao/fadeout_to: float` = `300.0` — Distance at which the screen-space ambient occlusion is fully faded out.
+- `rendering/environment/ssao/half_size: bool` = `true` — If `true`, screen-space ambient occlusion will be rendered at half size and then upscaled before being added to the scene.
+- `rendering/environment/ssao/quality: int` = `2` — Sets the quality of the screen-space ambient occlusion effect.
+- `rendering/environment/ssil/adaptive_target: float` = `0.5` — Quality target to use when `rendering/environment/ssil/quality` is set to `Ultra`.
+- `rendering/environment/ssil/blur_passes: int` = `4` — Number of blur passes to use when computing screen-space indirect lighting.
+- `rendering/environment/ssil/fadeout_from: float` = `50.0` — Distance at which the screen-space indirect lighting effect starts to fade out.
+- `rendering/environment/ssil/fadeout_to: float` = `300.0` — Distance at which the screen-space indirect lighting is fully faded out.
+- `rendering/environment/ssil/half_size: bool` = `true` — If `true`, screen-space indirect lighting will be rendered at half size and then upscaled before being added to the scene.
+- `rendering/environment/ssil/quality: int` = `2` — Sets the quality of the screen-space indirect lighting effect.
+- `rendering/environment/subsurface_scattering/subsurface_scattering_depth_scale: float` = `0.01` — Scales the depth over which the subsurface scattering effect is applied.
+- `rendering/environment/subsurface_scattering/subsurface_scattering_quality: int` = `1` — Sets the quality of the subsurface scattering effect.
+- `rendering/environment/subsurface_scattering/subsurface_scattering_scale: float` = `0.05` — Scales the distance over which samples are taken for subsurface scattering effect.
+- `rendering/environment/volumetric_fog/use_filter: int` = `1` — Enables filtering of the volumetric fog effect prior to integration.
+- `rendering/environment/volumetric_fog/volume_depth: int` = `64` — Number of slices to use along the depth of the froxel buffer for volumetric fog.
+- `rendering/environment/volumetric_fog/volume_size: int` = `64` — Base size used to determine size of froxel buffer in the camera X-axis and Y-axis.
+- `rendering/gl_compatibility/driver: String` = `"opengl3"` — Sets the driver to be used by the renderer when using the Compatibility renderer.
+- `rendering/gl_compatibility/driver.android: String` = `"opengl3"` — Android override for `rendering/gl_compatibility/driver`.
+- `rendering/gl_compatibility/driver.ios: String` = `"opengl3"` — iOS override for `rendering/gl_compatibility/driver`.
+- `rendering/gl_compatibility/driver.linuxbsd: String` = `"opengl3"` — LinuxBSD override for `rendering/gl_compatibility/driver`.
+- `rendering/gl_compatibility/driver.macos: String` = `"opengl3"` — macOS override for `rendering/gl_compatibility/driver`.
+- `rendering/gl_compatibility/driver.web: String` = `"opengl3"` — Web override for `rendering/gl_compatibility/driver`.
+- `rendering/gl_compatibility/driver.windows: String` = `"opengl3"` — Windows override for `rendering/gl_compatibility/driver`.
+- `rendering/gl_compatibility/fallback_to_angle: bool` = `true` — If `true`, the Compatibility renderer will fall back to ANGLE if native OpenGL is not supported or the device is listed in `rendering/gl_compatibility/force_angle_on_devices`.
+- `rendering/gl_compatibility/fallback_to_gles: bool` = `true` — If `true`, the Compatibility renderer will fall back to OpenGLES if desktop OpenGL is not supported.
+- `rendering/gl_compatibility/fallback_to_native: bool` = `true` — If `true`, the Compatibility renderer will fall back to native OpenGL if ANGLE is not supported, or ANGLE dynamic libraries aren't found.
+- `rendering/gl_compatibility/force_angle_on_devices: Array` — An Array of devices which should always use the ANGLE renderer.
+- `rendering/gl_compatibility/item_buffer_size: int` = `16384` — Maximum number of canvas items commands that can be drawn in a single viewport update.
+- `rendering/gl_compatibility/nvidia_disable_threaded_optimization: bool` = `true` — If `true`, disables the threaded optimization feature from the NVIDIA drivers, which are known to cause stuttering in most OpenGL applications.
+- `rendering/global_illumination/gi/use_half_resolution: bool` = `false` — If `true`, renders VoxelGI and SDFGI (`Environment.sdfgi_enabled`) buffers at halved resolution (e.g. 960×540 when the viewport size is 1920×1080).
+- `rendering/global_illumination/sdfgi/frames_to_converge: int` = `5` — The number of frames to use for converging signed distance field global illumination.
+- `rendering/global_illumination/sdfgi/frames_to_update_lights: int` = `2` — The number of frames over which dynamic lights should be updated in signed distance field global illumination.
+- `rendering/global_illumination/sdfgi/probe_ray_count: int` = `1` — The number of rays to throw per frame when computing signed distance field global illumination.
+- `rendering/global_illumination/voxel_gi/quality: int` = `0` — The VoxelGI quality to use.
+- `rendering/lightmapping/bake_performance/max_rays_per_pass: int` = `4` — The maximum number of rays that can be thrown per pass when baking lightmaps with LightmapGI.
+- `rendering/lightmapping/bake_performance/max_rays_per_probe_pass: int` = `64` — The maximum number of rays that can be thrown per pass when baking dynamic object lighting in LightmapProbes with LightmapGI.
+- `rendering/lightmapping/bake_performance/max_transparency_rays: int` = `8` — The maximum number of retry rays that can be thrown per pass when hitting a transparent surface when baking lightmaps with LightmapGI.
+- `rendering/lightmapping/bake_performance/region_size: int` = `512` — The region size to use when baking lightmaps with LightmapGI.
+- `rendering/lightmapping/bake_quality/high_quality_probe_ray_count: int` = `512` — The number of rays to use for baking dynamic object lighting in LightmapProbes when `LightmapGI.quality` is `LightmapGI.BAKE_QUALITY_HIGH`.
+- `rendering/lightmapping/bake_quality/high_quality_ray_count: int` = `512` — The number of rays to use for baking lightmaps with LightmapGI when `LightmapGI.quality` is `LightmapGI.BAKE_QUALITY_HIGH`.
+- `rendering/lightmapping/bake_quality/low_quality_probe_ray_count: int` = `64` — The number of rays to use for baking dynamic object lighting in LightmapProbes when `LightmapGI.quality` is `LightmapGI.BAKE_QUALITY_LOW`.
+- `rendering/lightmapping/bake_quality/low_quality_ray_count: int` = `32` — The number of rays to use for baking lightmaps with LightmapGI when `LightmapGI.quality` is `LightmapGI.BAKE_QUALITY_LOW`.
+- `rendering/lightmapping/bake_quality/medium_quality_probe_ray_count: int` = `256` — The number of rays to use for baking dynamic object lighting in LightmapProbes when `LightmapGI.quality` is `LightmapGI.BAKE_QUALITY_MEDIUM`.
+- `rendering/lightmapping/bake_quality/medium_quality_ray_count: int` = `128` — The number of rays to use for baking lightmaps with LightmapGI when `LightmapGI.quality` is `LightmapGI.BAKE_QUALITY_MEDIUM`.
+- `rendering/lightmapping/bake_quality/ultra_quality_probe_ray_count: int` = `2048` — The number of rays to use for baking dynamic object lighting in LightmapProbes when `LightmapGI.quality` is `LightmapGI.BAKE_QUALITY_ULTRA`.
+- `rendering/lightmapping/bake_quality/ultra_quality_ray_count: int` = `2048` — The number of rays to use for baking lightmaps with LightmapGI when `LightmapGI.quality` is `LightmapGI.BAKE_QUALITY_ULTRA`.
+- `rendering/lightmapping/denoising/denoiser: int` = `0` — Denoiser tool used for denoising lightmaps.
+- `rendering/lightmapping/lightmap_gi/use_bicubic_filter: bool` = `true` — If `true`, applies a bicubic filter during lightmap sampling.
+- `rendering/lightmapping/primitive_meshes/texel_size: float` = `0.2` — The texel_size that is used to calculate the `Mesh.lightmap_size_hint` on PrimitiveMesh resources if `PrimitiveMesh.add_uv2` is enabled.
+- `rendering/lightmapping/probe_capture/update_speed: float` = `15` — The framerate-independent update speed when representing dynamic object lighting from LightmapProbes.
+- `rendering/lights_and_shadows/contact_shadow/enabled: bool` = `false` — If `true`, screen-space contact shadows are enabled.
+- `rendering/lights_and_shadows/contact_shadow/shadow_length: int` = `1` — Controls the maximum distance contact shadows can be cast from their caster.
+- `rendering/lights_and_shadows/contact_shadow/surface_thickness: float` = `0.01` — The assumed depth thickness of surfaces, as a fraction of the depth range.
+- `rendering/lights_and_shadows/directional_shadow/16_bits: bool` = `true` — Use 16 bits for the directional shadow depth map.
+- `rendering/lights_and_shadows/directional_shadow/size: int` = `4096` — The directional shadow's size in pixels.
+- `rendering/lights_and_shadows/directional_shadow/size.mobile: int` = `2048` — Lower-end override for `rendering/lights_and_shadows/directional_shadow/size` on mobile devices, due to performance concerns or driver support.
+- `rendering/lights_and_shadows/directional_shadow/soft_shadow_filter_quality: int` = `2` — Quality setting for shadows cast by DirectionalLight3Ds.
+- `rendering/lights_and_shadows/directional_shadow/soft_shadow_filter_quality.mobile: int` = `0` — Lower-end override for `rendering/lights_and_shadows/directional_shadow/soft_shadow_filter_quality` on mobile devices, due to performance concerns or driver support.
+- `rendering/lights_and_shadows/multi_bounce_occlusion/enabled: bool` = `false` — If `true`, approximates local multi-bounce global illumination in ambient occlusion by integrating albedo information.
+- `rendering/lights_and_shadows/positional_shadow/atlas_16_bits: bool` = `true` — Use 16 bits for the omni/spot shadow depth map.
+- `rendering/lights_and_shadows/positional_shadow/atlas_quadrant_0_subdiv: int` = `2` — The subdivision amount of the first quadrant on the shadow atlas.
+- `rendering/lights_and_shadows/positional_shadow/atlas_quadrant_1_subdiv: int` = `2` — The subdivision amount of the second quadrant on the shadow atlas.
+- `rendering/lights_and_shadows/positional_shadow/atlas_quadrant_2_subdiv: int` = `3` — The subdivision amount of the third quadrant on the shadow atlas.
+- `rendering/lights_and_shadows/positional_shadow/atlas_quadrant_3_subdiv: int` = `4` — The subdivision amount of the fourth quadrant on the shadow atlas.
+- `rendering/lights_and_shadows/positional_shadow/atlas_size: int` = `4096` — The size of the shadow atlas used for OmniLight3D and SpotLight3D nodes.
+- `rendering/lights_and_shadows/positional_shadow/atlas_size.mobile: int` = `2048` — Lower-end override for `rendering/lights_and_shadows/positional_shadow/atlas_size` on mobile devices, due to performance concerns or driver support.
+- `rendering/lights_and_shadows/positional_shadow/soft_shadow_filter_quality: int` = `2` — Quality setting for shadows cast by OmniLight3Ds and SpotLight3Ds.
+- `rendering/lights_and_shadows/positional_shadow/soft_shadow_filter_quality.mobile: int` = `0` — Lower-end override for `rendering/lights_and_shadows/positional_shadow/soft_shadow_filter_quality` on mobile devices, due to performance concerns or driver support.
+- `rendering/lights_and_shadows/tighter_shadow_caster_culling: bool` = `true` — If `true`, items that cannot cast shadows into the view frustum will not be rendered into shadow maps.
+- `rendering/lights_and_shadows/use_physical_light_units: bool` = `false` — Enables the use of physically based units for light sources.
+- `rendering/limits/cluster_builder/max_clustered_elements: float` = `512` — The maximum number of clustered elements (OmniLight3D + SpotLight3D + Decal + ReflectionProbe) that can be rendered at once in the camera view.
+- `rendering/limits/global_shader_variables/buffer_size: int` = `65536` — The maximum number of uniforms that can be used by the global shader uniform buffer.
+- `rendering/limits/opengl/max_decals: int` = `64` — Max number of decals that can be rendered in a frame.
+- `rendering/limits/opengl/max_lights_per_object: int` = `8` — Max number of omnilights and spotlights renderable per object.
+- `rendering/limits/opengl/max_renderable_elements: int` = `65536` — Max number of elements renderable in a frame.
+- `rendering/limits/opengl/max_renderable_lights: int` = `32` — Max number of positional lights renderable in a frame.
+- `rendering/limits/spatial_indexer/threaded_cull_minimum_instances: int` = `1000` — The minimum number of instances that must be present in a scene to enable culling computations on multiple threads.
+- `rendering/limits/spatial_indexer/update_iterations_per_frame: int` = `10` — 
+- `rendering/limits/time/time_rollover_secs: float` = `3600` — Maximum time (in seconds) before the `TIME` shader built-in variable rolls over.
+- `rendering/mesh_lod/lod_change/threshold_pixels: float` = `1.0` — The automatic LOD bias to use for meshes rendered within the ReflectionProbe.
+- `rendering/occlusion_culling/bvh_build_quality: int` = `2` — The Bounding Volume Hierarchy quality to use when rendering the occlusion culling buffer.
+- `rendering/occlusion_culling/jitter_projection: bool` = `true` — If `true`, the projection used for rendering the occlusion buffer will be jittered.
+- `rendering/occlusion_culling/occlusion_rays_per_thread: int` = `512` — The number of occlusion rays traced per CPU thread.
+- `rendering/occlusion_culling/use_occlusion_culling: bool` = `false` — If `true`, OccluderInstance3D nodes will be usable for occlusion culling in 3D in the root viewport.
+- `rendering/reflections/reflection_atlas/reflection_count: int` = `64` — Number of cubemaps to store in the reflection atlas.
+- `rendering/reflections/reflection_atlas/reflection_size: int` = `256` — Size of cubemap faces for ReflectionProbes.
+- `rendering/reflections/reflection_atlas/reflection_size.mobile: int` = `128` — Lower-end override for `rendering/reflections/reflection_atlas/reflection_size` on mobile devices, due to performance concerns or driver support.
+- `rendering/reflections/sky_reflections/fast_filter_high_quality: bool` = `false` — Use a higher quality variant of the fast filtering algorithm.
+- `rendering/reflections/sky_reflections/ggx_samples: int` = `32` — Sets the number of samples to take when using importance sampling for Skys and ReflectionProbes.
+- `rendering/reflections/sky_reflections/ggx_samples.mobile: int` = `16` — Lower-end override for `rendering/reflections/sky_reflections/ggx_samples` on mobile devices, due to performance concerns or driver support.
+- `rendering/reflections/sky_reflections/roughness_layers: int` = `8` — Limits the number of layers to use in radiance maps when using importance sampling.
+- `rendering/reflections/sky_reflections/texture_array_reflections: bool` = `true` — If `true`, uses texture arrays instead of mipmaps for reflection probes and panorama backgrounds (sky).
+- `rendering/reflections/sky_reflections/texture_array_reflections.mobile: bool` = `false` — Lower-end override for `rendering/reflections/sky_reflections/texture_array_reflections` on mobile devices, due to performance concerns or driver support.
+- `rendering/reflections/specular_occlusion/enabled: bool` = `true` — If `true`, reduces reflections based on ambient light.
+- `rendering/renderer/rendering_method: String` = `"forward_plus"` — Sets the renderer that will be used by the project.
+- `rendering/renderer/rendering_method.mobile: String` = `"mobile"` — Override for `rendering/renderer/rendering_method` on mobile devices.
+- `rendering/renderer/rendering_method.web: String` = `"gl_compatibility"` — Override for `rendering/renderer/rendering_method` on web.
+- `rendering/rendering_device/d3d12/agility_sdk_version: int` = `618` — Version code of the Direct3D 12 Agility SDK to use (`D3D12SDKVersion`).
+- `rendering/rendering_device/d3d12/max_resource_descriptors: int` = `65536` — The number of entries in the resource descriptor heap the Direct3D 12 rendering driver uses for most rendering operations.
+- `rendering/rendering_device/d3d12/max_sampler_descriptors: int` = `1024` — The number of entries in the sampler descriptor heap the Direct3D 12 rendering driver uses for most rendering operations.
+- `rendering/rendering_device/driver: String` = `"vulkan"` — Sets the driver to be used by the renderer when using a RenderingDevice-based renderer like the Forward+ or Mobile renderers.
+- `rendering/rendering_device/driver.android: String` = `"vulkan"` — Android override for `rendering/rendering_device/driver`.
+- `rendering/rendering_device/driver.ios: String` = `"metal"` — iOS override for `rendering/rendering_device/driver`.
+- `rendering/rendering_device/driver.linuxbsd: String` = `"vulkan"` — LinuxBSD override for `rendering/rendering_device/driver`.
+- `rendering/rendering_device/driver.macos: String` = `"metal"` — macOS override for `rendering/rendering_device/driver`.
+- `rendering/rendering_device/driver.visionos: String` = `"metal"` — visionOS override for `rendering/rendering_device/driver`.
+- `rendering/rendering_device/driver.windows: String` = `"vulkan"` — Windows override for `rendering/rendering_device/driver`.
+- `rendering/rendering_device/fallback_to_d3d12: bool` = `true` — If `true`, the Forward+ renderer will fall back to Direct3D 12 if Vulkan is not supported.
+- `rendering/rendering_device/fallback_to_opengl3: bool` = `true` — If `true`, the Forward+ renderer will fall back to OpenGL 3 if Direct3D 12, Metal, and Vulkan are not supported.
+- `rendering/rendering_device/fallback_to_vulkan: bool` = `true` — If `true`, the Forward+ renderer will fall back to Vulkan if Direct3D 12 (on Windows) or Metal (on macOS x86_64) are not supported.
+- `rendering/rendering_device/pipeline_cache/enable: bool` = `true` — Enable the pipeline cache that is saved to disk if the graphics API supports it.
+- `rendering/rendering_device/pipeline_cache/save_chunk_size_mb: float` = `3.0` — Determines at which interval pipeline cache is saved to disk.
+- `rendering/rendering_device/staging_buffer/block_size_kb: int` = `256` — The size of a block allocated in the staging buffers.
+- `rendering/rendering_device/staging_buffer/max_size_mb: int` = `128` — The maximum amount of memory allowed to be used by staging buffers.
+- `rendering/rendering_device/staging_buffer/texture_download_region_size_px: int` = `64` — The region size in pixels used to download texture data from the GPU when using methods like `RenderingDevice.texture_get_data_async`.
+- `rendering/rendering_device/staging_buffer/texture_upload_region_size_px: int` = `64` — The region size in pixels used to upload texture data from the GPU when using methods like `RenderingDevice.texture_update`.
+- `rendering/rendering_device/vsync/frame_queue_size: int` = `2` — The number of frames to track on the CPU side before stalling to wait for the GPU.
+- `rendering/rendering_device/vsync/swapchain_image_count: int` = `3` — The number of images the swapchain will consist of (back buffers + front buffer).
+- `rendering/rendering_device/vulkan/max_descriptors_per_pool: int` = `64` — The number of descriptors per pool.
+- `rendering/scaling_3d/fsr_sharpness: float` = `0.2` — Determines how sharp the upscaled image will be when using the FSR upscaling mode.
+- `rendering/scaling_3d/mode: int` = `0` — Sets the scaling 3D mode.
+- `rendering/scaling_3d/mode.ios: int` — iOS override for `rendering/scaling_3d/mode`.
+- `rendering/scaling_3d/mode.macos: int` — macOS override for `rendering/scaling_3d/mode`.
+- `rendering/scaling_3d/scale: float` = `1.0` — Scales the 3D render buffer based on the viewport size uses an image filter specified in `rendering/scaling_3d/mode` to scale the output image to the full viewport size.
+- `rendering/shader_compiler/shader_cache/compress: bool` = `true` — 
+- `rendering/shader_compiler/shader_cache/enabled: bool` = `true` — Enable the shader cache, which stores compiled shaders to disk to prevent stuttering from shader compilation the next time the shader is needed.
+- `rendering/shader_compiler/shader_cache/strip_debug: bool` = `false` — 
+- `rendering/shader_compiler/shader_cache/strip_debug.release: bool` = `true` — 
+- `rendering/shader_compiler/shader_cache/use_zstd_compression: bool` = `true` — 
+- `rendering/shading/overrides/force_lambert_over_burley: bool` = `false` — If `true`, uses faster but lower-quality Lambert material lighting model instead of Burley.
+- `rendering/shading/overrides/force_lambert_over_burley.mobile: bool` = `true` — Lower-end override for `rendering/shading/overrides/force_lambert_over_burley` on mobile devices, due to performance concerns or driver support.
+- `rendering/shading/overrides/force_vertex_shading: bool` = `false` — If `true`, forces vertex shading for all rendering.
+- `rendering/textures/basis_universal/rdo_dict_size: int` = `1024` — The dictionary size for Rate-Distortion Optimization (RDO) when importing textures as Basis Universal and when RDO is enabled, ranging from `64` to `65536`.
+- `rendering/textures/basis_universal/zstd_supercompression: bool` = `true` — If `true`, enables Zstandard supercompression to reduce file size when importing textures as Basis Universal.
+- `rendering/textures/basis_universal/zstd_supercompression_level: int` = `6` — Specify the compression level for Basis Universal Zstandard supercompression, ranging from `1` to `22`.
+- `rendering/textures/canvas_textures/default_texture_filter: int` = `1` — The default texture filtering mode to use for CanvasItem's built-in texture.
+- `rendering/textures/canvas_textures/default_texture_repeat: int` = `0` — The default texture repeating mode to use for CanvasItem's built-in texture.
+- `rendering/textures/decals/filter: int` = `3` — The filtering quality to use for Decal nodes.
+- `rendering/textures/default_filters/anisotropic_filtering_level: int` = `2` — Sets the maximum number of samples to take when using anisotropic filtering on textures (as a power of two).
+- `rendering/textures/default_filters/texture_mipmap_bias: float` = `0.0` — Affects the final texture sharpness by reading from a lower or higher mipmap (also called "texture LOD bias").
+- `rendering/textures/default_filters/use_nearest_mipmap_filter: bool` = `false` — If `true`, uses nearest-neighbor mipmap filtering when using mipmaps (also called "bilinear filtering"), which will result in visible seams appearing between mipmap stages.
+- `rendering/textures/light_projectors/filter: int` = `3` — The filtering quality to use for OmniLight3D and SpotLight3D projectors.
+- `rendering/textures/lossless_compression/force_png: bool` = `false` — If `true`, the texture importer will import lossless textures using the PNG format.
+- `rendering/textures/streaming/enabled: bool` = `false` — If `true`, enables texture streaming.
+- `rendering/textures/streaming/inactivity_decay_rate_ms: int` = `5000` — The time (in milliseconds) per mipmap level of quality decay for textures that are no longer visible.
+- `rendering/textures/streaming/max_lod: int` = `3` — The maximum LOD (mipmap level) that streamed textures can load.
+- `rendering/textures/streaming/max_ops_per_second: int` = `200` — The maximum number of texture streaming operations (loading/unloading mipmaps) per second.
+- `rendering/textures/streaming/memory_budget_enabled: bool` = `false` — If `true`, limits the maximum VRAM allocated for streamed textures to the value specified in `rendering/textures/streaming/memory_budget_mb`.
+- `rendering/textures/streaming/memory_budget_mb: int` = `512` — The maximum VRAM (in megabytes) allocated for streamed textures.
+- `rendering/textures/streaming/min_lod: int` = `0` — The minimum LOD (mipmap level) that streamed textures start at when loaded.
+- `rendering/textures/vram_compression/cache_gpu_compressor: bool` = `true` — If `true`, the GPU texture compressor will cache the local RenderingDevice and its resources (shaders and pipelines), making subsequent imports faster at the cost of increased memory usage.
+- `rendering/textures/vram_compression/compress_with_gpu: bool` = `true` — If `true`, the texture importer will utilize the GPU for compressing textures, improving the import time of large images.
+- `rendering/textures/vram_compression/import_etc2_astc: bool` = `false` — If `true`, the texture importer will import VRAM-compressed textures using the Ericsson Texture Compression 2 algorithm for lower quality textures and normal maps and Adaptable Scalable Texture Compression algorithm for high quality textures (in 4×4 block size).
+- `rendering/textures/vram_compression/import_s3tc_bptc: bool` = `false` — If `true`, the texture importer will import VRAM-compressed textures using the S3 Texture Compression algorithm (DXT1-5) for lower quality textures and the BPTC algorithm (BC6H and BC7) for high quality textures.
+- `rendering/textures/webp_compression/compression_method: int` = `2` — The default compression method for WebP.
+- `rendering/textures/webp_compression/lossless_compression_factor: float` = `25` — The default compression factor for lossless WebP.
+- `rendering/viewport/hdr_2d: bool` = `false` — If `true`, enables `Viewport.use_hdr_2d` on the root Viewport. 2D rendering will use a high dynamic range (HDR) `RGBA16` format framebuffer.
+- `rendering/viewport/transparent_background: bool` = `false` — If `true`, enables `Viewport.transparent_bg` on the root viewport.
+- `rendering/vrs/mode: int` = `0` — Set the default Variable Rate Shading (VRS) mode for the main viewport.
+- `rendering/vrs/texture: String` = `""` — If `rendering/vrs/mode` is set to Texture, this is the path to default texture loaded as the VRS image.
+- `threading/worker_pool/low_priority_thread_ratio: float` = `0.3` — The ratio of WorkerThreadPool's threads that will be reserved for low-priority tasks.
+- `threading/worker_pool/max_threads: int` = `-1` — Maximum number of threads to be used by WorkerThreadPool.
+- `xr/openxr/binding_modifiers/analog_threshold: bool` = `false` — If `true`, enables the analog threshold binding modifier if supported by the XR runtime.
+- `xr/openxr/binding_modifiers/dpad_binding: bool` = `false` — If `true`, enables the D-pad binding modifier if supported by the XR runtime.
+- `xr/openxr/create_default_foveated_inset_viewport: bool` = `true` — If `true`, and `xr/openxr/view_configuration` is set to `Stereo with Foveated Inset`, and foveated inset is supported, Godot will add and configure an OpenXRFoveatedInsetViewport node for rendering the foveated inset.
+- `xr/openxr/default_action_map: String` = `"res://openxr_action_map.tres"` — Action map configuration to load by default.
+- `xr/openxr/enabled: bool` = `false` — If `true`, Godot will setup and initialize OpenXR on startup.
+- `xr/openxr/environment_blend_mode: int` = `"0"` — Specify how OpenXR should blend in the environment.
+- `xr/openxr/extensions/debug_message_types: int` = `"15"` — Specifies the message types for which we request debug messages.
+- `xr/openxr/extensions/debug_utils: int` = `"0"` — Enables debug utilities on XR runtimes that supports the debug utils extension.
+- `xr/openxr/extensions/eye_gaze_interaction: bool` = `false` — Specify whether to enable eye tracking for this project.
+- `xr/openxr/extensions/frame_synthesis: bool` = `false` — If `true` the frame synthesis extension will be activated if supported by the platform.
+- `xr/openxr/extensions/frame_synthesis/flip_y: bool` = `false` — If `true` the Y value of the motion vectors submitted to the frame synthesis extension will be flipped.
+- `xr/openxr/extensions/hand_interaction_profile: bool` = `false` — If `true` the hand interaction profile extension will be activated if supported by the platform.
+- `xr/openxr/extensions/hand_tracking: bool` = `false` — If `true`, the hand tracking extension is enabled if available.
+- `xr/openxr/extensions/hand_tracking_controller_data_source: bool` = `false` — If `true`, support for the controller inferred data source is requested.
+- `xr/openxr/extensions/hand_tracking_unobstructed_data_source: bool` = `false` — If `true`, support for the unobstructed data source is requested.
+- `xr/openxr/extensions/render_model: bool` = `false` — If `true` we enable the render model extension if available.
+- `xr/openxr/extensions/spatial_container/bounds: Vector3` = `Vector3(0.5, 0.5, 0.5)` — Specifies the starting bounds for the main spatial container, in meters.
+- `xr/openxr/extensions/spatial_container/bounds_mode: int` = `"0"` — Specifies the bounds mode, `bounded` or `immersive`, for the main spatial container.
+- `xr/openxr/extensions/spatial_container/enabled: bool` = `false` — Enables the spatial container extension.
+- `xr/openxr/extensions/spatial_entity/enable_builtin_anchor_detection: bool` = `false` — If `true`, we enable the built-in logic for handling anchors.
+- `xr/openxr/extensions/spatial_entity/enable_builtin_plane_detection: bool` = `false` — If `true`, we enable the built-in logic for handling plane detection.
+- `xr/openxr/extensions/spatial_entity/enable_persistent_anchors: bool` = `false` — If `true`, support for the persistent anchors extension is requested.
+- `xr/openxr/extensions/spatial_entity/enable_plane_tracking: bool` = `false` — If `true`, support for the plane tracking extension is requested.
+- `xr/openxr/extensions/spatial_entity/enable_spatial_anchors: bool` = `false` — If `true`, support for the spatial anchors extension is requested.
+- `xr/openxr/extensions/spatial_entity/enabled: bool` = `false` — If `true`, support for the spatial entity extension is requested.
+- `xr/openxr/extensions/spatial_entity/marker_tracking/april_tag_dict: int` = `"3"` — The April Tag marker type the built-in marker tracking is set to recognize (if April Tag marker tracking is available and enabled).
+- `xr/openxr/extensions/spatial_entity/marker_tracking/aruco_dict: int` = `"15"` — The ArUco marker type the built-in marker tracking is set to recognize (if ArUco marker tracking is available and enabled).
+- `xr/openxr/extensions/spatial_entity/marker_tracking/enable: bool` = `false` — If `true`, support for the marker tracking extension is requested.
+- `xr/openxr/extensions/spatial_entity/marker_tracking/enable_builtin_for_types: int` = `0` — Enables the built-in logic for handling marker tracking for each selected marker type.
+- `xr/openxr/extensions/user_presence: bool` = `false` — If `true`, the user presence extension is enabled if available.
+- `xr/openxr/form_factor: int` = `"0"` — Specify whether OpenXR should be configured for an HMD or a hand held device.
+- `xr/openxr/foveation_dynamic: bool` = `false` — If `true` and foveation is supported, will automatically adjust foveation level based on framerate up to the level set on `xr/openxr/foveation_level`.
+- `xr/openxr/foveation_eye_tracked: bool` = `true` — If `true` and foveation level is set to anything other than "Disabled", eye-tracked foveation will be used, so long as it's supported by the headset.
+- `xr/openxr/foveation_level: int` = `"0"` — Applied foveation level if supported.
+- `xr/openxr/foveation_with_subsampled_images: bool` = `true` — If `true` and foveation is also enabled, subsampled images will be used on Vulkan.
+- `xr/openxr/reference_space: int` = `"1"` — Specify the default reference space.
+- `xr/openxr/startup_alert: bool` = `true` — If `true`, Godot will display an alert modal when OpenXR initialization fails on startup.
+- `xr/openxr/submit_depth_buffer: bool` = `false` — If `true`, OpenXR will manage the depth buffer and use the depth buffer for advanced reprojection provided this is supported by the XR runtime.
+- `xr/openxr/target_api_version: String` = `""` — Optionally sets a specific API version of OpenXR to initialize in `major.minor.patch` notation.
+- `xr/openxr/view_configuration: int` = `"1"` — Specify the view configuration with which to configure OpenXR setting up either Mono or Stereo rendering.
+- `xr/shaders/enabled: bool` = `false` — If `true`, Godot will compile shaders required for XR.
+- `xr/visionos/dynamic_render_quality/enable: bool` = `false` — If `true`, enables Dynamic Render Quality for the visionOS XR module.
+- `xr/visionos/dynamic_render_quality/maximum_quality: float` = `0.38` — Set this value to the minimum value that makes sense for your app.
+- `xr/visionos/enable_controller_tracking: bool` = `false` — Enables and initializes visionOS controller tracking.
+- `xr/visionos/enable_hand_tracking: bool` = `false` — Enables and initializes visionOS hand tracking.
+- `xr/visionos/persistent_system_overlays: int` = `0` — Initial visibility of the system overlays, such as the Home indicator, for the visionOS XR module's immersive scene.
+- `xr/visionos/upper_limb_visibility: int` = `0` — Initial visibility of the user's upper limbs for the visionOS XR module's immersive scene.
+
+## Methods
+
+- `add_property_info(hint: Dictionary) -> void` — Adds a custom property info to a property.
+- `check_changed_settings_in_group(setting_prefix: String) -> bool` *const* — Checks if any settings with the prefix `setting_prefix` exist in the set of changed settings.
+- `clear(name: String) -> void` — Clears the whole configuration (not recommended, may break things).
+- `get_changed_settings() -> PackedStringArray` *const* — Gets an array of the settings which have been changed since the last save.
+- `get_global_class_list() -> Dictionary[]` — Returns an Array of registered global classes.
+- `get_order(name: String) -> int` *const* — Returns the order of a configuration value (influences when saved to the config file).
+- `get_setting(name: String, default_value: Variant = null) -> Variant` *const* — Returns the value of the setting identified by `name`.
+- `get_setting_with_override(name: StringName) -> Variant` *const* — Similar to `get_setting`, but applies feature tag overrides if any exists and is valid.
+- `get_setting_with_override_and_custom_features(name: StringName, features: PackedStringArray) -> Variant` *const* — Similar to `get_setting_with_override`, but applies feature tag overrides instead of current OS features.
+- `globalize_path(path: String) -> String` *const* — Returns the absolute, native OS path corresponding to the localized `path` (starting with `res://` or `user://`).
+- `has_setting(name: String) -> bool` *const* — Returns `true` if a configuration value is present.
+- `load_resource_pack(pack: String, replace_files: bool = true, offset: int = 0) -> bool` — Loads the contents of the .pck or .zip file specified by `pack` into the resource filesystem (`res://`).
+- `localize_path(path: String) -> String` *const* — Returns the localized path (starting with `res://`) corresponding to the absolute, native OS `path`.
+- `save() -> int[Error]` — Saves the configuration to the `project.godot` file.
+- `save_custom(file: String) -> int[Error]` — Saves the configuration to a custom file.
+- `set_as_basic(name: String, basic: bool) -> void` — Defines if the specified setting is considered basic or advanced.
+- `set_as_internal(name: String, internal: bool) -> void` — Defines if the specified setting is considered internal.
+- `set_initial_value(name: String, value: Variant) -> void` — Sets the specified setting's initial value.
+- `set_order(name: String, position: int) -> void` — Sets the order of a configuration value (influences when saved to the config file).
+- `set_restart_if_changed(name: String, restart: bool) -> void` — Sets whether a setting requires restarting the editor to properly take effect.
+- `set_setting(name: String, value: Variant) -> void` — Sets the value of a setting.
+
+## Signals
+
+- `settings_changed()` — Emitted when any setting is changed, up to once per process frame.

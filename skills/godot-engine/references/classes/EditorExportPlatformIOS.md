@@ -1,0 +1,253 @@
+# EditorExportPlatformIOS
+
+**Inherits:** EditorExportPlatformAppleEmbedded
+
+Exporter for iOS.
+
+
+
+## Properties
+
+- `application/additional_plist_content: String` — Additional data added to the root `<dict>` section of the Info.plist file.
+- `application/app_store_team_id: String` — Apple Team ID, unique 10-character string.
+- `application/bundle_identifier: String` — Unique application identifier in a reverse-DNS format, can only contain alphanumeric characters (`A-Z`, `a-z`, and `0-9`), hyphens (`-`), and periods (`.`).
+- `application/code_sign_identity_debug: String` — The "Full Name", "Common Name", or SHA-1 hash of the signing identity used for debug export.
+- `application/code_sign_identity_release: String` — The "Full Name", "Common Name", or SHA-1 hash of the signing identity used for release export.
+- `application/delete_old_export_files_unconditionally: bool` — If `true`, existing "project name" and "project name.xcodeproj" in the export destination directory will be unconditionally deleted during export.
+- `application/export_method_debug: int` — Application distribution target (debug export).
+- `application/export_method_release: int` — Application distribution target (release export).
+- `application/export_project_only: bool` — If `true`, exports iOS project files without building an XCArchive or `.ipa` file.
+- `application/icon_interpolation: int` — Interpolation method used to resize application icon.
+- `application/min_ios_version: String` — Minimum version of iOS required for this application to run in the `major.minor.patch` or `major.minor` format, can only contain numeric characters (`0-9`) and periods (`.`).
+- `application/provisioning_profile_specifier_debug: String` — Name of the provisioning profile.
+- `application/provisioning_profile_specifier_release: String` — Name of the provisioning profile.
+- `application/provisioning_profile_uuid_debug: String` — UUID of the provisioning profile.
+- `application/provisioning_profile_uuid_release: String` — UUID of the provisioning profile.
+- `application/short_version: String` — Application version visible to the user.
+- `application/signature: String` — A four-character creator code that is specific to the bundle.
+- `application/targeted_device_family: int` — Supported device family.
+- `application/version: String` — Machine-readable application version in the `major.minor.patch` format.
+- `architectures/arm64: bool` — If `true`, `arm64` binaries are included in the exported project.
+- `capabilities/access_wifi: bool` — If `true`, networking features related to Wi-Fi access are enabled.
+- `capabilities/additional: PackedStringArray` — Additional data added to the `UIRequiredDeviceCapabilities` array of the `Info.plist` file.
+- `capabilities/performance_a12: bool` — Requires the graphics performance and features of the A12 Bionic and later chips (devices supporting all Vulkan renderer features).
+- `capabilities/performance_gaming_tier: bool` — Requires the graphics performance and features of the A17 Pro and later chips.
+- `custom_template/debug: String` — Path to the custom export template.
+- `custom_template/release: String` — Path to the custom export template.
+- `entitlements/additional: String` — Additional data added to the root `<dict>` section of the .entitlements file.
+- `entitlements/game_center: bool` — If `true`, allows access to Game Center features.
+- `entitlements/increased_memory_limit: bool` — If `true`, hints that the app might perform better with a higher memory limit.
+- `entitlements/push_notifications: String` — Environment for Apple Push Notification service.
+- `icons/app_store_1024x1024: String` — App Store application icon file.
+- `icons/app_store_1024x1024_dark: String` — App Store application icon file, dark version.
+- `icons/app_store_1024x1024_tinted: String` — App Store application icon file, tinted version.
+- `icons/icon_1024x1024: String` — Base application icon used to generate other icons.
+- `icons/icon_1024x1024_dark: String` — Base application icon used to generate other icons, dark version.
+- `icons/icon_1024x1024_tinted: String` — Base application icon used to generate other icons, tinted version.
+- `icons/ios_128x128: String` — iOS application 64×64 icon file (2× DPI).
+- `icons/ios_128x128_dark: String` — iOS application 64×64 icon file (2× DPI), dark version.
+- `icons/ios_128x128_tinted: String` — iOS application 64×64 icon file (2× DPI), tinted version.
+- `icons/ios_136x136: String` — iOS application 68×68 icon file (2× DPI).
+- `icons/ios_136x136_dark: String` — iOS application 68×68 icon file (2× DPI), dark version.
+- `icons/ios_136x136_tinted: String` — iOS application 68×68 icon file (2× DPI), tinted version.
+- `icons/ios_192x192: String` — iOS application 64×64 icon file (3× DPI).
+- `icons/ios_192x192_dark: String` — iOS application 64×64 icon file (3× DPI), dark version.
+- `icons/ios_192x192_tinted: String` — iOS application 64×64 icon file (3× DPI), tinted version.
+- `icons/ipad_152x152: String` — Home screen application icon file on iPad (2× DPI).
+- `icons/ipad_152x152_dark: String` — Home screen application icon file on iPad (2× DPI), dark version.
+- `icons/ipad_152x152_tinted: String` — Home screen application icon file on iPad (2× DPI), tinted version.
+- `icons/ipad_167x167: String` — Home screen application icon file on iPad (3× DPI).
+- `icons/ipad_167x167_dark: String` — Home screen application icon file on iPad (3× DPI), dark version.
+- `icons/ipad_167x167_tinted: String` — Home screen application icon file on iPad (3× DPI), tinted version.
+- `icons/iphone_120x120: String` — Home screen application icon file on iPhone (2× DPI).
+- `icons/iphone_120x120_dark: String` — Home screen application icon file on iPhone (2× DPI), dark version.
+- `icons/iphone_120x120_tinted: String` — Home screen application icon file on iPhone (2× DPI), tinted version.
+- `icons/iphone_180x180: String` — Home screen application icon file on iPhone (3× DPI).
+- `icons/iphone_180x180_dark: String` — Home screen application icon file on iPhone (3× DPI), dark version.
+- `icons/iphone_180x180_tinted: String` — Home screen application icon file on iPhone (3× DPI), tinted version.
+- `icons/notification_40x40: String` — Notification icon file on iPad and iPhone (2× DPI).
+- `icons/notification_40x40_dark: String` — Notification icon file on iPad and iPhone (2× DPI), dark version.
+- `icons/notification_40x40_tinted: String` — Notification icon file on iPad and iPhone (2× DPI), tinted version.
+- `icons/notification_60x60: String` — Notification icon file on iPhone (3× DPI).
+- `icons/notification_60x60_dark: String` — Notification icon file on iPhone (3× DPI), dark version.
+- `icons/notification_60x60_tinted: String` — Notification icon file on iPhone (3× DPI), tinted version.
+- `icons/notification_76x76: String` — Notification icon file on iPad and iPhone (2× DPI).
+- `icons/notification_76x76_dark: String` — Notification icon file on iPad and iPhone (2× DPI), dark version.
+- `icons/notification_76x76_tinted: String` — Notification icon file on iPad and iPhone (2× DPI), tinted version.
+- `icons/notification_114x114: String` — Notification icon file on iPad and iPhone (3× DPI).
+- `icons/notification_114x114_dark: String` — Notification icon file on iPad and iPhone (3× DPI), dark version.
+- `icons/notification_114x114_tinted: String` — Notification icon file on iPad and iPhone (3× DPI), tinted version.
+- `icons/settings_58x58: String` — Application settings icon file on iPad and iPhone (2× DPI).
+- `icons/settings_58x58_dark: String` — Application settings icon file on iPad and iPhone (2× DPI), dark version.
+- `icons/settings_58x58_tinted: String` — Application settings icon file on iPad and iPhone (2× DPI), tinted version.
+- `icons/settings_87x87: String` — Application settings icon file on iPhone (3× DPI).
+- `icons/settings_87x87_dark: String` — Application settings icon file on iPhone (3× DPI), dark version.
+- `icons/settings_87x87_tinted: String` — Application settings icon file on iPhone (3× DPI), tinted version.
+- `icons/spotlight_80x80: String` — Spotlight icon file on iPad and iPhone (2× DPI).
+- `icons/spotlight_80x80_dark: String` — Spotlight icon file on iPad and iPhone (2× DPI), dark version.
+- `icons/spotlight_80x80_tinted: String` — Spotlight icon file on iPad and iPhone (2× DPI), tinted version.
+- `icons/spotlight_120x120: String` — Spotlight icon file on iPad and iPhone (3× DPI).
+- `icons/spotlight_120x120_dark: String` — Spotlight icon file on iPad and iPhone (3× DPI), dark version.
+- `icons/spotlight_120x120_tinted: String` — Spotlight icon file on iPad and iPhone (3× DPI), tinted version.
+- `modules/camera: bool` — If `true`, CameraServer module is added to the exported project.
+- `privacy/active_keyboard_access_reasons: int` — The reasons your app uses active keyboard API.
+- `privacy/camera_usage_description: String` — A message displayed when requesting access to the device's camera (in English).
+- `privacy/camera_usage_description_localized: Dictionary` — A message displayed when requesting access to the device's camera (localized).
+- `privacy/collected_data/advertising_data/collected: bool` — Indicates whether your app collects advertising data.
+- `privacy/collected_data/advertising_data/collection_purposes: int` — The reasons your app collects advertising data.
+- `privacy/collected_data/advertising_data/linked_to_user: bool` — Indicates whether your app links advertising data to the user's identity.
+- `privacy/collected_data/advertising_data/used_for_tracking: bool` — Indicates whether your app uses advertising data for tracking.
+- `privacy/collected_data/audio_data/collected: bool` — Indicates whether your app collects audio data.
+- `privacy/collected_data/audio_data/collection_purposes: int` — The reasons your app collects audio data.
+- `privacy/collected_data/audio_data/linked_to_user: bool` — Indicates whether your app links audio data to the user's identity.
+- `privacy/collected_data/audio_data/used_for_tracking: bool` — Indicates whether your app uses audio data for tracking.
+- `privacy/collected_data/browsing_history/collected: bool` — Indicates whether your app collects browsing history.
+- `privacy/collected_data/browsing_history/collection_purposes: int` — The reasons your app collects browsing history.
+- `privacy/collected_data/browsing_history/linked_to_user: bool` — Indicates whether your app links browsing history to the user's identity.
+- `privacy/collected_data/browsing_history/used_for_tracking: bool` — Indicates whether your app uses browsing history for tracking.
+- `privacy/collected_data/coarse_location/collected: bool` — Indicates whether your app collects coarse location data.
+- `privacy/collected_data/coarse_location/collection_purposes: int` — The reasons your app collects coarse location data.
+- `privacy/collected_data/coarse_location/linked_to_user: bool` — Indicates whether your app links coarse location data to the user's identity.
+- `privacy/collected_data/coarse_location/used_for_tracking: bool` — Indicates whether your app uses coarse location data for tracking.
+- `privacy/collected_data/contacts/collected: bool` — Indicates whether your app collects contacts.
+- `privacy/collected_data/contacts/collection_purposes: int` — The reasons your app collects contacts.
+- `privacy/collected_data/contacts/linked_to_user: bool` — Indicates whether your app links contacts to the user's identity.
+- `privacy/collected_data/contacts/used_for_tracking: bool` — Indicates whether your app uses contacts for tracking.
+- `privacy/collected_data/crash_data/collected: bool` — Indicates whether your app collects crash data.
+- `privacy/collected_data/crash_data/collection_purposes: int` — The reasons your app collects crash data.
+- `privacy/collected_data/crash_data/linked_to_user: bool` — Indicates whether your app links crash data to the user's identity.
+- `privacy/collected_data/crash_data/used_for_tracking: bool` — Indicates whether your app uses crash data for tracking.
+- `privacy/collected_data/credit_info/collected: bool` — Indicates whether your app collects credit information.
+- `privacy/collected_data/credit_info/collection_purposes: int` — The reasons your app collects credit information.
+- `privacy/collected_data/credit_info/linked_to_user: bool` — Indicates whether your app links credit information to the user's identity.
+- `privacy/collected_data/credit_info/used_for_tracking: bool` — Indicates whether your app uses credit information for tracking.
+- `privacy/collected_data/customer_support/collected: bool` — Indicates whether your app collects customer support data.
+- `privacy/collected_data/customer_support/collection_purposes: int` — The reasons your app collects customer support data.
+- `privacy/collected_data/customer_support/linked_to_user: bool` — Indicates whether your app links customer support data to the user's identity.
+- `privacy/collected_data/customer_support/used_for_tracking: bool` — Indicates whether your app uses customer support data for tracking.
+- `privacy/collected_data/device_id/collected: bool` — Indicates whether your app collects device IDs.
+- `privacy/collected_data/device_id/collection_purposes: int` — The reasons your app collects device IDs.
+- `privacy/collected_data/device_id/linked_to_user: bool` — Indicates whether your app links device IDs to the user's identity.
+- `privacy/collected_data/device_id/used_for_tracking: bool` — Indicates whether your app uses device IDs for tracking.
+- `privacy/collected_data/email_address/collected: bool` — Indicates whether your app collects email addresses.
+- `privacy/collected_data/email_address/collection_purposes: int` — The reasons your app collects email addresses.
+- `privacy/collected_data/email_address/linked_to_user: bool` — Indicates whether your app links email addresses to the user's identity.
+- `privacy/collected_data/email_address/used_for_tracking: bool` — Indicates whether your app uses email addresses for tracking.
+- `privacy/collected_data/emails_or_text_messages/collected: bool` — Indicates whether your app collects emails or text messages.
+- `privacy/collected_data/emails_or_text_messages/collection_purposes: int` — The reasons your app collects emails or text messages.
+- `privacy/collected_data/emails_or_text_messages/linked_to_user: bool` — Indicates whether your app links emails or text messages to the user's identity.
+- `privacy/collected_data/emails_or_text_messages/used_for_tracking: bool` — Indicates whether your app uses emails or text messages for tracking.
+- `privacy/collected_data/environment_scanning/collected: bool` — Indicates whether your app collects environment scanning data.
+- `privacy/collected_data/environment_scanning/collection_purposes: int` — The reasons your app collects environment scanning data.
+- `privacy/collected_data/environment_scanning/linked_to_user: bool` — Indicates whether your app links environment scanning data to the user's identity.
+- `privacy/collected_data/environment_scanning/used_for_tracking: bool` — Indicates whether your app uses environment scanning data for tracking.
+- `privacy/collected_data/fitness/collected: bool` — Indicates whether your app collects fitness and exercise data.
+- `privacy/collected_data/fitness/collection_purposes: int` — The reasons your app collects fitness and exercise data.
+- `privacy/collected_data/fitness/linked_to_user: bool` — Indicates whether your app links fitness and exercise data to the user's identity.
+- `privacy/collected_data/fitness/used_for_tracking: bool` — Indicates whether your app uses fitness and exercise data for tracking.
+- `privacy/collected_data/gameplay_content/collected: bool` — Indicates whether your app collects gameplay content.
+- `privacy/collected_data/gameplay_content/collection_purposes: int` — The reasons your app collects gameplay content.
+- `privacy/collected_data/gameplay_content/linked_to_user: bool` — Indicates whether your app links gameplay content to the user's identity.
+- `privacy/collected_data/gameplay_content/used_for_tracking: bool` — Indicates whether your app uses gameplay content for tracking.
+- `privacy/collected_data/hands/collected: bool` — Indicates whether your app collects user's hand structure and hand movements.
+- `privacy/collected_data/hands/collection_purposes: int` — The reasons your app collects user's hand structure and hand movements.
+- `privacy/collected_data/hands/linked_to_user: bool` — Indicates whether your app links user's hand structure and hand movements to the user's identity.
+- `privacy/collected_data/hands/used_for_tracking: bool` — Indicates whether your app uses user's hand structure and hand movements for tracking.
+- `privacy/collected_data/head/collected: bool` — Indicates whether your app collects user's head movement.
+- `privacy/collected_data/head/collection_purposes: int` — The reasons your app collects user's head movement.
+- `privacy/collected_data/head/linked_to_user: bool` — Indicates whether your app links user's head movement to the user's identity.
+- `privacy/collected_data/head/used_for_tracking: bool` — Indicates whether your app uses user's head movement for tracking.
+- `privacy/collected_data/health/collected: bool` — Indicates whether your app collects health and medical data.
+- `privacy/collected_data/health/collection_purposes: int` — The reasons your app collects health and medical data.
+- `privacy/collected_data/health/linked_to_user: bool` — Indicates whether your app links health and medical data to the user's identity.
+- `privacy/collected_data/health/used_for_tracking: bool` — Indicates whether your app uses health and medical data for tracking.
+- `privacy/collected_data/name/collected: bool` — Indicates whether your app collects user's name.
+- `privacy/collected_data/name/collection_purposes: int` — The reasons your app collects user's name.
+- `privacy/collected_data/name/linked_to_user: bool` — Indicates whether your app links user's name to the user's identity.
+- `privacy/collected_data/name/used_for_tracking: bool` — Indicates whether your app uses user's name for tracking.
+- `privacy/collected_data/other_contact_info/collected: bool` — Indicates whether your app collects any other contact information.
+- `privacy/collected_data/other_contact_info/collection_purposes: int` — The reasons your app collects any other contact information.
+- `privacy/collected_data/other_contact_info/linked_to_user: bool` — Indicates whether your app links any other contact information to the user's identity.
+- `privacy/collected_data/other_contact_info/used_for_tracking: bool` — Indicates whether your app uses any other contact information for tracking.
+- `privacy/collected_data/other_data_types/collected: bool` — Indicates whether your app collects any other data.
+- `privacy/collected_data/other_data_types/collection_purposes: int` — The reasons your app collects any other data.
+- `privacy/collected_data/other_data_types/linked_to_user: bool` — Indicates whether your app links any other data to the user's identity.
+- `privacy/collected_data/other_data_types/used_for_tracking: bool` — Indicates whether your app uses any other data for tracking.
+- `privacy/collected_data/other_diagnostic_data/collected: bool` — Indicates whether your app collects any other diagnostic data.
+- `privacy/collected_data/other_diagnostic_data/collection_purposes: int` — The reasons your app collects any other diagnostic data.
+- `privacy/collected_data/other_diagnostic_data/linked_to_user: bool` — Indicates whether your app links any other diagnostic data to the user's identity.
+- `privacy/collected_data/other_diagnostic_data/used_for_tracking: bool` — Indicates whether your app uses any other diagnostic data for tracking.
+- `privacy/collected_data/other_financial_info/collected: bool` — Indicates whether your app collects any other financial information.
+- `privacy/collected_data/other_financial_info/collection_purposes: int` — The reasons your app collects any other financial information.
+- `privacy/collected_data/other_financial_info/linked_to_user: bool` — Indicates whether your app links any other financial information to the user's identity.
+- `privacy/collected_data/other_financial_info/used_for_tracking: bool` — Indicates whether your app uses any other financial information for tracking.
+- `privacy/collected_data/other_usage_data/collected: bool` — Indicates whether your app collects any other usage data.
+- `privacy/collected_data/other_usage_data/collection_purposes: int` — The reasons your app collects any other usage data.
+- `privacy/collected_data/other_usage_data/linked_to_user: bool` — Indicates whether your app links any other usage data to the user's identity.
+- `privacy/collected_data/other_usage_data/used_for_tracking: bool` — Indicates whether your app uses any other usage data for tracking.
+- `privacy/collected_data/other_user_content/collected: bool` — Indicates whether your app collects any other user generated content.
+- `privacy/collected_data/other_user_content/collection_purposes: int` — The reasons your app collects any other user generated content.
+- `privacy/collected_data/other_user_content/linked_to_user: bool` — Indicates whether your app links any other user generated content to the user's identity.
+- `privacy/collected_data/other_user_content/used_for_tracking: bool` — Indicates whether your app uses any other user generated content for tracking.
+- `privacy/collected_data/payment_info/collected: bool` — Indicates whether your app collects payment information.
+- `privacy/collected_data/payment_info/collection_purposes: int` — The reasons your app collects payment information.
+- `privacy/collected_data/payment_info/linked_to_user: bool` — Indicates whether your app links payment information to the user's identity.
+- `privacy/collected_data/payment_info/used_for_tracking: bool` — Indicates whether your app uses payment information for tracking.
+- `privacy/collected_data/performance_data/collected: bool` — Indicates whether your app collects performance data.
+- `privacy/collected_data/performance_data/collection_purposes: int` — The reasons your app collects performance data.
+- `privacy/collected_data/performance_data/linked_to_user: bool` — Indicates whether your app links performance data to the user's identity.
+- `privacy/collected_data/performance_data/used_for_tracking: bool` — Indicates whether your app uses performance data for tracking.
+- `privacy/collected_data/phone_number/collected: bool` — Indicates whether your app collects phone numbers.
+- `privacy/collected_data/phone_number/collection_purposes: int` — The reasons your app collects phone numbers.
+- `privacy/collected_data/phone_number/linked_to_user: bool` — Indicates whether your app links phone numbers to the user's identity.
+- `privacy/collected_data/phone_number/used_for_tracking: bool` — Indicates whether your app uses phone numbers for tracking.
+- `privacy/collected_data/photos_or_videos/collected: bool` — Indicates whether your app collects photos or videos.
+- `privacy/collected_data/photos_or_videos/collection_purposes: int` — The reasons your app collects photos or videos.
+- `privacy/collected_data/photos_or_videos/linked_to_user: bool` — Indicates whether your app links photos or videos to the user's identity.
+- `privacy/collected_data/photos_or_videos/used_for_tracking: bool` — Indicates whether your app uses photos or videos for tracking.
+- `privacy/collected_data/physical_address/collected: bool` — Indicates whether your app collects physical addresses.
+- `privacy/collected_data/physical_address/collection_purposes: int` — The reasons your app collects physical addresses.
+- `privacy/collected_data/physical_address/linked_to_user: bool` — Indicates whether your app links physical addresses to the user's identity.
+- `privacy/collected_data/physical_address/used_for_tracking: bool` — Indicates whether your app uses physical addresses for tracking.
+- `privacy/collected_data/precise_location/collected: bool` — Indicates whether your app collects precise location data.
+- `privacy/collected_data/precise_location/collection_purposes: int` — The reasons your app collects precise location data.
+- `privacy/collected_data/precise_location/linked_to_user: bool` — Indicates whether your app links precise location data to the user's identity.
+- `privacy/collected_data/precise_location/used_for_tracking: bool` — Indicates whether your app uses precise location data for tracking.
+- `privacy/collected_data/product_interaction/collected: bool` — Indicates whether your app collects product interaction data.
+- `privacy/collected_data/product_interaction/collection_purposes: int` — The reasons your app collects product interaction data.
+- `privacy/collected_data/product_interaction/linked_to_user: bool` — Indicates whether your app links product interaction data to the user's identity.
+- `privacy/collected_data/product_interaction/used_for_tracking: bool` — Indicates whether your app uses product interaction data for tracking.
+- `privacy/collected_data/purchase_history/collected: bool` — Indicates whether your app collects purchase history.
+- `privacy/collected_data/purchase_history/collection_purposes: int` — The reasons your app collects purchase history.
+- `privacy/collected_data/purchase_history/linked_to_user: bool` — Indicates whether your app links purchase history to the user's identity.
+- `privacy/collected_data/purchase_history/used_for_tracking: bool` — Indicates whether your app uses purchase history for tracking.
+- `privacy/collected_data/search_history/collected: bool` — Indicates whether your app collects search history.
+- `privacy/collected_data/search_history/collection_purposes: int` — The reasons your app collects search history.
+- `privacy/collected_data/search_history/linked_to_user: bool` — Indicates whether your app links search history to the user's identity.
+- `privacy/collected_data/search_history/used_for_tracking: bool` — Indicates whether your app uses search history for tracking.
+- `privacy/collected_data/sensitive_info/collected: bool` — Indicates whether your app collects sensitive user information.
+- `privacy/collected_data/sensitive_info/collection_purposes: int` — The reasons your app collects sensitive user information.
+- `privacy/collected_data/sensitive_info/linked_to_user: bool` — Indicates whether your app links sensitive user information to the user's identity.
+- `privacy/collected_data/sensitive_info/used_for_tracking: bool` — Indicates whether your app uses sensitive user information for tracking.
+- `privacy/collected_data/user_id/collected: bool` — Indicates whether your app collects user IDs.
+- `privacy/collected_data/user_id/collection_purposes: int` — The reasons your app collects user IDs.
+- `privacy/collected_data/user_id/linked_to_user: bool` — Indicates whether your app links user IDs to the user's identity.
+- `privacy/collected_data/user_id/used_for_tracking: bool` — Indicates whether your app uses user IDs for tracking.
+- `privacy/disk_space_access_reasons: int` — The reasons your app uses free disk space API.
+- `privacy/file_timestamp_access_reasons: int` — The reasons your app uses file timestamp/metadata API.
+- `privacy/microphone_usage_description: String` — A message displayed when requesting access to the device's microphone (in English).
+- `privacy/microphone_usage_description_localized: Dictionary` — A message displayed when requesting access to the device's microphone (localized).
+- `privacy/photolibrary_usage_description: String` — A message displayed when requesting access to the user's photo library (in English).
+- `privacy/photolibrary_usage_description_localized: Dictionary` — A message displayed when requesting access to the user's photo library (localized).
+- `privacy/system_boot_time_access_reasons: int` — The reasons your app uses system boot time / absolute time API.
+- `privacy/tracking_domains: PackedStringArray` — The list of internet domains your app connects to that engage in tracking.
+- `privacy/tracking_enabled: bool` — Indicates whether your app uses data for tracking.
+- `privacy/user_defaults_access_reasons: int` — The reasons your app uses user defaults API.
+- `shader_baker/enabled: bool` — If `true`, shaders will be compiled and embedded in the application.
+- `storyboard/custom_bg_color: Color` — A custom background color of the storyboard launch screen.
+- `storyboard/custom_image@2x: String` — Application launch screen image file (2× DPI).
+- `storyboard/custom_image@3x: String` — Application launch screen image file (3× DPI).
+- `storyboard/image_scale_mode: int` — Launch screen image scaling mode.
+- `storyboard/use_custom_bg_color: bool` — If `true`, `storyboard/custom_bg_color` is used as a launch screen background color, otherwise the `application/boot_splash/bg_color` project setting is used.
+- `user_data/accessible_from_files_app: bool` — If `true`, the app "Documents" folder can be accessed via "Files" app.
+- `user_data/accessible_from_itunes_sharing: bool` — If `true`, the app "Documents" folder can be accessed via iTunes file sharing.

@@ -1,0 +1,11 @@
+# InputEventMagnifyGesture
+
+**Inherits:** InputEventGesture
+
+Represents a magnifying touch gesture.
+
+Stores the factor of a magnifying touch gesture. This is usually performed when the user pinches the touch screen and used for zooming in/out. Note: On Android, this requires the `ProjectSettings.input_devices/pointing/android/enable_pan_and_scale_gestures` project setting to be enabled.
+
+## Properties
+
+- `factor: float` = `1.0` — The amount (or delta) of the event.
