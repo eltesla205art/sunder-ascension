@@ -10,7 +10,8 @@ Creates under /Game/FX/Keepers:
                 NS_Keeper_Shot — empty systems with their effect type and pool sizes; emitters are built by hand
 
 Then sets, on all twelve BP_Keeper_* Blueprints, the five Keeper systems and each Keeper's two glow colours (its
-Hour's colour and an accent), and puts NS_Keeper_Shot on the Trail of BP_KeeperShot and BP_KeeperShotHeavy.
+Hour's colour and an accent), and puts NS_Keeper_Shot on the Trail of BP_KeeperShot and BP_KeeperShotHeavy with their
+sizes (34 / 46) and the heavy shot's flag.
 
 Empty systems are safe: the Keeper skips a system that has no emitters yet and uses the shared plasma impacts, so the
 game looks the same until each system is built, then picks it up with no further wiring.
@@ -19,7 +20,8 @@ Safe to run again. Untested until its first run.
 """
 import unreal
 
-HIDE_SHOT_SPHERE = False   # True once NS_Keeper_Shot has its emitters: hides the placeholder sphere on the Keeper shots
+# The Keeper shots' trail settings (User.ShotSize, User.Heavy): the heavy shot (Hours 7+) is bigger, with embers.
+SHOT_TRAILS = {"BP_KeeperShot": (34.0, False), "BP_KeeperShotHeavy": (46.0, True)}
 
 ROOT = "/Game/FX/Keepers"
 MAT_DIR = ROOT + "/Materials"
@@ -197,14 +199,18 @@ def wire_keeper(kid, systems):
 
 
 def wire_shot(name, trail_system):
+    size, heavy = SHOT_TRAILS.get(name, (34.0, False))
+
     def apply(cdo):
         trail = cdo.get_editor_property("trail")
         try:
             trail.set_asset(trail_system)
         except Exception:
             trail.set_editor_property("asset", trail_system)
-        if HIDE_SHOT_SPHERE:
-            cdo.get_editor_property("visual").set_editor_property("visible", False)
+        # the shot passes these to the trail each time it's fired; it hides its placeholder sphere by itself once
+        # NS_Keeper_Shot has emitters
+        cdo.set_editor_property("trail_size", size)
+        cdo.set_editor_property("heavy_trail", heavy)
 
     edit_blueprint("{}/{}".format(SHOT_DIR, name), apply)
 
@@ -244,9 +250,6 @@ def main():
         "Each NS_Keeper_* system: add the user parameters (KEEPER_VFX.md §1.1) and its emitters (§2–§7)",
         "Scratch pad dynamic input SP_KeeperPulse (KEEPER_VFX.md §1.3); SP_ErraticJitter and SP_FlattenToPlane come "
         "from WEAPON_VFX.md §2.3",
-        "BP_KeeperShotHeavy: on its Trail component, override User.ShotSize = 46 (KEEPER_VFX.md §7)",
-        "When NS_Keeper_Shot is built: set HIDE_SHOT_SPHERE = True and run this again (or untick Visual → Visible "
-        "on BP_KeeperShot and BP_KeeperShotHeavy)",
     ])
     log("---- done ({}) ----".format(len(DONE)))
     for label in DONE:

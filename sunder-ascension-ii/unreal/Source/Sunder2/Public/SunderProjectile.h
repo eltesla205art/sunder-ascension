@@ -29,9 +29,18 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Projectile")
 	TObjectPtr<UStaticMeshComponent> Visual;
 
-	/** Optional trail (assign a Niagara system on the component in the Blueprint subclass). */
+	/** Optional trail (assign a Niagara system on the component in the Blueprint subclass). Once its system has
+	 *  emitters, the placeholder Visual hides itself. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Projectile")
 	TObjectPtr<UNiagaraComponent> Trail;
+
+	/** Handed to the trail as User.ShotSize on every shot (0 = leave the system's default). Keeper shots: 34; heavy: 46. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Projectile")
+	float TrailSize = 0.f;
+
+	/** Handed to the trail as User.Heavy (0 or 1): the heavy Keeper shot's embers and cross-flare (KEEPER_VFX.md §7). */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Projectile")
+	bool bHeavyTrail = false;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Projectile")
 	float Damage = 10.f;

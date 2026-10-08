@@ -46,8 +46,8 @@ exactly these names:
 Write every size, radius and speed below in terms of `User.Size`, so one system fits a 300-unit Wepwawet and a
 700-unit Apep. Put the multiplication in the module input (Multiply Float dynamic input, or the input's expression).
 
-`NS_Keeper_Shot` has its own two: `User.ShotColor` (Linear Color, default (3, 2, 0.5, 1); each shot is recoloured with
-its Keeper's colour) and `User.ShotSize` (Float, 34).
+`NS_Keeper_Shot` has its own three (§7): `User.ShotColor` (the Keeper's colour), `User.ShotSize` (34, heavy 46) and
+`User.Heavy` (0 or 1).
 
 ### 1.2 Materials (made by the script)
 
@@ -274,23 +274,67 @@ on `BP_Keeper_Apep` only (also raise its Death Duration to 3.5).
 
 ## 7. `NS_Keeper_Shot` (each Keeper bullet)
 
-Set as the Trail of `BP_KeeperShot` and `BP_KeeperShotHeavy` by the script. The pool restarts it every time a shot is
-fired (`ResetSystem`), and the Keeper recolours it (`User.ShotColor`) to its Hour's colour.
+The script sets it as the Trail of `BP_KeeperShot` and `BP_KeeperShotHeavy`. It must be readable at a glance in a
+screen full of bullets, so the look is simple:
+- a hot white core inside a glow in the Keeper's colour;
+- a short comet tail along its flight;
+- for the heavy shot (Hours 7+, 2 damage) more size, a turning cross-flare and a few embers. You learn to fear it.
 
-Up to a few hundred of these can be on screen at once (Wall Barrage + Dual Spiral at phase 3), so keep it to **two CPU
-emitters and no more**. Fixed Bounds ±200. Effect Type `EFT_KeeperShot`.
+**What the shot hands the trail on every firing** (`ASunderProjectile::Fire`, then `ResetSystem`, so pooled shots
+start clean):
 
-**A. `Body`** (CPU, Local Space **on**, 1 particle): Spawn Burst 1, Lifetime 9999, size `User.ShotSize` (Heavy: set
-the Trail component's `ShotSize` override to 46 on `BP_KeeperShotHeavy`), Color `User.ShotColor`, alpha 0.9 + 0.1 ×
-sin(Age × 30). Sprite renderer Face Camera Plane, `MI_Keeper_Shot`.
+| Name | Type | Preview default | Value |
+|---|---|---|---|
+| `User.ShotColor` | Linear Color | (3, 2, 0.5, 1) | the Keeper's colour (`SetShotColor`, from the Keeper's `KeeperColor`) |
+| `User.ShotSize` | Float | 34 | `TrailSize` on the shot Blueprint: 34, heavy 46 (set by the script) |
+| `User.Heavy` | Float | 0 | 1 on `BP_KeeperShotHeavy` (`bHeavyTrail`), else 0 |
 
-**B. `Tail`** (CPU, Local Space **off**): Spawn Rate 60; Lifetime 0.1; RibbonLinkOrder = emitter age; width
-`User.ShotSize × 0.5` → 0; Color `User.ShotColor × 0.6`. Ribbon renderer `MI_PlasmaTendril`, Screen facing.
+The placeholder sphere hides itself once this system has an emitter, so there's no setting to change.
 
-Once it looks right, hide the placeholder sphere: set `HIDE_SHOT_SPHERE = True` in the script and run it again.
+**Budget.** Up to a few hundred of these can be on screen at once (Wall Barrage plus Dual Spiral at phase 3).
+- **Light shot:** two CPU emitters, A and B; C spawns nothing.
+- **Heavy shot:** C adds a few cheap sprites.
+- **System:** Fixed Bounds ±200; Effect Type `EFT_KeeperShot` (the script sets it).
 
-If `stat Niagara` shows the shots above about 1.5 ms with 300 in flight, drop the Tail first. Beyond that, move to the
-single-system bullet renderer in WEAPON_VFX §3.5.
+**A. `Body`** (CPU, Local Space **on**, 2 particles)
+- Spawn Burst: 2, Lifetime 9999.
+- Particle 0 (`Particles.UniqueID == 0`) is the core:
+  - size `User.ShotSize × 0.45`;
+  - colour white-hot (8, 8, 8) blended 30 % toward `User.ShotColor`.
+- Particle 1 is the glow:
+  - size `User.ShotSize × (1.0 + 0.12 × sin(Age × 30))` (a fast flicker);
+  - colour `User.ShotColor`.
+- Heavy: Sprite Rotation rate `User.Heavy × 240°/s`.
+- Sprite renderer: Face Camera Plane, `MI_Keeper_Shot`.
+- The heavy shot's cross-flare is a third particle:
+  - Spawn Burst `User.Heavy` (0 or 1);
+  - Sprite Size (`User.ShotSize × 1.8`, `User.ShotSize × 0.18`) (a thin bar);
+  - rotation rate 240°/s;
+  - colour `User.ShotColor × 0.7`;
+  - in a second sprite renderer with `MI_Spark`, or the same one with a Sub UV-free bar material.
+
+**B. `Tail`** (CPU, Local Space **off**: the tail stays where the shot has been)
+- Spawn Rate: 60.
+- Lifetime: 0.09 (0.12 when heavy: `0.09 + 0.03 × User.Heavy`). The tail's length is its lifetime × the shot's speed,
+  so faster later Hours get longer comets for free.
+- Ribbon: RibbonLinkOrder = `Engine.Emitter.Age` (newest at the head).
+- Width: `User.ShotSize × 0.55` → 0 over life.
+- Colour: `User.ShotColor × 0.6` → 0.
+- Ribbon renderer: `MI_PlasmaTendril`, Screen facing, UV0 Scaled Using Ribbon Segment Length.
+
+**C. `Embers`** (CPU, Local Space **off**: heavy shots only)
+- Spawn Rate: `14 × User.Heavy` (nothing on light shots).
+- Lifetime 0.2–0.35. Size 4–8.
+- Add Velocity in Cone: axis (0,0,1), 180° on the plane, speed 80–200, so they shed sideways and fall behind.
+- Drag 3; `SP_FlattenToPlane`.
+- Colour `User.ShotColor` → 0.
+- Renderer: `MI_Spark`.
+
+**Checks:**
+- In Hour 1 (Wepwawet's amber), shots read as small bright comets in its colour.
+- From Hour 7 the heavy shots are visibly bigger, with a turning cross and embers.
+- With 300 in flight (Apep, phase 3), `stat Niagara` stays under about 1.5 ms for this system. Over that, drop C's
+  embers first, then the Tail. Beyond that, move to the single-system bullet renderer in WEAPON_VFX §3.5.
 
 ---
 

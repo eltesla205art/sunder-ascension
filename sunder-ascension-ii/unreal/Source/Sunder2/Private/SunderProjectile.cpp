@@ -12,6 +12,7 @@
 #include "ImpactFXSubsystem.h"
 #include "Kismet/GameplayStatics.h"
 #include "NiagaraComponent.h"
+#include "NiagaraSystem.h"
 #include "ProjectilePoolSubsystem.h"
 #include "SunderEnemy.h"
 #include "SunderShipPawn.h"
@@ -52,6 +53,9 @@ void ASunderProjectile::BeginPlay()
 {
 	Super::BeginPlay();
 	Collision->OnComponentBeginOverlap.AddDynamic(this, &ASunderProjectile::OnOverlap);
+	// A built trail system carries the look: the placeholder bolt steps aside.
+	const UNiagaraSystem* TrailSystem = Trail->GetAsset();
+	if (TrailSystem && TrailSystem->GetEmitterHandles().Num() > 0) { Visual->SetVisibility(false); }
 	if (bParked) { Park(); }                                         // spawned by the pool: start parked
 }
 
@@ -71,7 +75,12 @@ void ASunderProjectile::Fire(const FVector& Location, const FVector& Direction, 
 	Movement->Activate(/*bReset*/ true);
 	Movement->SetComponentTickEnabled(true);
 
-	if (Trail->GetAsset()) { Trail->ResetSystem(); }                 // restarts the trail from the muzzle
+	if (Trail->GetAsset())
+	{
+		if (TrailSize > 0.f) { Trail->SetVariableFloat(TEXT("ShotSize"), TrailSize); }
+		Trail->SetVariableFloat(TEXT("Heavy"), bHeavyTrail ? 1.f : 0.f);
+		Trail->ResetSystem();                                     // restarts the trail from the muzzle
+	}
 	GetWorldTimerManager().SetTimer(LifetimeTimer, this, &ASunderProjectile::Expire, MaxLifetime, false);
 }
 
