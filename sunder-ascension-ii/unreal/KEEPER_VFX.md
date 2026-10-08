@@ -81,7 +81,8 @@ Out = Out1 * (1.0 + 0.2 * (P - 1.0));                      // each phase burns 2
 ### 1.4 System settings common to all
 
 - Fixed Bounds on every system (± the size noted per system); no dynamic bounds calculation.
-- Effect Type: `EFT_Keeper` (never culled: a boss's effects must always play). `NS_Keeper_Shot`: `EFT_KeeperShot`.
+- Effect Type: `EFT_Keeper` (never culled: a boss's effects must always play). `NS_Keeper_Shot`: `EFT_KeeperShot`,
+  also never culled: a bullet whose look was culled would still hit you, so cut cost in the emitters instead.
 - Pool sizes are set by the script: Muzzle 24 (prime 12), PhaseShift 4 (2), Arrival 2 (1), Death 2 (1). The aura and
   shot trails live on their actors and are not pooled.
 - No light renderers (the reason is in WEAPON_VFX §2.2). Bloom does the lighting.
@@ -294,7 +295,7 @@ The placeholder sphere hides itself once this system has an emitter, so there's 
 **Budget.** Up to a few hundred of these can be on screen at once (Wall Barrage plus Dual Spiral at phase 3).
 - **Light shot:** two CPU emitters, A and B; C spawns nothing.
 - **Heavy shot:** C adds a few cheap sprites.
-- **System:** Fixed Bounds ±200; Effect Type `EFT_KeeperShot` (the script sets it).
+- **System:** Fixed Bounds ±200; Effect Type `EFT_KeeperShot` (the script sets it; never culled).
 
 **A. `Body`** (CPU, Local Space **on**, 2 particles)
 - Spawn Burst: 2, Lifetime 9999.

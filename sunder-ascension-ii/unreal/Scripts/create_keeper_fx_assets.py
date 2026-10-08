@@ -5,7 +5,8 @@ material) and create_keepers.py (for the Keeper Blueprints), with the C++ in unr
 
 Creates under /Game/FX/Keepers:
   Materials/    MI_Keeper_Glow, MI_Keeper_Rune, MI_Keeper_Ray, MI_Keeper_Shot (instances of M_FX_Additive)
-  EffectTypes/  EFT_Keeper (never culled), EFT_KeeperShot (many instances, culled last)
+  EffectTypes/  EFT_Keeper (never culled), EFT_KeeperShot (never culled: a bullet's look
+                must not vanish while it can still hit you)
   Systems/      NS_Keeper_Aura, NS_Keeper_Arrival, NS_Keeper_Muzzle, NS_Keeper_PhaseShift, NS_Keeper_Death,
                 NS_Keeper_Shot — empty systems with their effect type and pool sizes; emitters are built by hand
 
@@ -130,14 +131,16 @@ def build_effect_type(name, cull_reaction, frequency, max_instances):
     et = get_or_create(name, EFT_DIR, unreal.NiagaraEffectType, unreal.NiagaraEffectTypeFactoryNew())
     et.set_editor_property("cull_reaction", cull_reaction)
     et.set_editor_property("update_frequency", frequency)
-    if max_instances:
-        array = et.get_editor_property("system_scalability_settings")
-        settings = list(array.get_editor_property("settings"))
+    # max_instances 0 = no cap (and clears a cap an earlier run of this script may have set)
+    array = et.get_editor_property("system_scalability_settings")
+    settings = list(array.get_editor_property("settings"))
+    if max_instances or settings:
         if not settings:
             settings = [unreal.NiagaraSystemScalabilitySettings()]
         first = settings[0]
-        first.set_editor_property("cull_by_max_instance_count", True)
-        first.set_editor_property("max_instances", max_instances)
+        first.set_editor_property("cull_by_max_instance_count", bool(max_instances))
+        if max_instances:
+            first.set_editor_property("max_instances", max_instances)
         settings[0] = first
         array.set_editor_property("settings", settings)
         et.set_editor_property("system_scalability_settings", array)
@@ -234,7 +237,7 @@ def main():
         "keeper": step("EFT_Keeper effect type", build_effect_type, "EFT_Keeper",
                        unreal.NiagaraCullReaction.DEACTIVATE, unreal.NiagaraScalabilityUpdateFrequency.CONTINUOUS, 0),
         "shot": step("EFT_KeeperShot effect type", build_effect_type, "EFT_KeeperShot",
-                     unreal.NiagaraCullReaction.DEACTIVATE_IMMEDIATE, unreal.NiagaraScalabilityUpdateFrequency.LOW, 400),
+                     unreal.NiagaraCullReaction.DEACTIVATE, unreal.NiagaraScalabilityUpdateFrequency.CONTINUOUS, 0),
     }
     systems = {}
     for name, (et_key, pool_max, pool_prime) in SYSTEMS.items():

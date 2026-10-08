@@ -78,6 +78,7 @@ void ASunderProjectile::Fire(const FVector& Location, const FVector& Direction, 
 	if (Trail->GetAsset())
 	{
 		if (TrailSize > 0.f) { Trail->SetVariableFloat(TEXT("ShotSize"), TrailSize); }
+		Trail->SetVariableLinearColor(TEXT("ShotColor"), PlasmaColor);   // the shot's own colour (a Keeper recolours after)
 		Trail->SetVariableFloat(TEXT("Heavy"), bHeavyTrail ? 1.f : 0.f);
 		Trail->ResetSystem();                                     // restarts the trail from the muzzle
 	}

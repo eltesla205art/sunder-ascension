@@ -34,6 +34,8 @@ original *SUNDER: Ascension — The Nine Bows* (`web/`, `godot/`, `docs/`), whic
 | `unreal/Scripts/create_ship_models.py` | Editor Python: imports the Sunborn, Scarab and Ibis models and sets them on the arena's ships (untested until first run) |
 | `unreal/SHIP_VFX.md` | UE5 Niagara guide for the ship's shield: the looping rings (one per layer) and its ripple, shatter and gather events |
 | `unreal/Scripts/create_ship_fx_assets.py` | Editor Python: the shield's materials and empty Niagara systems, set on the ship (untested until first run) |
+| `unreal/ENEMY_VFX.md` | UE5 Niagara guide for the regular enemies' shot: a violet orb with a pale core and a short wake |
+| `unreal/Scripts/create_enemy_fx_assets.py` | Editor Python: the enemy shot's material, effect type and empty Niagara system, set on the enemy shot (untested until first run) |
 | `unreal/Scripts/create_pickup_art.py` | Editor Python: imports the six pickup gems and makes the pickups use them (untested until first run) |
 | `unreal/Content/Pickups/` | The six power-up pickups as FBX gems for Unreal, from `blender/pickups.py --fbx` |
 | `unreal/Scripts/create_ship_sounds.py` | Editor Python: imports the game's sound effects and sets the shot, explosion, pickup, life, bomb and hit sounds (untested until first run) |

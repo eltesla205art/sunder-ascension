@@ -9,7 +9,7 @@ C++ side of [`../WEAPON_VFX.md`](../WEAPON_VFX.md) and [`../KEEPER_VFX.md`](../K
 |---|---|---|
 | `BeamWeaponComponent` | Actor component: persistent beam, sphere trace each frame, sets `BeamStart`/`BeamEnd`/`bHit`/`HitNormal`/`Intensity` on `NS_Laser_Beam`, ramps in and out, interval damage | §1.6 |
 | `ImpactFXSubsystem` (+ `UImpactFXSettings`) | World subsystem: `QueueImpact`, merges hits on the same spot, caps full effects per frame, spawns pooled (`AutoRelease`) | §3.2 |
-| `SunderProjectile` | Pooled plasma shot: overlap → queue impact, apply damage, return to the pool; times out off-screen; `SetShotColor` recolours one shot; hands its trail `TrailSize` / `bHeavyTrail` and hides its placeholder bolt once the trail system is built | §3.4 |
+| `SunderProjectile` | Pooled plasma shot: overlap → queue impact, apply damage, return to the pool; times out off-screen; `SetShotColor` recolours one shot; hands its trail `TrailSize`, its `PlasmaColor` (as `ShotColor`) and `bHeavyTrail`, and hides its placeholder bolt once the trail system is built | §3.4 |
 | `ProjectilePoolSubsystem` | World subsystem: `Acquire` / `Release` / `Prewarm`, per-class free lists | §3.4 |
 | `SunderShipPawn` | The player ship: eight-way movement clamped to the arena, held beam, held plasma shots from the pool in the chosen ship's style (Sunborn twin spread, Scarab heavy cannon, Ibis rapid stream; `ApplyLoadout`), flown as the ship's own model (turned nose-up, sized, guns at its nose); the web game's power-ups (Spread / Laser weapons, three forms per ship with more guns and ×power damage, bombs on X / K / Y that hit everything and wipe enemy shots, shields that soak a whole hit (a Niagara shield that grows with the layers and the ship's form, ripples, shatters and gathers — SHIP_VFX.md — with a placeholder disc until it is built), Life up to 2 over full; a hull hit costs a form) with the web game's pickup, bomb and hit sounds, a 5-hit hull with blinking invulnerability, death and respawn; input built at runtime with Enhanced Input (no input assets) | — |
 | `SunderPickup` | A falling power-up (Spread, Laser, Power, Bomb, Shield, Life): each kind's faceted gem from `blender/pickups.py` (`KindMeshes`), tilting to catch the light, or a placeholder diamond with its letter; dropped by enemies at the Hour's rate (bombers more), collected by flying into it | — |
@@ -98,6 +98,8 @@ Projectiles are team-aware: enemy shots only hit the ship, the player's shots ne
 14. [`../Scripts/create_pickup_art.py`](../Scripts/create_pickup_art.py): imports the six pickup gems from
     [`../Content/Pickups`](../Content/Pickups) (`blender/pickups.py <dir> 0 --fbx`), makes `BP_SunderPickup` with them, and
     sets it as the game mode's Pickup Class.
+15. [`../Scripts/create_enemy_fx_assets.py`](../Scripts/create_enemy_fx_assets.py): `MI_Enemy_Shot`, `EFT_EnemyShot` and an
+    empty `NS_Enemy_Shot`, set as `BP_EnemyShot`'s trail (size 30, violet); build the emitters from [`../ENEMY_VFX.md`](../ENEMY_VFX.md).
 
 ## Hook up
 

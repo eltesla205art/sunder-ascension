@@ -88,7 +88,7 @@ def color(r, g, b):
 def build_enemy_shot():
     return blueprint("BP_EnemyShot", BP_DIR, unreal.SunderProjectile, {
         "damage": 1.0, "speed": 520.0, "max_lifetime": 5.0,
-        "plasma_color": color(4.0, 0.35, 1.2),                      # hot magenta-red, distinct from the player's
+        "plasma_color": color(1.3, 0.12, 2.7),                      # the web game's violet (#9B30D6), distinct from the player's
     })
 
 
