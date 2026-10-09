@@ -225,6 +225,17 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ship|Power-ups")
 	FLinearColor BombColor = FLinearColor(0.6f, 2.4f, 4.0f, 1.f);
 
+	/** NS_Ship_Bomb (SHIP_VFX.md §7), one-shot and pooled: the blast, a shockwave that sweeps the whole arena, and a
+	 *  fizzle where each wiped enemy shot was. User.Color = BombColor, User.Reach = how far the wave must travel to
+	 *  cover the arena, User.WipedShots (Vector Array: offsets from the blast) and User.WipedCount. Until it has
+	 *  emitters, a ring of plasma impacts stands in. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ship|Power-ups")
+	TObjectPtr<UNiagaraSystem> BombFX;
+
+	/** Most wiped shots handed to BombFX for fizzles (the rest just vanish). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ship|Power-ups", meta = (ClampMin = "0"))
+	int32 MaxBombFizzles = 256;
+
 	/** Seconds of invulnerability after a shield takes a hit. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ship|Power-ups")
 	float ShieldInvulnerability = 0.8f;
@@ -346,6 +357,8 @@ private:
 	void UpdateShield(int32 Event);
 	/** 0 = a hull hit, 1 = destroyed: ExplosionFX, or plasma impacts until it's built. */
 	void SpawnExplosion(int32 Event);
+	/** BombFX at Centre; false if it isn't set or built yet (UseBomb falls back to plasma impacts). */
+	bool SpawnBombBlast(const FVector& Centre, const TArray<FVector>& Wiped);
 	float ShieldRadiusNow() const { return ShieldRadius * FormScale(); }
 	void UpdateBodyScale();
 	float FormScale() const;

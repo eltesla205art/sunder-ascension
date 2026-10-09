@@ -20,6 +20,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "NiagaraComponent.h"
+#include "NiagaraDataInterfaceArrayFunctionLibrary.h"
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraSystem.h"
 #include "Sound/SoundBase.h"
@@ -441,10 +442,15 @@ void ASunderShipPawn::UseBomb()
 	--State.Bombs;
 	PlaySound(BombSound);
 	UWorld* World = GetWorld();
-	// Every enemy shot is wiped away…
+	// Every enemy shot is wiped away (where they were, for the blast's fizzles)…
+	TArray<FVector> Wiped;
 	for (TActorIterator<ASunderProjectile> It(World); It; ++It)
 	{
-		if (It->IsFromEnemy() && !It->IsParked()) { It->Recall(); }
+		if (It->IsFromEnemy() && !It->IsParked())
+		{
+			if (Wiped.Num() < MaxBombFizzles) { Wiped.Add(It->GetActorLocation()); }
+			It->Recall();
+		}
 	}
 	// …and everything on screen takes the blast (a Keeper only once it has taken its place).
 	TArray<ASunderEnemy*> Targets;
@@ -454,10 +460,11 @@ void ASunderShipPawn::UseBomb()
 		const bool bKeeper = Enemy->IsA<ASunderKeeper>();
 		UGameplayStatics::ApplyDamage(Enemy, bKeeper ? BombKeeperDamage : BombDamage, GetController(), this, UDamageType::StaticClass());
 	}
-	if (UImpactFXSubsystem* Impacts = World->GetSubsystem<UImpactFXSubsystem>())
+	// The blast is 100 px up the screen from the ship in the web game: 500 units here.
+	const FVector Centre = GetActorLocation() + FVector(500.f, 0.f, 0.f);
+	if (SpawnBombBlast(Centre, Wiped)) { return; }
+	if (UImpactFXSubsystem* Impacts = World->GetSubsystem<UImpactFXSubsystem>())   // not built yet: a ring of bursts
 	{
-		// A ring of bursts ahead of the ship (the web game's blast is 100 px up the screen).
-		const FVector Centre = GetActorLocation() + FVector(500.f, 0.f, 0.f);
 		Impacts->QueueImpact(Centre, FVector::ForwardVector, BombColor);
 		for (int32 i = 0; i < 10; ++i)
 		{
@@ -465,6 +472,33 @@ void ASunderShipPawn::UseBomb()
 			Impacts->QueueImpact(Centre + FVector(FMath::Cos(A), FMath::Sin(A), 0.f) * 380.f, FVector::ForwardVector, BombColor);
 		}
 	}
+}
+
+bool ASunderShipPawn::SpawnBombBlast(const FVector& Centre, const TArray<FVector>& Wiped)
+{
+	if (!BombFX || BombFX->GetEmitterHandles().Num() == 0) { return false; }
+	UNiagaraComponent* FX = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), BombFX, Centre, FRotator::ZeroRotator,
+		FVector(1.f), /*bAutoDestroy*/ false, /*bAutoActivate*/ true, ENCPoolMethod::AutoRelease, false);
+	if (!FX) { return false; }
+	// The wave travels until it has covered the arena's farthest corner from the blast.
+	float Reach = 0.f;
+	for (const float SX : { -1.f, 1.f })
+	{
+		for (const float SY : { -1.f, 1.f })
+		{
+			const FVector Corner = ArenaCenter + FVector(SX * ArenaHalfExtents.X, SY * ArenaHalfExtents.Y, 0.f);
+			Reach = FMath::Max(Reach, FVector::Dist2D(Centre, Corner));
+		}
+	}
+	TArray<FVector> Offsets;
+	Offsets.Reserve(Wiped.Num());
+	for (const FVector& Spot : Wiped) { Offsets.Add(FVector(Spot.X - Centre.X, Spot.Y - Centre.Y, 0.f)); }
+	FX->SetVariableLinearColor(TEXT("Color"), BombColor);
+	FX->SetVariableFloat(TEXT("Reach"), Reach);
+	FX->SetVariableInt(TEXT("WipedCount"), Offsets.Num());
+	UNiagaraDataInterfaceArrayFunctionLibrary::SetNiagaraArrayVector(FX, TEXT("WipedShots"), Offsets);
+	FX->SetTranslucentSortPriority(17);
+	return true;
 }
 
 FSunderShipState ASunderShipPawn::GetState() const

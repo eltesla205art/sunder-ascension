@@ -1,18 +1,19 @@
-# SUNDER: Ascension II — UE5 ship VFX: the shield and the explosion (Niagara)
+# SUNDER: Ascension II — UE5 ship VFX: the shield, the explosion and the bomb (Niagara)
 
 The web game draws a ship's shield as a pulsing cyan ring that thickens with each layer (up to 3). This is that shield
-for the Unreal version, as two systems. A third, the ship's explosion, is in §5.
+for the Unreal version, as two systems. The ship's explosion is in §5 and its bomb blast in §7.
 
 | System | When | Lives |
 |---|---|---|
 | `NS_Ship_Shield` | while any shield is up | looping, rides on the ship; fades (not cut) when the last layer goes |
 | `NS_Ship_ShieldEvent` | a hit soaked (ripple), the last layer breaking (shatter), a layer forming (gather) | one-shot, pooled |
 | `NS_Ship_Explosion` | the hull taking a hit (a small gold burst), the ship destroyed (the big one) | one-shot, pooled |
+| `NS_Ship_Bomb` | a bomb: the blast, a shockwave that sweeps the arena, and every wiped enemy shot fizzling | one-shot, pooled |
 
 > **Status:** written guidance, not yet built or run in-engine (no Unreal where it was written).
 > The C++ that drives them is `ASunderShipPawn` in [`Source/`](Source/README.md) (`ShieldFX`, `ShieldEventFX`,
-> `UpdateShield`, `ExplosionFX`, `SpawnExplosion`). [`Scripts/create_ship_fx_assets.py`](Scripts/create_ship_fx_assets.py)
-> makes the materials and the three empty systems and sets them on `BP_SunderShip`; the emitters below are built by hand. Module names are from UE 5.3–5.5;
+> `UpdateShield`, `ExplosionFX`, `SpawnExplosion`, `BombFX`, `SpawnBombBlast`).
+> [`Scripts/create_ship_fx_assets.py`](Scripts/create_ship_fx_assets.py) makes the materials and the four empty systems and sets them on `BP_SunderShip`; the emitters below are built by hand. Module names are from UE 5.3–5.5;
 > the ones that moved between versions are marked ⚠.
 
 Read [`WEAPON_VFX.md`](WEAPON_VFX.md) §0 first. The same camera rules apply: Z is up, the camera looks down −Z, every
@@ -21,7 +22,8 @@ material is Unlit and Additive, and every particle stays flat on the play plane.
 
 **Nothing breaks while you build.** Until `NS_Ship_Shield` has an emitter, the ship shows the placeholder disc. Until
 `NS_Ship_ShieldEvent` has one, a hit or a break shows a plasma impact instead. Until `NS_Ship_Explosion` has one, a
-hull hit shows one gold plasma impact and the ship's destruction four in its colour.
+hull hit shows one gold plasma impact and the ship's destruction four in its colour. Until `NS_Ship_Bomb` has one, a
+bomb shows a ring of eleven cyan plasma impacts.
 
 ---
 
@@ -261,3 +263,97 @@ count of 0 spawns nothing).
 4. **Forms:** destroyed at form 3 bursts bigger than at form 1. A hit drops the form first, so it bursts at the
    lower form's size.
 5. **Game over:** the last life's explosion plays out fully under the Keeper's gloat.
+
+---
+
+## 7. `NS_Ship_Bomb` (one-shot)
+
+The web game's bomb (web/game.html `useBomb`): every enemy shot vanishes, every enemy takes 8 damage (a Keeper 10), the
+screen shakes (0.4), and 60 cyan sparks burst 100 px up the screen from the ship (500 units here).
+
+The damage and the wipe happen at once, as in the web game (`ASunderShipPawn::UseBomb`). This system shows it:
+- a cyan-white blast ahead of the ship;
+- a **shockwave** that sweeps the whole arena in half a second, so you see the bomb reach everything;
+- the web game's 60 sparks;
+- **a fizzle where every wiped enemy shot was**, popping as the wave passes it, so you can see the bullets go.
+
+### 7.1 User parameters
+
+`ASunderShipPawn::SpawnBombBlast` sets these. The system spawns at the blast's centre (500 units up the screen from the
+ship):
+
+| Name | Type | Preview default | What the ship sends |
+|---|---|---|---|
+| `User.Color` | Linear Color | (0.6, 2.4, 4.0, 1) | `BombColor`: cyan HDR |
+| `User.Reach` | Float | 1600 | how far the wave must travel to cover the arena's farthest corner from the blast (about 1250 from mid-arena, up to about 3000 from the top edge) |
+| `User.WipedShots` | **Niagara Vector Array** (Array Float3) | empty | each wiped enemy shot's position, as an offset from the blast (Z = 0); at most `MaxBombFizzles` (256) |
+| `User.WipedCount` | Int | 0 | how many are in `User.WipedShots` |
+
+Add `User.WipedShots` from the user parameter list's **Array → Vector** type. The ship fills it with
+`UNiagaraDataInterfaceArrayFunctionLibrary::SetNiagaraArrayVector`.
+
+Set this once in System Spawn: `System.WaveTime = 0.5` (seconds for the wave to reach `User.Reach`). The fizzles use it.
+
+### 7.2 Emitters
+
+**System:**
+- World space, Fixed Bounds ±3000 (it covers the arena from anywhere the blast can be).
+- Effect Type `EFT_PlayerWeapon` (the script sets it): never culled.
+- Pooled by the script: max 2, primed 1.
+- Every emitter: CPU, a Spawn Burst at age 0, Emitter State **Self, Once**.
+
+**A. `Blast`**: the centre
+- Burst 2: a white-hot core and a wide glow.
+- Core: size 120 → 520 → 0 over 0.3 s, colour `User.Color` lerped 75 % toward white × 2.
+- Glow: size 900 → 0 over 0.5 s, colour `User.Color × 0.6`, alpha 1 → 0.
+- Sprite renderer: `MI_Ship_Flash`, Face Camera Plane.
+
+**B. `Wash`**: a brief tint over the whole screen
+- Burst 1. Lifetime 0.25.
+- Size `User.Reach × 2.4` (it covers the arena from the blast).
+- Colour `User.Color × 0.12`, alpha 1 → 0 on an ease-out curve.
+- Sprite renderer: `MI_Shield_Glow`, Face Camera Plane. Keep it faint: it should feel like a pulse of light, not hide
+  the bullets that are left (there are none, but enemies still move).
+
+**C. `Shockwave`**: the wave that reaches everything
+- Burst 2: the leading wave and a slower echo.
+- Leading wave: lifetime `System.WaveTime`. Size from 100 to `User.Reach × 2` (its diameter), linear, so it reaches
+  the farthest corner exactly at 0.5 s. Colour `User.Color`, alpha 1 → 0.6 then → 0 in the last 15 %.
+- Echo: lifetime 0.8, size 100 → `User.Reach × 1.2`, ease-out, colour `User.Color × 0.5`, alpha 0.8 → 0.
+- Ring thickness (Dynamic Parameter 1): 1 → 0.35 over life.
+- Sprite renderer: `MI_Bomb_Wave` (a thick soft ring), Face Camera Plane.
+
+**D. `Sparks`**: the web game's 60
+- Burst 60.
+- Shape Location: Sphere, radius 60, then `SP_FlattenToPlane` (WEAPON_VFX §2.3).
+- Velocity from Point, on the plane, 300–1600 u/s (the web's big burst ×5). Drag 1.2.
+- Lifetime 0.35–1.05. Size 8–28, scaled 1 → 0.
+- Colour `User.Color`, alpha 1 → 0.
+- Sprite renderer: `MI_Spark`, Velocity Aligned (stretch about 0.03 × speed).
+
+**E. `Fizzles`**: one per wiped enemy shot
+- Spawn Burst count `User.WipedCount` (0 spawns nothing).
+- Particle Spawn:
+  - `Particles.Offset` = **Array Get** on `User.WipedShots` at index `Engine.ExecutionIndex`;
+  - Position = the system's position + `Particles.Offset`;
+  - `Particles.Delay` = `length(Particles.Offset) / User.Reach × System.WaveTime`: when the wave passes it;
+  - Lifetime `Particles.Delay + 0.22`.
+- Particle Update: `Particles.Local = max(Age − Particles.Delay, 0) / 0.22`.
+  - Size: 0 before the wave, then 55 → 0 over `Local`.
+  - Colour: the enemy shot's violet (1.3, 0.12, 2.7) at the pop, fading to `User.Color` (the bullet turned to light).
+- Sprite renderer: `MI_Spark`, Face Camera Plane.
+- Optional: a second burst of 3 tiny sparks per fizzle, using the same offset and delay, for a dense wave.
+
+**Budget:** about 65 particles plus one or two per wiped shot. A bomb in a Keeper's bullet storm (200+ shots) is
+about 500 particles for half a second; that's fine on the CPU. If it isn't, move E to GPU: the array works there too.
+
+## 8. Checks in play (bomb)
+
+1. **Blast:** a cyan-white flash 500 units ahead of the ship, wherever the ship is.
+2. **Reach:** the leading wave reaches the arena's farthest corner just as it fades, from the bottom corners and from
+   the top.
+3. **Fizzles:** in a dense wave, every enemy bullet pops as the wave passes it: near ones first, far ones last.
+4. **Kills:** enemies burst at once (the damage is instant, as in the web game). Within half a second that reads as the
+   bomb's doing.
+5. **No bullets:** with no enemy shots on screen, the bomb shows no fizzles and no errors.
+6. **Two bombs** quickly: the second plays over the first (the pool holds two).
