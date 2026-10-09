@@ -71,39 +71,81 @@ void ASunderStoryHUD::DrawPrompt(const FString& Text, float T)
 
 void ASunderStoryHUD::DrawMap(USunderStoryData* Data, int32 Next, float T)
 {
-	// Twelve gates in four acts of three, a serpentine road from dusk (top) to dawn (bottom).
+	// The web game's hour map (MAP_NODES): twelve gates in four acts of three, a road snaking up from Hour 1 at the
+	// bottom toward dawn at the top. Opened gates are gold, the next one is ringed in cyan and pulses, the rest wait dim.
 	const float W = Canvas->ClipX, H = Canvas->ClipY;
 	UFont* Font = HudFont();
 	const int32 N = Data->Hours.Num();
+	static const float WebNodes[12][2] = {                   // web/game.html MAP_NODES, on its 480 × 720 canvas
+		{ 100.f, 630.f }, { 240.f, 600.f }, { 380.f, 630.f }, { 380.f, 500.f }, { 240.f, 470.f }, { 100.f, 500.f },
+		{ 100.f, 370.f }, { 240.f, 340.f }, { 380.f, 370.f }, { 380.f, 240.f }, { 240.f, 210.f }, { 100.f, 170.f } };
+	const float Half = H * 0.30f;                             // the web's 280 px across, kept in proportion
 	auto GatePos = [&](int32 i)
 	{
-		const int32 Act = i / 3, Step = i % 3;
-		const int32 Col = (Act % 2 == 0) ? Step : 2 - Step;     // the road turns back each act
-		return FVector2D(W * (0.30f + 0.20f * Col), H * (0.20f + 0.15f * Act));
+		const float* Web = WebNodes[FMath::Clamp(i, 0, 11)];
+		return FVector2D(W * 0.5f + (Web[0] - 240.f) / 140.f * Half, H * (0.23f + (Web[1] - 170.f) / 460.f * 0.57f));
 	};
-	for (int32 i = 0; i + 1 < N; ++i)                            // the road
+	const float Scale = H / 720.f;                            // the web's node sizes, at this screen's height
+
+	// Dawn waits at the road's end, a little brighter for every gate opened.
+	const FVector2D End = GatePos(N - 1);
+	for (int32 k = 0; k < 4; ++k)
+	{
+		DrawDisc(End, (56.f - 9.f * k) * Scale, Faded(FLinearColor(1.f, 0.8f, 0.4f), (0.025f + 0.05f * Next / FMath::Max(N, 1)) * (k + 1) * 0.5f));
+	}
+	for (int32 i = 0; i + 1 < N; ++i)                         // the road: gold where travelled
 	{
 		const FVector2D A = GatePos(i), B = GatePos(i + 1);
-		DrawLine(A.X, A.Y, B.X, B.Y, i < Next ? Gold : Faded(Dim, 0.6f), 2.f);
+		DrawLine(A.X, A.Y, B.X, B.Y, i + 1 <= Next ? Faded(Gold, 0.85f) : Faded(Gold, 0.35f), 2.f);
+	}
+	if (Next > 0 && Next < N)                                  // a spark travels the last road into the next gate
+	{
+		const float F = FMath::Fmod(T * 0.6f, 1.f);
+		const FVector2D P = FMath::Lerp(GatePos(Next - 1), GatePos(Next), F);
+		DrawDisc(P, 4.f * Scale, Faded(Cyan, 1.f - F * 0.5f));
 	}
 	for (int32 i = 0; i < N; ++i)
 	{
-		const FSunderStoryHour& Hour = Data->Hours[i];
 		const FVector2D P = GatePos(i);
 		const bool bDone = i < Next, bNext = i == Next;
-		const float R = bNext ? 22.f + 4.f * FMath::Sin(T * 4.f) : 16.f;
-		const FLinearColor C = bDone ? Gold : bNext ? Hour.Tint : Dim;
-		DrawRect(Faded(C, bDone || bNext ? 0.9f : 0.5f), P.X - R * 0.5f, P.Y - R * 0.5f, R, R);
-		if (bNext) { DrawRect(Faded(Hour.Tint, 0.18f), P.X - R * 1.2f, P.Y - R * 1.2f, R * 2.4f, R * 2.4f); }
+		const float R = (bNext ? 20.f : 15.f) * Scale;
+		DrawDisc(P, R, bDone ? FLinearColor(0.83f, 0.69f, 0.22f) : bNext ? FLinearColor(0.07f, 0.19f, 0.29f) : FLinearColor(0.08f, 0.07f, 0.13f));
+		DrawRing(P, R, bDone ? FLinearColor(0.96f, 0.84f, 0.48f) : bNext ? FLinearColor(0.56f, 0.89f, 1.f) : Faded(FLinearColor(0.61f, 0.54f, 0.31f), 0.5f),
+			bNext ? 3.f : 1.5f);
+		if (bNext)                                             // the pulse around the gate to open
+		{
+			const float Pulse = FMath::Sin(T * 4.f);
+			DrawRing(P, (28.f + 3.f * Pulse) * Scale, Faded(FLinearColor(0.56f, 0.89f, 1.f), 0.4f + 0.3f * Pulse), 2.f);
+		}
 		const FString Num = FString::FromInt(i + 1);
 		float TW = 0.f, TH = 0.f;
 		GetTextSize(Num, TW, TH, Font, 0.8f);
-		DrawText(Num, bNext ? FLinearColor::White : C, P.X - TW * 0.5f, P.Y + R * 0.5f + 6.f, Font, 0.8f);
+		DrawText(Num, bDone ? FLinearColor(0.1f, 0.075f, 0.02f) : bNext ? FLinearColor(0.94f, 0.98f, 1.f) : FLinearColor(0.42f, 0.37f, 0.23f),
+			P.X - TW * 0.5f, P.Y - TH * 0.5f, Font, 0.8f);
 	}
-	for (int32 Act = 0; Act * 3 < N; ++Act)                      // act names at the left of each row
+	for (int32 Act = 0; Act * 3 < N; ++Act)                   // each act's name beside its row of three
 	{
 		const FString& Sub = Data->Hours[Act * 3].Subtitle;
-		DrawText(Sub, Faded(Cyan, Next >= Act * 3 ? 0.9f : 0.35f), W * 0.04f, H * (0.20f + 0.15f * Act) - 10.f, Font, 0.85f);
+		float TW = 0.f, TH = 0.f;
+		GetTextSize(Sub, TW, TH, Font, 0.8f);
+		const float RowY = (GatePos(Act * 3).Y + GatePos(FMath::Min(Act * 3 + 1, N - 1)).Y) * 0.5f;
+		DrawText(Sub, Faded(Cyan, Next >= Act * 3 ? 0.85f : 0.3f), W * 0.5f - Half - 40.f * Scale - TW, RowY - TH * 0.5f, Font, 0.8f);
+	}
+}
+
+void ASunderStoryHUD::DrawDisc(const FVector2D& Centre, float Radius, const FLinearColor& Color)
+{
+	Canvas->K2_DrawPolygon(nullptr, Centre, FVector2D(Radius, Radius), 32, Color);
+}
+
+void ASunderStoryHUD::DrawRing(const FVector2D& Centre, float Radius, const FLinearColor& Color, float Thickness)
+{
+	const int32 Sides = 40;
+	for (int32 k = 0; k < Sides; ++k)
+	{
+		const float A0 = UE_TWO_PI * k / Sides, A1 = UE_TWO_PI * (k + 1) / Sides;
+		DrawLine(Centre.X + FMath::Cos(A0) * Radius, Centre.Y + FMath::Sin(A0) * Radius,
+			Centre.X + FMath::Cos(A1) * Radius, Centre.Y + FMath::Sin(A1) * Radius, Color, Thickness);
 	}
 }
 
@@ -140,14 +182,18 @@ void ASunderStoryHUD::DrawHUD()
 	case ESunderStoryScreen::Map:
 	{
 		DrawBackdrop(Data->MapBackdrop, 0.3f);
-		DrawWrapped(TEXT("THE HOUR MAP"), Gold, H * 0.05f, 1.6f, Wrap);
-		DrawMap(Data, Index, T);
-		if (Hour)
+		DrawWrapped(TEXT("THE TWELVE GATES  ·  HOUR MAP"), Gold, H * 0.04f, 1.5f, Wrap);
+		if (Hour)                                              // the web game's target card: the next Hour and its act
 		{
-			const float Y = DrawWrapped(FString::Printf(TEXT("NEXT  ·  HOUR %d  ·  %s"), Index + 1, *HourName), Hour->Tint, H * 0.80f, 1.1f, Wrap);
-			DrawWrapped(FString::Printf(TEXT("Keeper: %s"), *Hour->KeeperName), Pale, Y, 0.9f, Wrap);
+			FString Short = Hour->Name;
+			Short.RemoveFromStart(TEXT("Hour of "));
+			const float Y = DrawWrapped(FString::Printf(TEXT("NEXT:  HOUR %d  ·  %s"), Index + 1, *Short.ToUpper()), Cyan, H * 0.10f, 1.1f, Wrap);
+			DrawWrapped(Hour->Subtitle, Faded(Gold, 0.85f), Y, 0.9f, Wrap);
 		}
-		DrawPrompt(FString::Printf(TEXT("SPACE  open the gate    ·    ESC  title    ·    SCORE  %d"), Story->GetTotalScore()), T);
+		DrawMap(Data, Index, T);
+		DrawWrapped(FString::Printf(TEXT("%d / %d gates opened    ·    SCORE  %d"), Index, Data->Hours.Num(), Story->GetTotalScore()),
+			Faded(Gold, 0.8f), H * 0.875f, 0.9f, Wrap);
+		DrawPrompt(TEXT("SPACE  open the marked gate    ·    ESC  title"), T);
 		break;
 	}
 	case ESunderStoryScreen::Briefing:

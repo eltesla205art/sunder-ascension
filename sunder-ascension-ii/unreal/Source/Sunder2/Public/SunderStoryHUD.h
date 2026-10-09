@@ -26,4 +26,7 @@ private:
 	void DrawDusk(float T);
 	void DrawHorizon(float Height, float Glow, const FLinearColor& Low, const FLinearColor& High, const FLinearColor& Sun);
 	void DrawMap(class USunderStoryData* Data, int32 Next, float T);
+	/** A filled circle (the canvas's polygon) and a ring of line segments, for the map's gates. */
+	void DrawDisc(const FVector2D& Centre, float Radius, const FLinearColor& Color);
+	void DrawRing(const FVector2D& Centre, float Radius, const FLinearColor& Color, float Thickness);
 };
