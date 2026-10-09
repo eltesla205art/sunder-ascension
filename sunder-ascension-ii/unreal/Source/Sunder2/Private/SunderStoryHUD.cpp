@@ -180,7 +180,8 @@ void ASunderStoryHUD::DrawHUD()
 		{
 			Y = DrawWrapped(Hour->Interlude, Faded(Cyan, (T - 0.6f) / 1.5f), Y + 24.f, 0.95f, Wrap);
 		}
-		DrawWrapped(FString::Printf(TEXT("SCORE  %d"), Story->GetTotalScore()), Gold, Y + 20.f, 1.0f, Wrap);
+		Y = DrawWrapped(TEXT("+1 LIFE  ·  +1 BOMB  ·  +1 SHIELD"), Faded(Cyan, (T - 0.3f) / 0.8f), Y + 20.f, 1.0f, Wrap);   // battle math #5
+		DrawWrapped(FString::Printf(TEXT("SCORE  %d"), Story->GetTotalScore()), Gold, Y + 14.f, 1.0f, Wrap);
 		DrawPrompt(TEXT("SPACE  hour map"), T);
 		break;
 	}

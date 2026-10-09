@@ -89,6 +89,17 @@ public:
 	/** A Keeper is gone: the boss bar goes. */
 	void ClearKeeper(ASunderKeeper* Keeper);
 
+	/** A Keeper is beaten: the clear card (the web game's STAGE_CLEAR banner: HOUR N SURVIVED, GATE OPEN, its line). */
+	void AnnounceKeeperFallen(const ASunderKeeper* Keeper);
+
+	UFUNCTION(BlueprintPure, Category = "Sunder") float GetKeeperFallenAt() const { return FallenAt; }
+	UFUNCTION(BlueprintPure, Category = "Sunder") int32 GetFallenHour() const { return FallenHour; }
+	/** The Hour's name, or the Keeper's when it has none. */
+	UFUNCTION(BlueprintPure, Category = "Sunder") FString GetFallenName() const { return FallenName; }
+	UFUNCTION(BlueprintPure, Category = "Sunder") FString GetFallenLine() const { return FallenLine; }
+	UFUNCTION(BlueprintPure, Category = "Sunder") bool HasFallenHourName() const { return bFallenHourName; }
+	UFUNCTION(BlueprintPure, Category = "Sunder") FLinearColor GetFallenTint() const { return FallenTint; }
+
 	UFUNCTION(BlueprintPure, Category = "Sunder") ASunderKeeper* GetActiveKeeper() const;   // in the .cpp: needs the full class
 	UFUNCTION(BlueprintPure, Category = "Sunder") FString GetKeeperTitle() const { return KeeperTitle; }
 	UFUNCTION(BlueprintPure, Category = "Sunder") FString GetKeeperTaunt() const { return KeeperTaunt; }
@@ -121,6 +132,12 @@ private:
 	FString KeeperTitle;
 	FString KeeperTaunt;
 	float KeeperAnnouncedAt = -100.f;
+	float FallenAt = -100.f;
+	int32 FallenHour = 0;
+	FString FallenName;
+	FString FallenLine;
+	bool bFallenHourName = false;
+	FLinearColor FallenTint = FLinearColor(1.f, 0.25f, 0.6f);
 	FString WaveName;
 	float WaveAnnouncedAt = -100.f;
 	int32 WaveNumber = 0;

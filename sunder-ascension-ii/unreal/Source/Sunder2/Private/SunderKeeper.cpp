@@ -381,6 +381,7 @@ void ASunderKeeper::FinishDying(bool bAwardScore)
 	if (bAwardScore)
 	{
 		if (USunderMusicSubsystem* M = Music()) { M->PlayStageCue(ESunderStageCue::Clear); }   // the Hour is won
+		if (ASunderGameMode* Mode = GetWorld()->GetAuthGameMode<ASunderGameMode>()) { Mode->AnnounceKeeperFallen(this); }
 	}
 	if (ASunderGameMode* Mode = GetWorld()->GetAuthGameMode<ASunderGameMode>()) { Mode->ClearKeeper(this); }
 	Super::Die(bAwardScore);

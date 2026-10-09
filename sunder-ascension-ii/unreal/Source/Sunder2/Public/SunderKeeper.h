@@ -46,6 +46,14 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Keeper")
 	FString Taunt;
 
+	/** Its Hour's name and the line that closes it (web STAGES name, CLEAR_LINES), for the clear card when it falls;
+	 *  set by create_story_level.py. Empty = the card names the Keeper instead. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Keeper")
+	FString HourName;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Keeper")
+	FString ClearLine;
+
 	/** Shown on its intro card, in its Hour's glow (T_Portrait_*, set by create_story_level.py); none = name and taunt. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Keeper")
 	TObjectPtr<UTexture2D> Portrait;

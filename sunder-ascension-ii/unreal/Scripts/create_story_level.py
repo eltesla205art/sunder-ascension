@@ -17,7 +17,8 @@ Does:
   1. imports the sound into /Game/Sunder/Audio/Story and the art into /Game/Sunder/UI/Stages and /Keepers;
   2. makes DA_StoryAudio_Opening and DA_StoryAudio_Map (theme + ambience);
   3. makes DA_StoryData: the words, the twelve Hours (each with its DA_StageAudio_*, BP_Keeper_*, DA_Waves_HourNN_*
-     from create_hour_waves.py, backdrop, portrait; the portrait also goes on the Keeper, for its intro card), DA_TestWaves for any Hour without its own waves, and the story
+     from create_hour_waves.py, backdrop, portrait; the portrait, the Hour's name and its clear line also go on the Keeper,
+     for its intro and clear cards), DA_TestWaves for any Hour without its own waves, and the story
      screens' music and cues;
   4. makes BP_SunderStoryGameMode and the level L_SunderStory;
   5. points the hangar's Story mode at it (BP_SunderMenuGameMode → Story Level, Story Data).
@@ -227,14 +228,19 @@ def build_hour(h):
     portrait = asset(PORTRAIT_DIR, "T_Portrait_" + camel(h["keeper_id"]))
     if portrait is not None:
         hour.set_editor_property("keeper_portrait", portrait)
-        if EAL.does_asset_exist(keeper_bp):
-            step("BP_Keeper_{}: Portrait (its intro card)".format(camel(h["keeper_id"])), keeper_portrait, keeper_bp, portrait)
+    if EAL.does_asset_exist(keeper_bp):
+        step("BP_Keeper_{}: portrait, Hour name and clear line (its intro and clear cards)".format(camel(h["keeper_id"])),
+             keeper_cards, keeper_bp, portrait, h)
     return hour
 
 
-def keeper_portrait(keeper_bp, portrait):
+def keeper_cards(keeper_bp, portrait, h):
     bp = EAL.load_asset(keeper_bp)
-    unreal.get_default_object(EAL.load_blueprint_class(keeper_bp)).set_editor_property("portrait", portrait)
+    cdo = unreal.get_default_object(EAL.load_blueprint_class(keeper_bp))
+    if portrait is not None:
+        cdo.set_editor_property("portrait", portrait)
+    cdo.set_editor_property("hour_name", h["name"])
+    cdo.set_editor_property("clear_line", h.get("clear", ""))
     unreal.BlueprintEditorLibrary.compile_blueprint(bp)
     EAL.save_loaded_asset(bp)
 

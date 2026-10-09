@@ -95,6 +95,9 @@ void ASunderHUD::DrawHUD()
 		DrawText(Keeper->KeeperName, Gold, X, 38.f, Font, 0.9f);
 	}
 
+	const float SinceFallen = GetWorld()->GetTimeSeconds() - Mode->GetKeeperFallenAt();
+	if (SinceFallen < ClearCardTime && !Mode->IsGameOver()) { DrawClearCard(Mode, SinceFallen, Font); }
+
 	if (Mode->IsGameOver())
 	{
 		const FString Text = TEXT("DAWN DENIED");
@@ -142,4 +145,56 @@ void ASunderHUD::DrawKeeperCard(const ASunderKeeper* Keeper, const FString& Name
 	DrawText(Name, FLinearColor(0.96f, 0.84f, 0.48f, A), (W - TW) * 0.5f, Y, Font, 1.8f);   // #F4D77B
 	GetTextSize(Quote, TW, TH, Font, 1.1f);
 	DrawText(Quote, FLinearColor(0.79f, 0.70f, 0.41f, A), (W - TW) * 0.5f, Y + 54.f, Font, 1.1f);   // #C9B368
+}
+
+void ASunderHUD::DrawClearCard(const ASunderGameMode* Mode, float Since, UFont* Font)
+{
+	// The web game's STAGE_CLEAR banner, over the arena as the Keeper's last burst fades.
+	const float W = Canvas->ClipX, H = Canvas->ClipY;
+	const float In = FMath::Clamp((Since - 0.3f) / 0.5f, 0.f, 1.f), Out = FMath::Clamp((ClearCardTime - Since) / 0.5f, 0.f, 1.f);
+	const float A = FMath::Min(In, Out);
+	DrawRect(FLinearColor(0.02f, 0.016f, 0.047f, 0.5f * A), 0.f, 0.f, W, H);
+	const FLinearColor Tint = Mode->GetFallenTint();
+	const float Wrap = FMath::Min(W * 0.8f, 1100.f);
+	float Y = H * 0.30f;
+	if (Mode->HasFallenHourName())
+	{
+		Y = DrawCentredWrapped(FString::Printf(TEXT("HOUR %d SURVIVED"), Mode->GetFallenHour()), FLinearColor(0.96f, 0.84f, 0.48f, A), Y, 1.9f, Wrap, Font);
+		Y = DrawCentredWrapped(Mode->GetFallenName().ToUpper() + TEXT("  ·  GATE OPEN"), FLinearColor(Tint.R, Tint.G, Tint.B, A), Y + 6.f, 1.1f, Wrap, Font);
+	}
+	else
+	{
+		Y = DrawCentredWrapped(TEXT("THE KEEPER FALLS"), FLinearColor(0.96f, 0.84f, 0.48f, A), Y, 1.9f, Wrap, Font);
+		Y = DrawCentredWrapped(Mode->GetFallenName().ToUpper(), FLinearColor(Tint.R, Tint.G, Tint.B, A), Y + 6.f, 1.1f, Wrap, Font);
+	}
+	if (!Mode->GetFallenLine().IsEmpty())                     // its closing line, a beat later
+	{
+		const float LA = FMath::Min(FMath::Clamp((Since - 0.9f) / 0.6f, 0.f, 1.f), Out);
+		DrawCentredWrapped(Mode->GetFallenLine(), FLinearColor(0.79f, 0.70f, 0.41f, LA), Y + 22.f, 1.0f, Wrap, Font);
+	}
+}
+
+float ASunderHUD::DrawCentredWrapped(const FString& Text, const FLinearColor& Color, float Y, float Scale, float MaxWidth, UFont* Font)
+{
+	TArray<FString> Words;
+	Text.ParseIntoArray(Words, TEXT(" "), true);
+	FString Line;
+	float TW = 0.f, TH = 0.f;
+	auto Flush = [&]()
+	{
+		if (Line.IsEmpty()) { return; }
+		GetTextSize(Line, TW, TH, Font, Scale);
+		DrawText(Line, Color, (Canvas->ClipX - TW) * 0.5f, Y, Font, Scale);
+		Y += TH + 4.f;
+		Line.Reset();
+	};
+	for (const FString& Word : Words)
+	{
+		const FString Try = Line.IsEmpty() ? Word : Line + TEXT(" ") + Word;
+		GetTextSize(Try, TW, TH, Font, Scale);
+		if (TW > MaxWidth && !Line.IsEmpty()) { Flush(); Line = Word; }
+		else { Line = Try; }
+	}
+	Flush();
+	return Y;
 }

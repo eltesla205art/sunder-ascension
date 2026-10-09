@@ -143,6 +143,19 @@ void ASunderGameMode::AnnounceKeeper(ASunderKeeper* Keeper, const FString& Title
 	KeeperAnnouncedAt = GetWorld()->GetTimeSeconds();
 }
 
+void ASunderGameMode::AnnounceKeeperFallen(const ASunderKeeper* Keeper)
+{
+	if (!Keeper) { return; }
+	FallenAt = GetWorld()->GetTimeSeconds();
+	FallenHour = Keeper->Hour;
+	bFallenHourName = !Keeper->HourName.IsEmpty();
+	FallenName = bFallenHourName ? Keeper->HourName : Keeper->KeeperName;
+	FallenLine = Keeper->ClearLine;
+	const FLinearColor& C = Keeper->KeeperColor;             // its Hour's colour, brought down from HDR for text
+	const float Peak = FMath::Max3(C.R, C.G, C.B);
+	if (Peak > 0.f) { FallenTint = FLinearColor(C.R / Peak, C.G / Peak, C.B / Peak); }
+}
+
 ASunderKeeper* ASunderGameMode::GetActiveKeeper() const
 {
 	return ActiveKeeper.Get();
