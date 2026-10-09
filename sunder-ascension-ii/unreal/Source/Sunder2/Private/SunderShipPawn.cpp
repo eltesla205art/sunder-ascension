@@ -243,7 +243,7 @@ float ASunderShipPawn::TakeDamage(float DamageAmount, FDamageEvent const& Damage
 	Health -= DamageAmount;
 	Invulnerable = HitInvulnerability;
 	PlaySound(HitSound);
-	if (State.Power > 1) { SetPower(State.Power - 1); }      // the form falls back a step
+	if (State.Power > 1 && Health > 0.f) { SetPower(State.Power - 1); }   // the form falls back a step (a respawn resets it)
 	if (Health > 0.f)
 	{
 		SpawnExplosion(0);                                    // the web game's small gold burst on a hull hit
@@ -293,6 +293,7 @@ void ASunderShipPawn::ApplyLoadout(const FSunderShipLoadout& InLoadout)
 	ShotColor = InLoadout.Color;
 	if (BeamWeapon) { BeamWeapon->BeamColor = InLoadout.Color; }   // picked up the next time the beam starts
 	DeathColor = InLoadout.Color;
+	FormColor = InLoadout.Accent;
 	if (!bBaseScaleCaptured) { BaseMeshScale = Mesh->GetRelativeScale3D(); bBaseScaleCaptured = true; }
 	if (InLoadout.Mesh)
 	{
@@ -399,14 +400,35 @@ void ASunderShipPawn::SetPower(int32 NewPower)
 		Toast = TEXT("FORM: ") + GetFormName().ToUpper();
 		ToastTime = bUp ? 2.2f : 1.6f;
 	}
-	if (bUp)
+	PlayFormChange(bUp);
+	UpdateBodyScale();
+}
+
+void ASunderShipPawn::PlayFormChange(bool bUp)
+{
+	if (bDead) { return; }                                     // a respawn resets the form quietly
+	if (FormFX && FormFX->GetEmitterHandles().Num() > 0)
 	{
-		if (UImpactFXSubsystem* Impacts = GetWorld()->GetSubsystem<UImpactFXSubsystem>())
+		// Rides on the ship: the rings and the light stay around it as it flies.
+		if (UNiagaraComponent* FX = UNiagaraFunctionLibrary::SpawnSystemAttached(FormFX, GetRootComponent(), NAME_None,
+			FVector::ZeroVector, FRotator::ZeroRotator, EAttachLocation::SnapToTarget, /*bAutoDestroy*/ false,
+			/*bAutoActivate*/ true, ENCPoolMethod::AutoRelease, /*bPreCullCheck*/ false))
 		{
-			Impacts->QueueImpact(GetActorLocation(), FVector::ForwardVector, ShotColor.A > 0.f ? ShotColor : DeathColor);
+			FX->SetVariableFloat(TEXT("Up"), bUp ? 1.f : 0.f);
+			FX->SetVariableFloat(TEXT("Form"), (float)State.Power);
+			FX->SetVariableLinearColor(TEXT("Color"), FormColor);
+			FX->SetVariableFloat(TEXT("Size"), FormFXSize * FormScale());
+			FX->SetTranslucentSortPriority(15);
+			return;
 		}
 	}
-	UpdateBodyScale();
+	if (bUp)
+	{
+		if (UImpactFXSubsystem* Impacts = GetWorld()->GetSubsystem<UImpactFXSubsystem>())   // not built yet
+		{
+			Impacts->QueueImpact(GetActorLocation(), FVector::ForwardVector, FormColor);
+		}
+	}
 }
 
 void ASunderShipPawn::PlaySound(USoundBase* Sound) const

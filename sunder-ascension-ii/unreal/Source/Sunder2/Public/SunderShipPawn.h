@@ -91,6 +91,8 @@ struct FSunderShipLoadout
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ship") FLinearColor Color = FLinearColor(3.0f, 2.1f, 0.6f, 1.f);
 	/** Its HUD colour (not HDR). */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ship") FLinearColor Tint = FLinearColor(0.79f, 0.54f, 0.08f, 1.f);
+	/** The web game's accent (HDR): its form changes burst in it. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ship") FLinearColor Accent = FLinearColor(0.92f, 2.43f, 3.5f, 1.f);
 	/** The web game's form scale: the Scarab is bigger, the Ibis smaller. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ship") float BodyScale = 1.f;
 
@@ -236,6 +238,20 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ship|Power-ups", meta = (ClampMin = "0"))
 	int32 MaxBombFizzles = 256;
 
+	/** NS_Ship_FormChange (SHIP_VFX.md §9), one-shot and pooled, riding on the ship: User.Up 1 = it rises a form (the
+	 *  web game's burst in the ship's accent), 0 = a hit knocks it back one; User.Form (1–3, the new form),
+	 *  User.Color = FormColor, User.Size. Until it has emitters, a plasma impact stands in for a rise. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ship|Power-ups")
+	TObjectPtr<UNiagaraSystem> FormFX;
+
+	/** The form change's colour: the ship's accent (set by ApplyLoadout). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ship|Power-ups")
+	FLinearColor FormColor = FLinearColor(0.92f, 2.43f, 3.5f, 1.f);
+
+	/** User.Size for a form-1 ship; it grows with the form. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ship|Power-ups", meta = (ClampMin = "1"))
+	float FormFXSize = 90.f;
+
 	/** Seconds of invulnerability after a shield takes a hit. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ship|Power-ups")
 	float ShieldInvulnerability = 0.8f;
@@ -359,6 +375,8 @@ private:
 	void SpawnExplosion(int32 Event);
 	/** BombFX at Centre; false if it isn't set or built yet (UseBomb falls back to plasma impacts). */
 	bool SpawnBombBlast(const FVector& Centre, const TArray<FVector>& Wiped);
+	/** FormFX for a form change (up or down), or a plasma impact for a rise until it's built. */
+	void PlayFormChange(bool bUp);
 	float ShieldRadiusNow() const { return ShieldRadius * FormScale(); }
 	void UpdateBodyScale();
 	float FormScale() const;

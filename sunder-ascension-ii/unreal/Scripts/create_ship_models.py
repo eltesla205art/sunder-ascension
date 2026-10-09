@@ -7,7 +7,8 @@ Does:
   1. imports unreal/Content/Ships/SM_Ship_Sunborn|Scarab|Ibis.fbx (blender/ships.py --fbx: the same models as the
      hangar's sprites, one mesh each) into /Game/Sunder/Ships;
   2. sets each as the Mesh of its ship in BP_SunderGameMode's Ships, so the arena flies the hangar's choice as its own
-     model: turned nose-up (Mesh Rotation), sized (Mesh Length × Body Scale), its guns at its nose.
+     model: turned nose-up (Mesh Rotation), sized (Mesh Length × Body Scale), its guns at its nose. It also sets each
+     ship's Accent (the web game's accent, for its form changes), since saving the Ships list here stores every field.
 
 Safe to run again. Untested until its first run.
 """
@@ -20,6 +21,8 @@ SOURCE_DIR = None   # None = ../Content/Ships next to this script
 MESH_DIR = "/Game/Sunder/Ships"
 GAME_MODE = "/Game/Sunder/Blueprints/BP_SunderGameMode"
 SHIPS = ["sunborn", "scarab", "ibis"]
+# The web game's ship accents (web/game.html SHIPS accent), HDR: the colour its form changes burst in.
+ACCENTS = {"sunborn": (0.92, 2.43, 3.5), "scarab": (3.5, 0.92, 0.12), "ibis": (1.82, 3.5, 2.43)}
 
 TOOLS = unreal.AssetToolsHelpers.get_asset_tools()
 EAL = unreal.EditorAssetLibrary
@@ -96,6 +99,12 @@ def set_ship_meshes(meshes):
     found = set()
     for i, ship in enumerate(ships):
         sid = str(ship.get_editor_property("id")).lower()
+        if sid in ACCENTS:
+            try:
+                ship.set_editor_property("accent", unreal.LinearColor(*ACCENTS[sid], 1.0))
+                ships[i] = ship
+            except Exception as exc:   # C++ from before Accent: compile unreal/Source again
+                MANUAL.append("{}: Accent not set ({})".format(sid, exc))
         if meshes.get(sid) is not None:
             ship.set_editor_property("mesh", meshes[sid])
             ships[i] = ship

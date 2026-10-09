@@ -1,17 +1,17 @@
 """SUNDER: Ascension II — create the scriptable half of the ship's VFX (see ../SHIP_VFX.md): its shield, its
-explosion and its bomb blast, and wire them to the ship.
+explosion, its bomb blast and its form change, and wire them to the ship.
 
 Run inside the Unreal Editor (Tools → Execute Python Script…) AFTER create_weapon_fx_assets.py (for the master material
 and EFT_PlayerWeapon) and create_arena_level.py (for BP_SunderShip), with the C++ in unreal/Source compiled.
 
 Creates under /Game/FX/Ship:
-  Materials/  MI_Shield_Ring, MI_Shield_Glow, MI_Ship_Flash, MI_Bomb_Wave (instances of M_FX_Additive)
-  Systems/    NS_Ship_Shield (looping), NS_Ship_ShieldEvent, NS_Ship_Explosion and NS_Ship_Bomb (one-shot, pooled):
-              empty systems; build their emitters by hand from SHIP_VFX.md
-and sets them on BP_SunderShip as Shield FX, Shield Event FX, Explosion FX and Bomb FX.
+  Materials/  MI_Shield_Ring, MI_Shield_Glow, MI_Ship_Flash, MI_Bomb_Wave, MI_Form_Ray (instances of M_FX_Additive)
+  Systems/    NS_Ship_Shield (looping), NS_Ship_ShieldEvent, NS_Ship_Explosion, NS_Ship_Bomb and NS_Ship_FormChange
+              (one-shot, pooled): empty systems; build their emitters by hand from SHIP_VFX.md
+and sets them on BP_SunderShip as Shield FX, Shield Event FX, Explosion FX, Bomb FX and Form FX.
 
 Empty systems are safe: the ship keeps its placeholder shield disc, and plasma impacts for shield hits, hull hits, its
-destruction and bombs, until a system has an emitter, then uses it with no further wiring.
+destruction, bombs and form rises, until a system has an emitter, then uses it with no further wiring.
 
 Safe to run again. Untested until its first run.
 """
@@ -64,6 +64,7 @@ INSTANCES = {
     "MI_Shield_Ring": {"Mode": 2.0, "CoreSharpness": 3.0, "GlowSharpness": 1.2, "CoreBoost": 5.0, "RingThickness": 0.06},
     "MI_Shield_Glow": {"Mode": 1.0, "CoreSharpness": 0.8, "GlowSharpness": 0.5, "CoreBoost": 1.0},
     "MI_Ship_Flash":  {"Mode": 1.0, "CoreSharpness": 2.0, "GlowSharpness": 0.6, "CoreBoost": 4.0},   # white-hot centre, wide
+    "MI_Form_Ray":    {"Mode": 0.0, "CoreSharpness": 3.0, "GlowSharpness": 0.9, "CoreBoost": 3.0, "ScrollSpeed": 3.0},
     "MI_Bomb_Wave":   {"Mode": 2.0, "CoreSharpness": 1.5, "GlowSharpness": 0.5, "CoreBoost": 3.0, "RingThickness": 0.22},
 }
 
@@ -95,7 +96,7 @@ def build_system(name, pool_max, pool_prime):
     return system
 
 
-def wire_ship(shield, event, explosion, bomb):
+def wire_ship(shield, event, explosion, bomb, form):
     if not EAL.does_asset_exist(SHIP_BP):
         raise RuntimeError(SHIP_BP + " not found; run create_arena_level.py first")
     bp = EAL.load_asset(SHIP_BP)
@@ -108,6 +109,8 @@ def wire_ship(shield, event, explosion, bomb):
         cdo.set_editor_property("explosion_fx", explosion)
     if bomb is not None:
         cdo.set_editor_property("bomb_fx", bomb)
+    if form is not None:
+        cdo.set_editor_property("form_fx", form)
     unreal.BlueprintEditorLibrary.compile_blueprint(bp)
     EAL.save_loaded_asset(bp)
 
@@ -131,7 +134,9 @@ def main():
     # the explosion: a hull hit or the ship destroyed; at most a couple at once (a hit, then the death)
     explosion = step("NS_Ship_Explosion (empty)", build_system, "NS_Ship_Explosion", 3, 1)
     bomb = step("NS_Ship_Bomb (empty)", build_system, "NS_Ship_Bomb", 2, 1)   # one at a time, but two can overlap
-    step("BP_SunderShip: Shield FX, Shield Event FX, Explosion FX and Bomb FX", wire_ship, shield, event, explosion, bomb)
+    form = step("NS_Ship_FormChange (empty)", build_system, "NS_Ship_FormChange", 3, 1)
+    step("BP_SunderShip: Shield FX, Shield Event FX, Explosion FX, Bomb FX and Form FX", wire_ship,
+         shield, event, explosion, bomb, form)
 
     MANUAL.extend([
         "NS_Ship_Shield and NS_Ship_ShieldEvent: add the user parameters (SHIP_VFX.md §1.1) and the emitters (§2, §3)",
@@ -139,6 +144,7 @@ def main():
         "NS_Ship_Explosion: add its user parameters (SHIP_VFX.md §5.1) and the emitters (§5.2)",
         "NS_Ship_Bomb: add its user parameters, including the WipedShots vector array (SHIP_VFX.md §7.1), and the "
         "emitters (§7.2)",
+        "NS_Ship_FormChange: add its user parameters (SHIP_VFX.md §9.1) and the emitters (§9.2)",
     ])
     log("---- done ({}) ----".format(len(DONE)))
     for label in DONE:

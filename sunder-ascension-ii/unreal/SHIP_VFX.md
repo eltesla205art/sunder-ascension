@@ -1,7 +1,8 @@
-# SUNDER: Ascension II — UE5 ship VFX: the shield, the explosion and the bomb (Niagara)
+# SUNDER: Ascension II — UE5 ship VFX: the shield, the explosion, the bomb and the form change (Niagara)
 
 The web game draws a ship's shield as a pulsing cyan ring that thickens with each layer (up to 3). This is that shield
-for the Unreal version, as two systems. The ship's explosion is in §5 and its bomb blast in §7.
+for the Unreal version, as two systems. The ship's explosion is in §5, its bomb blast in §7 and its form
+change in §9.
 
 | System | When | Lives |
 |---|---|---|
@@ -9,11 +10,12 @@ for the Unreal version, as two systems. The ship's explosion is in §5 and its b
 | `NS_Ship_ShieldEvent` | a hit soaked (ripple), the last layer breaking (shatter), a layer forming (gather) | one-shot, pooled |
 | `NS_Ship_Explosion` | the hull taking a hit (a small gold burst), the ship destroyed (the big one) | one-shot, pooled |
 | `NS_Ship_Bomb` | a bomb: the blast, a shockwave that sweeps the arena, and every wiped enemy shot fizzling | one-shot, pooled |
+| `NS_Ship_FormChange` | the ship rising a form (one ring per form, light up the screen) or a hit knocking it back one | one-shot, pooled, rides on the ship |
 
 > **Status:** written guidance, not yet built or run in-engine (no Unreal where it was written).
 > The C++ that drives them is `ASunderShipPawn` in [`Source/`](Source/README.md) (`ShieldFX`, `ShieldEventFX`,
-> `UpdateShield`, `ExplosionFX`, `SpawnExplosion`, `BombFX`, `SpawnBombBlast`).
-> [`Scripts/create_ship_fx_assets.py`](Scripts/create_ship_fx_assets.py) makes the materials and the four empty systems and sets them on `BP_SunderShip`; the emitters below are built by hand. Module names are from UE 5.3–5.5;
+> `UpdateShield`, `ExplosionFX`, `SpawnExplosion`, `BombFX`, `SpawnBombBlast`, `FormFX`, `PlayFormChange`).
+> [`Scripts/create_ship_fx_assets.py`](Scripts/create_ship_fx_assets.py) makes the materials and the five empty systems and sets them on `BP_SunderShip`; the emitters below are built by hand. Module names are from UE 5.3–5.5;
 > the ones that moved between versions are marked ⚠.
 
 Read [`WEAPON_VFX.md`](WEAPON_VFX.md) §0 first. The same camera rules apply: Z is up, the camera looks down −Z, every
@@ -23,7 +25,8 @@ material is Unlit and Additive, and every particle stays flat on the play plane.
 **Nothing breaks while you build.** Until `NS_Ship_Shield` has an emitter, the ship shows the placeholder disc. Until
 `NS_Ship_ShieldEvent` has one, a hit or a break shows a plasma impact instead. Until `NS_Ship_Explosion` has one, a
 hull hit shows one gold plasma impact and the ship's destruction four in its colour. Until `NS_Ship_Bomb` has one, a
-bomb shows a ring of eleven cyan plasma impacts.
+bomb shows a ring of eleven cyan plasma impacts. Until `NS_Ship_FormChange` has one, a rise shows one plasma impact in the
+ship's accent and a fall shows nothing.
 
 ---
 
@@ -357,3 +360,100 @@ about 500 particles for half a second; that's fine on the CPU. If it isn't, move
    bomb's doing.
 5. **No bullets:** with no enemy shots on screen, the bomb shows no fizzles and no errors.
 6. **Two bombs** quickly: the second plays over the first (the pool holds two).
+
+---
+
+## 9. `NS_Ship_FormChange` (one-shot, rides on the ship)
+
+The web game's form change (web/game.html `collectPowerup`): when the ship rises a form (a Power pickup, or its weapon
+pickup again) it swells for 0.4 s, the form's name shows ("FORM: RISING FALCON"), and 24 sparks burst in the ship's
+**accent** colour. A hull hit knocks it back a form with only the name.
+
+Unreal already has the swell and the name (`SetPower`, the HUD). This system adds the moment:
+- **Rising:** a flash, the web game's 24 sparks, **one ring for each form now reached** (so form 3 reads as three),
+  rays of light shooting up the screen (the ascension), and at form 3 a crown of light circling the ship.
+- **Falling** (a hit, the ship survives): the light sheds away, down the screen. It's quiet, because the hull hit's
+  gold burst (§5) plays at the same moment.
+
+### 9.1 User parameters
+
+`ASunderShipPawn::PlayFormChange` sets these. The system is attached to the ship at its centre, so every emitter that
+should stay with the ship uses Local Space **on**.
+
+| Name | Type | Preview default | What the ship sends |
+|---|---|---|---|
+| `User.Up` | Float | 1 | 1 = rising a form, 0 = knocked back one |
+| `User.Form` | Float | 2 | the new form, 1–3 |
+| `User.Color` | Linear Color | (0.92, 2.43, 3.5, 1) | `FormColor`: the ship's accent from the web game (Sunborn #8CD9FF sky blue, Scarab #FF8C33 orange, Ibis #BFFFD9 pale green) |
+| `User.Size` | Float | 90 | `FormFXSize` (90) × the new form's scale |
+
+Set in Emitter Spawn: `Emitter.Rise = User.Up > 0.5`, `Emitter.Crown = Emitter.Rise && User.Form > 2.5`.
+
+### 9.2 Emitters
+
+**System:**
+- Fixed Bounds ±1200 (the rays travel up the screen).
+- Effect Type `EFT_PlayerWeapon` (the script sets it): never culled.
+- Pooled by the script: max 3, primed 1.
+- Every emitter: CPU, Emitter State **Self, Once**. Bursts use counts of 0 to switch an emitter off for the other
+  direction.
+
+**A. `Flash`** (Local Space on; rising only)
+- Burst `1 × Emitter.Rise`. Lifetime 0.4 (the web game's swell).
+- Size `User.Size × 2.4`, curve 0.6 → 1 → 0.
+- Colour `User.Color` lerped 50 % toward white, alpha 1 → 0.
+- Sprite renderer: `MI_Ship_Flash`, Face Camera Plane.
+
+**B. `Sparks`** (Local Space **off**, so they stay behind as the ship flies; rising only): the web game's 24
+- Burst `24 × Emitter.Rise`.
+- Velocity radial on the plane, 150–900 u/s (the web's small burst ×5), Drag 1.2.
+- Lifetime 0.35–0.7. Size 8–20 → 0. Colour `User.Color`, alpha 1 → 0.
+- Sprite renderer: `MI_Spark`, Velocity Aligned.
+
+**C. `FormRings`** (Local Space on; rising only): the form, as a count
+- Burst `round(User.Form) × Emitter.Rise`: 2 rings at form 2, 3 at form 3.
+- Each ring `i` (`Engine.ExecutionIndex`, 0-based) waits `0.09 × i` s: alpha 0 until then (as the bomb's fizzles do
+  in §7.2 E).
+- Lifetime `0.45 + 0.09 × i`. Size from `User.Size × 0.6` to `User.Size × (2.2 + 0.7 × i)`, ease-out.
+- Colour `User.Color`, alpha 1 → 0. Ring thickness (Dynamic Parameter 1) 1 → 0.3.
+- Sprite renderer: `MI_Shield_Ring`, Face Camera Plane.
+
+**D. `Rays`** (Local Space on; rising only): light shooting up the screen
+- Burst `7 × Emitter.Rise`.
+- Position: across the ship, Y spread `±User.Size × 0.6`; X from `−User.Size × 0.3` to 0.
+- Velocity +X (up the screen) 900–1500 u/s, no drag.
+- Lifetime 0.35–0.55.
+- Sprite size: 10–16 across × `User.Size × 1.4` long. Alpha 0 → 1 → 0.
+- Colour `User.Color` lerped 30 % toward white.
+- Sprite renderer: `MI_Form_Ray`, Facing **Velocity Aligned**, non-uniform size, so each ray is a streak up the screen.
+
+**E. `Crown`** (Local Space on; rising to form 3 only)
+- Burst `8 × Emitter.Crown` at 0.15 s.
+- Placed evenly on a circle of radius `User.Size × 1.3` around the ship; orbit it at 1.2 turns/s (rotate the position
+  by `Age × 1.2 × 2π` around Z, or use a Vortex Force with a Point Attraction holding the radius).
+- Lifetime 0.9. Size 14 → 22 → 0. Colour `User.Color` toward white, alpha 0 → 1 → 0.
+- Sprite renderer: `MI_Spark`, Face Camera Plane.
+
+**F. `Shed`** (Local Space **off**; falling only): the form's light falling away
+- Burst `10 × (1 − Emitter.Rise)`.
+- Shape: a ring of radius `User.Size × 1.2` around the ship.
+- Velocity −X (down the screen) 150–350 u/s plus a little outward drift, Drag 1.5.
+- Lifetime 0.45–0.6. Size 10–16 → 0. Colour `User.Color × 0.5`, alpha 0.8 → 0.
+- Plus one ring (a second particle set in the same emitter, or a tiny emitter beside it): size `User.Size × 2.2` →
+  `User.Size × 1.1` over 0.3 s, colour `User.Color × 0.4`, alpha 0.7 → 0: the aura closing in.
+- Sprite renderers: `MI_Spark` (motes), `MI_Shield_Ring` (ring).
+
+**Budget:** a rise to form 3 is about 43 particles for under a second; a fall is 11. Nothing to watch.
+
+## 10. Checks in play (form change)
+
+1. **Rise to form 2:** a flash, sparks in the ship's accent, **two** rings, rays up the screen, and the name.
+2. **Rise to form 3:** **three** rings and the crown circling the ship.
+3. **Accent per ship:** sky blue for the Sunborn, orange for the Scarab, pale green for the Ibis (pick each in the
+   hangar). If every ship bursts sky blue, run `create_ship_models.py` again: it saves the ship list into
+   `BP_SunderGameMode`, and a list saved before the accents existed holds the default for all three.
+4. **Flying:** rise while strafing. The rings, rays and crown stay with the ship, and the sparks stay behind.
+5. **Hit at form 2 or 3:** light sheds down the screen with the hull hit's gold burst. No rings, no rays.
+6. **Killing hit or respawn:** no form effect. A killing hit shows only the explosion, and a respawn resets the form
+   quietly.
+7. **Weapon switch** (Spread ↔ Laser): no form effect, because the form doesn't change.

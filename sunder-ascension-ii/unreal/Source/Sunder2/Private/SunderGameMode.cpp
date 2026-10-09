@@ -34,12 +34,15 @@ ASunderGameMode::ASunderGameMode()
 	//    id         name                  style                          speed   hull  every   dmg   shot   size
 	FSunderShipLoadout* S = Ship(TEXT("sunborn"), TEXT("SUNBORN THUNDER"), ESunderShotStyle::TwinSpread, 950.f, 5.f, 0.09f, 10.f, 2200.f, 1.0f,
 		FLinearColor(3.0f, 2.1f, 0.6f), FLinearColor(0.79f, 0.54f, 0.08f), 1.0f);    // 320 px/s, 3 hull, 0.14 s, ±6°
+	S->Accent = FLinearColor(0.92f, 2.43f, 3.5f);   // #8CD9FF
 	S->StartBombs = 3; S->FormNames = { TEXT("Falcon"), TEXT("Rising Falcon"), TEXT("Solar Horus") }; S->FormScales = { 1.f, 1.05f, 1.12f };
 	S = Ship(TEXT("scarab"), TEXT("SCARAB WARBRINGER"), ESunderShotStyle::HeavyCannon, 742.f, 7.f, 0.129f, 30.f, 1925.f, 1.6f,
 		FLinearColor(4.0f, 0.7f, 0.3f), FLinearColor(0.69f, 0.05f, 0.03f), 1.1f);    // 250, 4 hull, 0.20 s, 3-damage cannon
+	S->Accent = FLinearColor(3.5f, 0.92f, 0.12f);   // #FF8C33
 	S->StartBombs = 4; S->FormNames = { TEXT("Scarab"), TEXT("Armored Scarab"), TEXT("Khnum Ram") }; S->FormScales = { 1.f, 1.073f, 1.164f };
 	S = Ship(TEXT("ibis"), TEXT("IBIS PHANTOM"), ESunderShotStyle::RapidStream, 1188.f, 3.f, 0.058f, 10.f, 2681.f, 0.8f,
 		FLinearColor(0.6f, 3.6f, 1.4f), FLinearColor(0.07f, 0.69f, 0.22f), 0.92f);   // 400, 2 hull, 0.09 s, fast stream
+	S->Accent = FLinearColor(1.82f, 3.5f, 2.43f);   // #BFFFD9
 	S->StartBombs = 3; S->FormNames = { TEXT("Ibis"), TEXT("Twin Ibis"), TEXT("Thoth Ascendant") }; S->FormScales = { 1.f, 1.043f, 1.087f };
 }
 
