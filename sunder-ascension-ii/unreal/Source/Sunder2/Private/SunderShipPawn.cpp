@@ -128,6 +128,10 @@ void ASunderShipPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 	BeamAction = MakeAction(TEXT("IA_Beam"), EInputActionValueType::Boolean);
 	ShootAction = MakeAction(TEXT("IA_Shoot"), EInputActionValueType::Boolean);
 	BombAction = MakeAction(TEXT("IA_Bomb"), EInputActionValueType::Boolean);
+	PauseAction = MakeAction(TEXT("IA_Pause"), EInputActionValueType::Boolean);
+	ResumeAction = MakeAction(TEXT("IA_Resume"), EInputActionValueType::Boolean);
+	BackAction = MakeAction(TEXT("IA_Back"), EInputActionValueType::Boolean);
+	for (UInputAction* Action : { PauseAction.Get(), ResumeAction.Get(), BackAction.Get() }) { Action->bTriggerWhenPaused = true; }
 
 	Mapping = NewObject<UInputMappingContext>(this, TEXT("IMC_Ship"));
 	auto MapNegated = [this](UInputAction* Action, const FKey& Key)
@@ -150,6 +154,12 @@ void ASunderShipPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 	Mapping->MapKey(BombAction, EKeys::K);
 	Mapping->MapKey(BombAction, EKeys::Gamepad_FaceButton_Top);
 	Mapping->MapKey(BombAction, EKeys::Gamepad_RightShoulder);
+	Mapping->MapKey(PauseAction, EKeys::P);
+	Mapping->MapKey(PauseAction, EKeys::Gamepad_Special_Right);
+	Mapping->MapKey(ResumeAction, EKeys::SpaceBar);
+	Mapping->MapKey(ResumeAction, EKeys::Gamepad_FaceButton_Bottom);
+	Mapping->MapKey(BackAction, EKeys::Escape);
+	Mapping->MapKey(BackAction, EKeys::Gamepad_Special_Left);
 
 	if (APlayerController* PC = Cast<APlayerController>(GetController()))
 	{
@@ -168,6 +178,28 @@ void ASunderShipPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 	Input->BindAction(ShootAction, ETriggerEvent::Started, this, &ASunderShipPawn::OnShootPressed);
 	Input->BindAction(ShootAction, ETriggerEvent::Completed, this, &ASunderShipPawn::OnShootReleased);
 	Input->BindAction(BombAction, ETriggerEvent::Started, this, &ASunderShipPawn::OnBombPressed);
+	Input->BindAction(PauseAction, ETriggerEvent::Started, this, &ASunderShipPawn::OnPausePressed);
+	Input->BindAction(ResumeAction, ETriggerEvent::Started, this, &ASunderShipPawn::OnResumePressed);
+	Input->BindAction(BackAction, ETriggerEvent::Started, this, &ASunderShipPawn::OnBackPressed);
+}
+
+void ASunderShipPawn::OnPausePressed(const FInputActionValue& Value)
+{
+	if (ASunderGameMode* Mode = GetWorld()->GetAuthGameMode<ASunderGameMode>()) { Mode->TogglePause(); }
+}
+
+void ASunderShipPawn::OnResumePressed(const FInputActionValue& Value)
+{
+	ASunderGameMode* Mode = GetWorld()->GetAuthGameMode<ASunderGameMode>();
+	if (Mode && Mode->IsCombatPaused()) { Mode->SetCombatPaused(false); }   // only resumes; while playing SPACE is the beam
+}
+
+void ASunderShipPawn::OnBackPressed(const FInputActionValue& Value)
+{
+	ASunderGameMode* Mode = GetWorld()->GetAuthGameMode<ASunderGameMode>();
+	if (!Mode) { return; }
+	if (Mode->IsCombatPaused()) { Mode->QuitToHangar(); }    // the web game: ESC while paused — quit to ship select
+	else { Mode->SetCombatPaused(true); }
 }
 
 void ASunderShipPawn::OnMoveUp(const FInputActionValue& Value) { MoveInput.X = Value.Get<float>(); }

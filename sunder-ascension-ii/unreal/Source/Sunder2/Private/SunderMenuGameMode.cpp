@@ -20,7 +20,9 @@ ASunderMenuGameMode::ASunderMenuGameMode()
 void ASunderMenuGameMode::BeginPlay()
 {
 	Super::BeginPlay();
-	EnterTitle();
+	// From the arena's pause menu (ESC: quit to ship select) the menu opens on the hangar, as in the web game.
+	if (UGameplayStatics::HasOption(OptionsString, TEXT("Hangar"))) { EnterHangar(); }
+	else { EnterTitle(); }
 }
 
 void ASunderMenuGameMode::EnterTitle()

@@ -99,6 +99,15 @@ void ASunderHUD::DrawHUD()
 	if (SinceFallen < ClearCardTime && !Mode->IsGameOver()) { DrawClearCard(Mode, SinceFallen, Font); }
 
 	if (Mode->IsGameOver()) { DrawDefeatCard(Mode, GetWorld()->GetTimeSeconds() - Mode->GetGameOverAt(), Font); }
+
+	if (Mode->IsCombatPaused())                                // the web game's pause overlay
+	{
+		DrawRect(FLinearColor(0.02f, 0.016f, 0.047f, 0.74f), 0.f, 0.f, W, H);
+		const float Wrap = FMath::Min(W * 0.8f, 1100.f);
+		const float Y = DrawCentredWrapped(TEXT("PAUSED"), FLinearColor(0.96f, 0.84f, 0.48f), H * 0.5f - 64.f, 2.4f, Wrap, Font);
+		const float Y2 = DrawCentredWrapped(TEXT("P / SPACE  \u2014  resume"), FLinearColor(0.56f, 0.89f, 1.f), Y + 18.f, 1.1f, Wrap, Font);
+		DrawCentredWrapped(TEXT("ESC  \u2014  quit to ship select"), FLinearColor(0.79f, 0.70f, 0.41f), Y2 + 8.f, 1.1f, Wrap, Font);
+	}
 }
 
 void ASunderHUD::DrawKeeperCard(const ASunderKeeper* Keeper, const FString& Name, const FString& Quote, float Since, float Hold,

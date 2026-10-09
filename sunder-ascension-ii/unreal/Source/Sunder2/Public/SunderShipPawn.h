@@ -380,6 +380,9 @@ private:
 	void OnBeamReleased(const FInputActionValue& Value);
 	void OnShootPressed(const FInputActionValue& Value);
 	void OnShootReleased(const FInputActionValue& Value);
+	void OnPausePressed(const FInputActionValue& Value);
+	void OnResumePressed(const FInputActionValue& Value);
+	void OnBackPressed(const FInputActionValue& Value);
 	void OnBombPressed(const FInputActionValue& Value);
 	void SetPower(int32 NewPower);
 	void PlaySound(USoundBase* Sound) const;
@@ -402,6 +405,9 @@ private:
 	UPROPERTY(Transient) TObjectPtr<UInputAction> BeamAction;
 	UPROPERTY(Transient) TObjectPtr<UInputAction> ShootAction;
 	UPROPERTY(Transient) TObjectPtr<UInputAction> BombAction;
+	UPROPERTY(Transient) TObjectPtr<UInputAction> PauseAction;    // P / Start: pause or resume
+	UPROPERTY(Transient) TObjectPtr<UInputAction> ResumeAction;   // SPACE / A: resume when paused
+	UPROPERTY(Transient) TObjectPtr<UInputAction> BackAction;     // ESC / Back: pause, or quit to the hangar when paused
 	UPROPERTY(Transient) TObjectPtr<class UMaterialInstanceDynamic> ShieldMaterial;
 	UPROPERTY(Transient) TObjectPtr<UInputMappingContext> Mapping;
 

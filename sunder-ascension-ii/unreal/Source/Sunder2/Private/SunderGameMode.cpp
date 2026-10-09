@@ -13,6 +13,7 @@
 #include "SunderPickup.h"
 #include "Sound/SoundBase.h"
 #include "TimerManager.h"
+#include "Misc/CoreDelegates.h"
 
 ASunderGameMode::ASunderGameMode()
 {
@@ -121,6 +122,38 @@ void ASunderGameMode::BeginPlay()
 	SwarmStartedAt = GetWorld()->GetTimeSeconds();
 	Score = 0;
 	bGameOver = false;
+	// Like the web game's blur handler: alt-tabbing away mid-fight pauses it.
+	DeactivateHandle = FCoreDelegates::ApplicationWillDeactivateDelegate.AddUObject(this, &ASunderGameMode::OnAppDeactivated);
+}
+
+void ASunderGameMode::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	FCoreDelegates::ApplicationWillDeactivateDelegate.Remove(DeactivateHandle);
+	Super::EndPlay(EndPlayReason);
+}
+
+void ASunderGameMode::OnAppDeactivated()
+{
+	if (!bGameOver) { SetCombatPaused(true); }
+}
+
+void ASunderGameMode::SetCombatPaused(bool bPause)
+{
+	if (bPause && bGameOver) { return; }                     // never stick outside combat
+	if (bPause == bPaused) { return; }
+	bPaused = bPause;
+	UGameplayStatics::SetGamePaused(this, bPaused);           // a frozen frame: nothing moves, the HUD draws PAUSED
+}
+
+void ASunderGameMode::QuitToHangar()
+{
+	SetCombatPaused(false);
+	if (USunderStorySubsystem* Story = GetGameInstance() ? GetGameInstance()->GetSubsystem<USunderStorySubsystem>() : nullptr)
+	{
+		if (Story->IsActive()) { Story->EndCampaign(); }
+	}
+	const FName Menu = MenuLevel.IsNone() ? FName(TEXT("L_SunderTitle")) : MenuLevel;
+	UGameplayStatics::OpenLevel(this, Menu, true, TEXT("Hangar"));   // straight to the ship select (SunderMenuGameMode)
 }
 
 void ASunderGameMode::AddScore(int32 Points)

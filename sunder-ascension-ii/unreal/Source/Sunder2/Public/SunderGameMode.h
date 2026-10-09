@@ -119,11 +119,24 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Sunder") FString GetWaveName() const { return WaveName; }
 	UFUNCTION(BlueprintPure, Category = "Sunder") float GetWaveAnnouncedAt() const { return WaveAnnouncedAt; }
 
+	// ---- pause (the web game's: P / SPACE resume, ESC quits to the ship select; the window losing focus pauses)
+	/** Pause or resume the fight (not after DAWN DENIED). */
+	UFUNCTION(BlueprintCallable, Category = "Sunder|Pause") void SetCombatPaused(bool bPause);
+	UFUNCTION(BlueprintCallable, Category = "Sunder|Pause") void TogglePause() { SetCombatPaused(!bPaused); }
+	UFUNCTION(BlueprintPure, Category = "Sunder|Pause") bool IsCombatPaused() const { return bPaused; }
+	/** Leave the run for the hangar (ends a story campaign, as the web game's goToHangar resets the run). */
+	UFUNCTION(BlueprintCallable, Category = "Sunder|Pause") void QuitToHangar();
+
 protected:
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 private:
 	void RestartArena();
+	void OnAppDeactivated();
+
+	bool bPaused = false;
+	FDelegateHandle DeactivateHandle;
 
 	FString ShipId;
 	float LastExplosionAt = -100.f;
