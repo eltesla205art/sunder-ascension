@@ -24,6 +24,9 @@ private:
 	void DrawDawn(float T);
 	/** Defeat: the sun sinks below the horizon and its glow goes out. */
 	void DrawDusk(float T);
+	/** Opening: the Overlord's rain of stars still falling, and the sun gone dark (a black disc with a gold corona). */
+	void DrawFallingStars(float T);
+	void DrawEclipse(float T, const FVector2D& Centre, float Radius);
 	void DrawHorizon(float Height, float Glow, const FLinearColor& Low, const FLinearColor& High, const FLinearColor& Sun);
 	void DrawMap(class USunderStoryData* Data, int32 Next, float T);
 	/** A filled circle (the canvas's polygon) and a ring of line segments, for the map's gates. */

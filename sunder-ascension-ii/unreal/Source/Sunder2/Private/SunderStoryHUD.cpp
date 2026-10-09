@@ -166,15 +166,21 @@ void ASunderStoryHUD::DrawHUD()
 	{
 	case ESunderStoryScreen::Opening:
 	{
-		// The crawl rises into place and holds.
+		// The crawl rises into place and holds, over the night it tells of: the stars still falling into the Duat, and a
+		// sun gone dark above the title.
 		DrawBackdrop(Data->MapBackdrop, 0.25f);
+		DrawFallingStars(T);
+		DrawEclipse(T, FVector2D(W * 0.5f, H * 0.11f), H * 0.07f);   // above the crawl, clear of its words
 		const float Rise = FMath::Max(0.f, 1.f - T / 6.f);
-		float Y = H * 0.10f + Rise * H * 0.5f;
+		float Y = H * 0.22f + Rise * H * 0.5f;
 		for (int32 i = 0; i < Data->Opening.Num(); ++i)
 		{
+			// The title and subtitle head it; its other all-caps lines (APEP, THE SERPENT OF UNMAKING.) stand out in gold.
+			const FString& Line = Data->Opening[i];
 			const bool bHead = i < 2;
+			const bool bCaps = !bHead && !Line.IsEmpty() && Line == Line.ToUpper() && Line != Line.ToLower();
 			const float A = FMath::Clamp((T - i * 0.25f) / 1.2f, 0.f, 1.f);
-			Y = DrawWrapped(Data->Opening[i], Faded(bHead ? Gold : Pale, A), Y, bHead ? (i == 0 ? 1.8f : 1.2f) : 1.0f, Wrap);
+			Y = DrawWrapped(Line, Faded(bHead || bCaps ? Gold : Pale, A), Y, bHead ? (i == 0 ? 1.8f : 1.2f) : bCaps ? 1.1f : 1.0f, Wrap);
 		}
 		DrawPrompt(TEXT("SPACE  begin    ·    ESC  title"), T);
 		break;
@@ -308,4 +314,36 @@ void ASunderStoryHUD::DrawHorizon(float Height, float Glow, const FLinearColor& 
 		const float HalfW = FMath::Sqrt(FMath::Max(R * R - DY * DY, 0.f));
 		DrawRect(Faded(Sun, SunA), W * 0.5f - HalfW, Y, HalfW * 2.f, 2.f * R / Rows + 1.f);
 	}
+}
+
+void ASunderStoryHUD::DrawFallingStars(float T)
+{
+	// The Crystal Overlord's rain of stars, still falling: thin streaks slanting down the night, most pale gold, some
+	// crystal pink, each on its own fixed lane and pace so the sky stays calm rather than random.
+	const float W = Canvas->ClipX, H = Canvas->ClipY;
+	const int32 Count = 36;
+	for (int32 i = 0; i < Count; ++i)
+	{
+		const float Hx = FMath::Frac(FMath::Sin(i * 12.9898f) * 43758.5453f);           // fixed per star
+		const float Hs = FMath::Frac(FMath::Sin(i * 78.233f) * 12345.678f);
+		const float Speed = 0.08f + 0.12f * Hs;                                          // screens per second
+		const float F = FMath::Frac(Hx * 3.7f + T * Speed);
+		const float Y = (F * 1.3f - 0.15f) * H, X = Hx * W * 1.2f - W * 0.1f + F * W * 0.12f;
+		const float Len = H * (0.03f + 0.05f * Hs);
+		const FLinearColor C = (i % 5 == 0) ? FLinearColor(1.f, 0.45f, 0.81f) : FLinearColor(1.f, 0.88f, 0.6f);
+		const float A = 0.5f * FMath::Clamp(T / 2.f, 0.f, 1.f) * FMath::Sin(F * UE_PI);  // in and out along the fall
+		DrawLine(X, Y, X - Len * 0.25f, Y - Len, Faded(C, A), 1.5f);
+	}
+}
+
+void ASunderStoryHUD::DrawEclipse(float T, const FVector2D& Centre, float Radius)
+{
+	// "Now the sun sets and does not rise": a black sun with a thin, slowly breathing gold corona above the title.
+	const float A = FMath::Clamp(T / 3.f, 0.f, 1.f), Breath = 0.85f + 0.15f * FMath::Sin(T * 1.3f);
+	for (int32 k = 4; k >= 1; --k)                                                       // the corona's soft falloff
+	{
+		DrawDisc(Centre, Radius * (1.f + 0.07f * k), Faded(FLinearColor(1.f, 0.7f, 0.3f), 0.05f * A * Breath * (5 - k) * 0.5f));
+	}
+	DrawDisc(Centre, Radius, Faded(FLinearColor(0.01f, 0.008f, 0.02f), A));
+	DrawRing(Centre, Radius, Faded(FLinearColor(1.f, 0.8f, 0.45f), 0.6f * A * Breath), 2.f);
 }
