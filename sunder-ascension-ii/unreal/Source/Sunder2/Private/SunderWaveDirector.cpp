@@ -2,6 +2,7 @@
 #include "SunderWaveDirector.h"
 
 #include "Engine/World.h"
+#include "EngineUtils.h"
 #include "SunderEnemy.h"
 #include "SunderGameMode.h"
 #include "SunderKeeper.h"
@@ -94,12 +95,26 @@ void ASunderWaveDirector::StartWave(int32 Index)
 	WaveTime = 0.f;
 	bBetweenWaves = false;
 	++WavesStarted;
+	if (WaveSet->Waves[Index].Keeper) { ClearForKeeper(); }
 	BuildSpawns(Index);
 	const FString& Name = WaveSet->Waves[Index].WaveName;
 	const FString Label = LoopCount > 0 ? FString::Printf(TEXT("%s  +%d"), *Name, LoopCount) : Name;
 	OnWaveStarted.Broadcast(WavesStarted, Label);
 	PlayWaveAudio(Index);
 	if (ASunderGameMode* Mode = GetWorld()->GetAuthGameMode<ASunderGameMode>()) { Mode->AnnounceWave(WavesStarted, Label); }
+}
+
+void ASunderWaveDirector::ClearForKeeper()
+{
+	// No score, no drops, no cue: the field is cleared for the Keeper, not won. Their shots stay in flight, as in the
+	// web game.
+	TArray<ASunderEnemy*> Leftovers;
+	for (TActorIterator<ASunderEnemy> It(GetWorld()); It; ++It)
+	{
+		if (!It->IsA<ASunderKeeper>()) { Leftovers.Add(*It); }
+	}
+	for (ASunderEnemy* Enemy : Leftovers) { Enemy->Banish(); }
+	Alive.RemoveAll([](const TWeakObjectPtr<ASunderEnemy>& E) { return !E.IsValid() || !E->IsA<ASunderKeeper>(); });
 }
 
 void ASunderWaveDirector::ReportStoryHourCleared()

@@ -172,6 +172,10 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Enemy")
 	float GetHealth() const { return Health; }
 
+	/** Gone in a burst (its explosion, in DeathColor) with no score, drop or cue: the web game's Keeper intro clearing
+	 *  the leftover enemies (startBossIntro). */
+	void Banish();
+
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator,
 		AActor* DamageCauser) override;
 	virtual void Tick(float DeltaTime) override;

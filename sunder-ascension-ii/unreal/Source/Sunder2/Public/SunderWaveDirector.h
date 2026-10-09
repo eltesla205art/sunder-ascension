@@ -74,6 +74,8 @@ private:
 	};
 
 	void StartWave(int32 Index);
+	/** A Keeper's wave begins: every other enemy still in the arena bursts and is gone (the web game's startBossIntro). */
+	void ClearForKeeper();
 	void BuildSpawns(int32 Index);
 	void PlayWaveAudio(int32 Index);
 	void ReportStoryHourCleared();

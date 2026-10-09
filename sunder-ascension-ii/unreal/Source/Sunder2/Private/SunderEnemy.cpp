@@ -75,6 +75,21 @@ void ASunderEnemy::Setup(const FVector& InArenaCenter, const FVector2D& InArenaH
 	SpawnLocation = GetActorLocation();
 }
 
+void ASunderEnemy::Banish()
+{
+	if (bDead) { return; }
+	bDead = true;
+	if (!SpawnExplosion())
+	{
+		if (UImpactFXSubsystem* Impacts = GetWorld()->GetSubsystem<UImpactFXSubsystem>())
+		{
+			Impacts->QueueImpact(GetActorLocation(), FVector::BackwardVector, DeathColor);
+		}
+	}
+	SetActorEnableCollision(false);
+	Destroy();
+}
+
 bool ASunderEnemy::SpawnExplosion()
 {
 	if (!ExplosionFX || ExplosionFX->GetEmitterHandles().Num() == 0) { return false; }   // unset, or not built yet
