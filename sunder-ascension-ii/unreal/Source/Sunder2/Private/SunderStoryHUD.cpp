@@ -188,13 +188,18 @@ void ASunderStoryHUD::DrawHUD()
 	case ESunderStoryScreen::Victory:
 	{
 		DrawBackdrop(Data->MapBackdrop, FMath::Clamp(T / 4.f, 0.f, 0.8f));     // the light comes back
+		DrawDawn(T);                                                           // and for the first time in forty days, dawn
 		float Y = H * 0.10f;
 		for (int32 i = 0; i < Data->Victory.Num(); ++i)
 		{
+			// The gate line opens it; ASCENSION COMPLETE and the Heir's name stand apart in gold (all-caps lines).
+			const FString& Line = Data->Victory[i];
+			const bool bHead = !Line.IsEmpty() && Line == Line.ToUpper() && Line != Line.ToLower();
 			const float A = FMath::Clamp((T - 0.6f - i * 0.3f) / 1.2f, 0.f, 1.f);
-			Y = DrawWrapped(Data->Victory[i], Faded(i == 0 ? Gold : Pale, A), Y, i == 0 ? 1.6f : 1.0f, Wrap);
+			Y = DrawWrapped(Line, Faded(bHead ? Gold : Pale, A), Y, i == 0 ? 1.6f : bHead ? 1.25f : 1.0f, Wrap);
 		}
-		DrawWrapped(FString::Printf(TEXT("FINAL SCORE  %d"), Story->GetTotalScore()), Gold, Y + 20.f, 1.3f, Wrap);
+		const float SA = FMath::Clamp((T - 0.6f - Data->Victory.Num() * 0.3f) / 1.2f, 0.f, 1.f);
+		DrawWrapped(FString::Printf(TEXT("FINAL SCORE  %d"), Story->GetTotalScore()), Faded(Gold, SA), Y + 20.f, 1.3f, Wrap);
 		DrawPrompt(TEXT("SPACE  title"), T);
 		break;
 	}
@@ -209,5 +214,30 @@ void ASunderStoryHUD::DrawHUD()
 		DrawPrompt(TEXT("SPACE  rise again    ·    ESC  title"), T);
 		break;
 	}
+	}
+}
+
+void ASunderStoryHUD::DrawDawn(float T)
+{
+	// Drawn with flat strips (the canvas has no gradients): a warm band up from the horizon, then the sun's disc
+	// climbing through it, both easing in over about five seconds.
+	const float W = Canvas->ClipX, H = Canvas->ClipY;
+	const float Rise = FMath::InterpEaseOut(0.f, 1.f, FMath::Clamp(T / 5.f, 0.f, 1.f), 2.f);
+	const float Horizon = H * 0.97f, Band = H * (0.15f + 0.35f * Rise);
+	const int32 Strips = 32;
+	for (int32 i = 0; i < Strips; ++i)
+	{
+		const float F = (float)i / Strips;                     // 0 at the horizon, 1 at the top of the band
+		const FLinearColor C = FMath::Lerp(FLinearColor(1.f, 0.45f, 0.12f), FLinearColor(1.f, 0.82f, 0.4f), F);
+		DrawRect(Faded(C, 0.22f * Rise * (1.f - F) * (1.f - F)), 0.f, Horizon - Band * (F + 1.f / Strips), W, Band / Strips + 1.f);
+	}
+	const float R = H * 0.08f, CY = Horizon + R * 1.2f - (R * 2.4f + H * 0.06f) * Rise;
+	const int32 Rows = 40;
+	for (int32 i = 0; i < Rows; ++i)                           // the disc, row by row, cut off at the horizon
+	{
+		const float DY = -R + 2.f * R * (i + 0.5f) / Rows, Y = CY + DY;
+		if (Y > Horizon) { continue; }
+		const float HalfW = FMath::Sqrt(FMath::Max(R * R - DY * DY, 0.f));
+		DrawRect(Faded(FLinearColor(1.f, 0.86f, 0.5f), 0.85f * Rise), W * 0.5f - HalfW, Y, HalfW * 2.f, 2.f * R / Rows + 1.f);
 	}
 }

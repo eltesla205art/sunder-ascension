@@ -157,7 +157,13 @@ void ASunderHUD::DrawClearCard(const ASunderGameMode* Mode, float Since, UFont* 
 	const FLinearColor Tint = Mode->GetFallenTint();
 	const float Wrap = FMath::Min(W * 0.8f, 1100.f);
 	float Y = H * 0.30f;
-	if (Mode->HasFallenHourName())
+	if (Mode->WasFinalKeeper())
+	{
+		// The web game goes straight to its ending here: its first and last words, then the story's Victory screen.
+		Y = DrawCentredWrapped(TEXT("THE TWELFTH GATE IS OPEN."), FLinearColor(0.96f, 0.84f, 0.48f, A), Y, 1.9f, Wrap, Font);
+		Y = DrawCentredWrapped(TEXT("ASCENSION COMPLETE."), FLinearColor(1.f, 0.86f, 0.5f, A), Y + 6.f, 1.2f, Wrap, Font);
+	}
+	else if (Mode->HasFallenHourName())
 	{
 		Y = DrawCentredWrapped(FString::Printf(TEXT("HOUR %d SURVIVED"), Mode->GetFallenHour()), FLinearColor(0.96f, 0.84f, 0.48f, A), Y, 1.9f, Wrap, Font);
 		Y = DrawCentredWrapped(Mode->GetFallenName().ToUpper() + TEXT("  ·  GATE OPEN"), FLinearColor(Tint.R, Tint.G, Tint.B, A), Y + 6.f, 1.1f, Wrap, Font);

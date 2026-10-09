@@ -54,6 +54,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Keeper")
 	FString ClearLine;
 
+	/** The last Keeper (Apep, Hour 12): its fall ends the night, so its clear card opens the twelfth gate instead. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Keeper")
+	bool bFinalKeeper = false;
+
 	/** Shown on its intro card, in its Hour's glow (T_Portrait_*, set by create_story_level.py); none = name and taunt. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Keeper")
 	TObjectPtr<UTexture2D> Portrait;

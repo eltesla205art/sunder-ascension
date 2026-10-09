@@ -98,6 +98,8 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Sunder") FString GetFallenName() const { return FallenName; }
 	UFUNCTION(BlueprintPure, Category = "Sunder") FString GetFallenLine() const { return FallenLine; }
 	UFUNCTION(BlueprintPure, Category = "Sunder") bool HasFallenHourName() const { return bFallenHourName; }
+	/** The last Keeper fell: the night is over. */
+	UFUNCTION(BlueprintPure, Category = "Sunder") bool WasFinalKeeper() const { return bFallenFinal; }
 	UFUNCTION(BlueprintPure, Category = "Sunder") FLinearColor GetFallenTint() const { return FallenTint; }
 
 	UFUNCTION(BlueprintPure, Category = "Sunder") ASunderKeeper* GetActiveKeeper() const;   // in the .cpp: needs the full class
@@ -137,6 +139,7 @@ private:
 	FString FallenName;
 	FString FallenLine;
 	bool bFallenHourName = false;
+	bool bFallenFinal = false;
 	FLinearColor FallenTint = FLinearColor(1.f, 0.25f, 0.6f);
 	FString WaveName;
 	float WaveAnnouncedAt = -100.f;

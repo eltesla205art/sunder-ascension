@@ -203,7 +203,7 @@ def build_screen_audio(screen):
     return data
 
 
-def build_hour(h):
+def build_hour(h, final=False):
     hour = unreal.SunderStoryHour()
     for prop, key in (("name", "name"), ("subtitle", "subtitle"), ("keeper_name", "keeper"), ("quote", "quote"),
                       ("brief", "brief"), ("clear_line", "clear"), ("interlude", "interlude")):
@@ -230,17 +230,18 @@ def build_hour(h):
         hour.set_editor_property("keeper_portrait", portrait)
     if EAL.does_asset_exist(keeper_bp):
         step("BP_Keeper_{}: portrait, Hour name and clear line (its intro and clear cards)".format(camel(h["keeper_id"])),
-             keeper_cards, keeper_bp, portrait, h)
+             keeper_cards, keeper_bp, portrait, h, final)
     return hour
 
 
-def keeper_cards(keeper_bp, portrait, h):
+def keeper_cards(keeper_bp, portrait, h, final):
     bp = EAL.load_asset(keeper_bp)
     cdo = unreal.get_default_object(EAL.load_blueprint_class(keeper_bp))
     if portrait is not None:
         cdo.set_editor_property("portrait", portrait)
     cdo.set_editor_property("hour_name", h["name"])
     cdo.set_editor_property("clear_line", h.get("clear", ""))
+    cdo.set_editor_property("final_keeper", final)           # the last Hour's Keeper: its fall ends the night
     unreal.BlueprintEditorLibrary.compile_blueprint(bp)
     EAL.save_loaded_asset(bp)
 
@@ -250,7 +251,7 @@ def build_story_data(story, screens):
     data.set_editor_property("opening", story["opening"])
     data.set_editor_property("victory", story["victory"])
     data.set_editor_property("defeat_tag", story["defeat"])
-    data.set_editor_property("hours", [build_hour(h) for h in story["hours"]])
+    data.set_editor_property("hours", [build_hour(h, h is story["hours"][-1]) for h in story["hours"]])
     waves = asset(WAVE_DIR, "DA_TestWaves")
     if waves is not None:
         data.set_editor_property("enemy_waves", waves)

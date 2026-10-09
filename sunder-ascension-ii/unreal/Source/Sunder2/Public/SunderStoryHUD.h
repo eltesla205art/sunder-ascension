@@ -20,5 +20,7 @@ private:
 	float DrawWrapped(const FString& Text, const FLinearColor& Color, float Y, float Scale, float MaxWidth);
 	void DrawBackdrop(UTexture2D* Art, float Light);
 	void DrawPrompt(const FString& Text, float T);
+	/** Victory: the sky warms from the horizon and the sun climbs into it over the first seconds. */
+	void DrawDawn(float T);
 	void DrawMap(class USunderStoryData* Data, int32 Next, float T);
 };

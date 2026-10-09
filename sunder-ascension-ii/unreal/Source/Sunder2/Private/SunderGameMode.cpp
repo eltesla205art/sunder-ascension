@@ -151,6 +151,7 @@ void ASunderGameMode::AnnounceKeeperFallen(const ASunderKeeper* Keeper)
 	bFallenHourName = !Keeper->HourName.IsEmpty();
 	FallenName = bFallenHourName ? Keeper->HourName : Keeper->KeeperName;
 	FallenLine = Keeper->ClearLine;
+	bFallenFinal = Keeper->bFinalKeeper;
 	const FLinearColor& C = Keeper->KeeperColor;             // its Hour's colour, brought down from HDR for text
 	const float Peak = FMath::Max3(C.R, C.G, C.B);
 	if (Peak > 0.f) { FallenTint = FLinearColor(C.R / Peak, C.G / Peak, C.B / Peak); }
