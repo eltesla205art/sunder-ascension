@@ -22,5 +22,8 @@ private:
 	void DrawPrompt(const FString& Text, float T);
 	/** Victory: the sky warms from the horizon and the sun climbs into it over the first seconds. */
 	void DrawDawn(float T);
+	/** Defeat: the sun sinks below the horizon and its glow goes out. */
+	void DrawDusk(float T);
+	void DrawHorizon(float Height, float Glow, const FLinearColor& Low, const FLinearColor& High, const FLinearColor& Sun);
 	void DrawMap(class USunderStoryData* Data, int32 Next, float T);
 };

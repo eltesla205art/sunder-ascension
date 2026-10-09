@@ -180,6 +180,7 @@ void ASunderGameMode::OnShipDestroyed(ASunderShipPawn* Ship)
 	else
 	{
 		bGameOver = true;
+		GameOverAt = GetWorld()->GetTimeSeconds();
 		if (bSwarm) { SwarmEndedAt = GetWorld()->GetTimeSeconds(); }
 		if (ASunderKeeper* Keeper = GetActiveKeeper()) { Keeper->Gloat(); }   // the Keeper has the last word
 		GetWorldTimerManager().SetTimer(RestartTimer, this, &ASunderGameMode::RestartArena, RestartDelay, false);

@@ -98,13 +98,7 @@ void ASunderHUD::DrawHUD()
 	const float SinceFallen = GetWorld()->GetTimeSeconds() - Mode->GetKeeperFallenAt();
 	if (SinceFallen < ClearCardTime && !Mode->IsGameOver()) { DrawClearCard(Mode, SinceFallen, Font); }
 
-	if (Mode->IsGameOver())
-	{
-		const FString Text = TEXT("DAWN DENIED");
-		float TW = 0.f, TH = 0.f;
-		GetTextSize(Text, TW, TH, Font, 2.4f);
-		DrawText(Text, FLinearColor(1.f, 0.25f, 0.6f), (W - TW) * 0.5f, H * 0.42f, Font, 2.4f);
-	}
+	if (Mode->IsGameOver()) { DrawDefeatCard(Mode, GetWorld()->GetTimeSeconds() - Mode->GetGameOverAt(), Font); }
 }
 
 void ASunderHUD::DrawKeeperCard(const ASunderKeeper* Keeper, const FString& Name, const FString& Quote, float Since, float Hold,
@@ -203,4 +197,23 @@ float ASunderHUD::DrawCentredWrapped(const FString& Text, const FLinearColor& Co
 	}
 	Flush();
 	return Y;
+}
+
+void ASunderHUD::DrawDefeatCard(const ASunderGameMode* Mode, float Since, UFont* Font)
+{
+	// The web game's DEFEAT banner, over the arena while the ship's last explosion plays out and the Keeper gloats; in
+	// story mode its full screen (the Hour, the tag, rise again) follows (ASunderGameMode::RestartDelay).
+	const float W = Canvas->ClipX, H = Canvas->ClipY;
+	DrawRect(FLinearColor(0.02f, 0.f, 0.03f, 0.7f * FMath::Clamp(Since / 1.5f, 0.f, 1.f)), 0.f, 0.f, W, H);   // the night closes in
+	const float A = FMath::Clamp((Since - 0.4f) / 0.8f, 0.f, 1.f);
+	const float Wrap = FMath::Min(W * 0.8f, 1100.f);
+	float Y = DrawCentredWrapped(TEXT("DAWN DENIED"), FLinearColor(1.f, 0.25f, 0.6f, A), H * 0.38f, 2.6f, Wrap, Font);
+	const float B = FMath::Clamp((Since - 1.2f) / 0.8f, 0.f, 1.f);
+	FString Tally = FString::Printf(TEXT("SCORE  %d"), Mode->GetScore());
+	if (Mode->IsSwarm())
+	{
+		const int32 Secs = FMath::FloorToInt(Mode->GetSwarmTime());
+		Tally = FString::Printf(TEXT("SURVIVED  %d:%02d    ·    SCORE  %d"), Secs / 60, Secs % 60, Mode->GetScore());
+	}
+	DrawCentredWrapped(Tally, FLinearColor(0.96f, 0.84f, 0.48f, B), Y + 18.f, 1.1f, Wrap, Font);
 }

@@ -73,6 +73,8 @@ public:
 
 	/** Seconds survived in Swarm (stops at DAWN DENIED). */
 	UFUNCTION(BlueprintPure, Category = "Sunder") float GetSwarmTime() const;
+	/** When the last life was lost (DAWN DENIED). */
+	UFUNCTION(BlueprintPure, Category = "Sunder") float GetGameOverAt() const { return GameOverAt; }
 
 	virtual void InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage) override;
 	virtual APawn* SpawnDefaultPawnAtTransform_Implementation(AController* NewPlayer, const FTransform& SpawnTransform) override;
@@ -128,6 +130,7 @@ private:
 	bool bSwarm = false;
 	float SwarmStartedAt = 0.f;
 	float SwarmEndedAt = -1.f;
+	float GameOverAt = -100.f;
 	FTimerHandle RespawnTimer;
 	FTimerHandle RestartTimer;
 	TWeakObjectPtr<ASunderKeeper> ActiveKeeper;

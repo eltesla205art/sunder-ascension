@@ -24,6 +24,9 @@ private:
 	/** A Keeper beaten: HOUR N SURVIVED, the Hour's name · GATE OPEN, and its closing line (the web game's STAGE_CLEAR). */
 	void DrawClearCard(const class ASunderGameMode* Mode, float Since, UFont* Font);
 
+	/** The last life lost: the night closes in, DAWN DENIED, the score (and in Swarm how long you lasted). */
+	void DrawDefeatCard(const class ASunderGameMode* Mode, float Since, UFont* Font);
+
 	/** Centred text wrapped to MaxWidth; returns the Y below it. */
 	float DrawCentredWrapped(const FString& Text, const FLinearColor& Color, float Y, float Scale, float MaxWidth, UFont* Font);
 

@@ -205,7 +205,8 @@ void ASunderStoryHUD::DrawHUD()
 	}
 	case ESunderStoryScreen::Defeat:
 	{
-		DrawBackdrop(Hour ? Hour->Backdrop.Get() : nullptr, 0.12f);
+		DrawBackdrop(Hour ? Hour->Backdrop.Get() : nullptr, FMath::Lerp(0.3f, 0.12f, FMath::Clamp(T / 3.f, 0.f, 1.f)));   // the night closes in
+		DrawDusk(T);
 		float Y = H * 0.22f;
 		Y = DrawWrapped(TEXT("DAWN DENIED"), Faded(Magenta, T / 0.8f), Y, 2.6f, Wrap);
 		if (Hour) { Y = DrawWrapped(FString::Printf(TEXT("Hour %d  ·  %s"), Index + 1, *Hour->Name), Pale, Y + 10.f, 1.1f, Wrap); }
@@ -219,25 +220,40 @@ void ASunderStoryHUD::DrawHUD()
 
 void ASunderStoryHUD::DrawDawn(float T)
 {
-	// Drawn with flat strips (the canvas has no gradients): a warm band up from the horizon, then the sun's disc
-	// climbing through it, both easing in over about five seconds.
-	const float W = Canvas->ClipX, H = Canvas->ClipY;
+	// And for the first time in forty days, dawn: the horizon warms and the sun climbs into it over about five seconds.
 	const float Rise = FMath::InterpEaseOut(0.f, 1.f, FMath::Clamp(T / 5.f, 0.f, 1.f), 2.f);
-	const float Horizon = H * 0.97f, Band = H * (0.15f + 0.35f * Rise);
+	DrawHorizon(Rise, Rise, FLinearColor(1.f, 0.45f, 0.12f), FLinearColor(1.f, 0.82f, 0.4f), FLinearColor(1.f, 0.86f, 0.5f));
+}
+
+void ASunderStoryHUD::DrawDusk(float T)
+{
+	// DAWN DENIED: the last of the light, a dull red sun, sinks below the horizon and the glow goes out after it.
+	const float Fall = FMath::InterpEaseIn(0.f, 1.f, FMath::Clamp(T / 4.f, 0.f, 1.f), 2.f);
+	DrawHorizon(0.6f * (1.f - Fall), 0.55f * (1.f - Fall), FLinearColor(0.6f, 0.06f, 0.12f), FLinearColor(0.35f, 0.08f, 0.4f),
+		FLinearColor(0.85f, 0.2f, 0.12f));
+}
+
+void ASunderStoryHUD::DrawHorizon(float Height, float Glow, const FLinearColor& Low, const FLinearColor& High, const FLinearColor& Sun)
+{
+	// Drawn with flat strips (the canvas has no gradients): a band of light up from the horizon, then the sun's disc
+	// at Height (0 = just below the horizon, 1 = well clear of it).
+	const float W = Canvas->ClipX, H = Canvas->ClipY;
+	const float Horizon = H * 0.97f, Band = H * (0.15f + 0.35f * Glow);
 	const int32 Strips = 32;
 	for (int32 i = 0; i < Strips; ++i)
 	{
 		const float F = (float)i / Strips;                     // 0 at the horizon, 1 at the top of the band
-		const FLinearColor C = FMath::Lerp(FLinearColor(1.f, 0.45f, 0.12f), FLinearColor(1.f, 0.82f, 0.4f), F);
-		DrawRect(Faded(C, 0.22f * Rise * (1.f - F) * (1.f - F)), 0.f, Horizon - Band * (F + 1.f / Strips), W, Band / Strips + 1.f);
+		DrawRect(Faded(FMath::Lerp(Low, High, F), 0.22f * Glow * (1.f - F) * (1.f - F)), 0.f, Horizon - Band * (F + 1.f / Strips), W,
+			Band / Strips + 1.f);
 	}
-	const float R = H * 0.08f, CY = Horizon + R * 1.2f - (R * 2.4f + H * 0.06f) * Rise;
+	const float R = H * 0.08f, CY = Horizon + R * 1.2f - (R * 2.4f + H * 0.06f) * Height;
+	const float SunA = 0.85f * FMath::Clamp(Height * 3.f, 0.f, 1.f);
 	const int32 Rows = 40;
 	for (int32 i = 0; i < Rows; ++i)                           // the disc, row by row, cut off at the horizon
 	{
 		const float DY = -R + 2.f * R * (i + 0.5f) / Rows, Y = CY + DY;
 		if (Y > Horizon) { continue; }
 		const float HalfW = FMath::Sqrt(FMath::Max(R * R - DY * DY, 0.f));
-		DrawRect(Faded(FLinearColor(1.f, 0.86f, 0.5f), 0.85f * Rise), W * 0.5f - HalfW, Y, HalfW * 2.f, 2.f * R / Rows + 1.f);
+		DrawRect(Faded(Sun, SunA), W * 0.5f - HalfW, Y, HalfW * 2.f, 2.f * R / Rows + 1.f);
 	}
 }
