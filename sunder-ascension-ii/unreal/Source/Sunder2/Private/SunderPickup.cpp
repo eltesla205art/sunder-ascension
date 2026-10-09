@@ -5,7 +5,11 @@
 #include "Components/StaticMeshComponent.h"
 #include "Components/TextRenderComponent.h"
 #include "Engine/StaticMesh.h"
+#include "ImpactFXSubsystem.h"
 #include "Materials/MaterialInstanceDynamic.h"
+#include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraSystem.h"
 #include "UObject/ConstructorHelpers.h"
 
 ASunderPickup::ASunderPickup()
@@ -120,6 +124,35 @@ void ASunderPickup::OnOverlap(UPrimitiveComponent* OverlappedComp, AActor* Other
 {
 	ASunderShipPawn* Ship = Cast<ASunderShipPawn>(OtherActor);
 	if (!Ship || !Ship->IsAlive()) { return; }
+	PlayCollect(Ship);
 	Ship->CollectPickup(Kind);
 	Destroy();
+}
+
+void ASunderPickup::PlayCollect(ASunderShipPawn* Ship)
+{
+	const FLinearColor Base = KindColor(Kind);
+	const float Peak = FMath::Max3(Base.R, Base.G, Base.B);
+	const FLinearColor Glow = Peak > 0.f ? FLinearColor(Base.R / Peak * CollectGlow, Base.G / Peak * CollectGlow, Base.B / Peak * CollectGlow, 1.f)
+		: FLinearColor(CollectGlow, CollectGlow, CollectGlow, 1.f);
+	const FVector Here = GetActorLocation();
+	if (CollectFX && CollectFX->GetEmitterHandles().Num() > 0)
+	{
+		// Rides on the ship (starting where the gem was), so the light it draws in follows the ship as it flies.
+		if (UNiagaraComponent* FX = UNiagaraFunctionLibrary::SpawnSystemAttached(CollectFX, Ship->GetRootComponent(), NAME_None,
+			Here, FRotator::ZeroRotator, EAttachLocation::KeepWorldPosition, /*bAutoDestroy*/ false, /*bAutoActivate*/ true,
+			ENCPoolMethod::AutoRelease, /*bPreCullCheck*/ false))
+		{
+			FX->SetVariableLinearColor(TEXT("Color"), Glow);
+			FX->SetVariableFloat(TEXT("Kind"), (float)static_cast<uint8>(Kind));
+			FX->SetVariableFloat(TEXT("Size"), MeshSize);
+			FX->SetVariableVec3(TEXT("ToShip"), Ship->GetActorLocation() - Here);
+			FX->SetTranslucentSortPriority(13);
+			return;
+		}
+	}
+	if (UImpactFXSubsystem* Impacts = GetWorld()->GetSubsystem<UImpactFXSubsystem>())   // not built yet
+	{
+		Impacts->QueueImpact(Here, FVector::ForwardVector, Glow);
+	}
 }

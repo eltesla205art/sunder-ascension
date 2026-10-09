@@ -15,6 +15,7 @@ class UStaticMeshComponent;
 class UTextRenderComponent;
 class UMaterialInstanceDynamic;
 class UStaticMesh;
+class UNiagaraSystem;
 
 UCLASS()
 class SUNDER2_API ASunderPickup : public AActor
@@ -50,6 +51,17 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pickup|Look")
 	float MeshSize = 140.f;
 
+	/** NS_Pickup_Collect (PICKUP_VFX.md), one-shot and pooled, played when the ship collects it: the gem breaks into
+	 *  light that's drawn into the ship. It rides on the ship, starting where the gem was. User.Color = the kind's colour
+	 *  (HDR), User.Kind (0 Spread … 5 Life), User.Size = MeshSize, User.ToShip = the ship's position from the gem.
+	 *  Until it has emitters, a plasma impact in the kind's colour stands in. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pickup|Look")
+	TObjectPtr<UNiagaraSystem> CollectFX;
+
+	/** Brightest channel of the kind's colour in the collect effect (bloom does the rest). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pickup|Look", meta = (ClampMin = "0"))
+	float CollectGlow = 4.f;
+
 	/** Units per second down the screen (the web game's 90 px/s × 5). */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pickup")
 	float FallSpeed = 450.f;
@@ -70,6 +82,8 @@ private:
 	UFUNCTION()
 	void OnOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp,
 		int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	void PlayCollect(ASunderShipPawn* Ship);
 
 	UPROPERTY(Transient)
 	TObjectPtr<UMaterialInstanceDynamic> GemMaterial;

@@ -37,6 +37,8 @@ original *SUNDER: Ascension — The Nine Bows* (`web/`, `godot/`, `docs/`), whic
 | `unreal/ENEMY_VFX.md` | UE5 Niagara guide for the regular enemies: their shot (a violet orb with a pale core and a short wake) and their explosion (flash, sparks in the Hour's colour, a ring, and embers for bombers) |
 | `unreal/Scripts/create_enemy_fx_assets.py` | Editor Python: the enemy shot's and explosion's materials, effect types and empty Niagara systems, set on the enemy shot and the five enemies (untested until first run) |
 | `unreal/Scripts/create_pickup_art.py` | Editor Python: imports the six pickup gems and makes the pickups use them (untested until first run) |
+| `unreal/PICKUP_VFX.md` | UE5 Niagara guide for collecting a power-up: the gem breaks into light in its colour, drawn into the ship |
+| `unreal/Scripts/create_pickup_fx_assets.py` | Editor Python: the collect effect's materials and empty Niagara system, set on the pickup (untested until first run) |
 | `unreal/Content/Pickups/` | The six power-up pickups as FBX gems for Unreal, from `blender/pickups.py --fbx` |
 | `unreal/Scripts/create_ship_sounds.py` | Editor Python: imports the game's sound effects and sets the shot, explosion, pickup, life, bomb and hit sounds (untested until first run) |
 | `unreal/Content/Audio/Effects/` | The game's own sound effects (pickups, bomb, hits, shots, explosions) as WAV, rendered from `web/game.html` |
