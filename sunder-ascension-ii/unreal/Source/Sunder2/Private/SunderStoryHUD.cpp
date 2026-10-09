@@ -199,18 +199,24 @@ void ASunderStoryHUD::DrawHUD()
 	case ESunderStoryScreen::Briefing:
 	{
 		if (!Hour) { break; }
-		DrawBackdrop(Hour->Backdrop, 0.35f);
+		// The stage comes up out of the dark, the Keeper's portrait in its Hour's glow, then the words in turn: the Hour,
+		// its name, act and Keeper, the quote, the brief (the web game's BRIEFING, revealed rather than all at once).
+		DrawBackdrop(Hour->Backdrop, 0.35f * FMath::Clamp(T / 1.2f, 0.f, 1.f));
+		auto Reveal = [T](float At) { return FMath::Clamp((T - At) / 0.6f, 0.f, 1.f); };
 		if (Hour->KeeperPortrait)
 		{
-			const float S = FMath::Min(H * 0.28f, 300.f);
-			DrawTexture(Hour->KeeperPortrait, (W - S) * 0.5f, H * 0.04f, S, S, 0.f, 0.f, 1.f, 1.f, Faded(FLinearColor::White, T / 1.0f));
+			const float S = FMath::Min(H * 0.28f, 300.f), PA = FMath::Clamp(T / 1.0f, 0.f, 1.f);
+			const float G = S * (1.35f + 0.04f * FMath::Sin(T * 2.f));     // a slow breath in the Hour's colour behind it
+			DrawTexture(Hour->KeeperPortrait, (W - G) * 0.5f, H * 0.04f - (G - S) * 0.5f, G, G, 0.f, 0.f, 1.f, 1.f,
+				Faded(Hour->Tint, 0.35f * PA), BLEND_Additive);
+			DrawTexture(Hour->KeeperPortrait, (W - S) * 0.5f, H * 0.04f, S, S, 0.f, 0.f, 1.f, 1.f, Faded(FLinearColor::White, PA));
 		}
 		float Y = H * 0.36f;
-		Y = DrawWrapped(FString::Printf(TEXT("HOUR %d / %d"), Index + 1, Data->Hours.Num()), Cyan, Y, 1.0f, Wrap);
-		Y = DrawWrapped(HourName, Hour->Tint, Y, 1.7f, Wrap);
-		Y = DrawWrapped(FString::Printf(TEXT("%s  ·  Keeper: %s"), *Hour->Subtitle, *Hour->KeeperName), Pale, Y, 0.95f, Wrap);
-		Y = DrawWrapped(Hour->Quote, Gold, Y + 18.f, 1.0f, Wrap);
-		DrawWrapped(Hour->Brief, Pale, Y + 14.f, 0.95f, Wrap);
+		Y = DrawWrapped(FString::Printf(TEXT("HOUR %d / %d"), Index + 1, Data->Hours.Num()), Faded(Cyan, Reveal(0.3f)), Y, 1.0f, Wrap);
+		Y = DrawWrapped(HourName, Faded(Hour->Tint, Reveal(0.5f)), Y, 1.7f, Wrap);
+		Y = DrawWrapped(FString::Printf(TEXT("%s  ·  Keeper: %s"), *Hour->Subtitle, *Hour->KeeperName), Faded(Pale, Reveal(0.8f)), Y, 0.95f, Wrap);
+		Y = DrawWrapped(Hour->Quote, Faded(Gold, Reveal(1.3f)), Y + 18.f, 1.0f, Wrap);
+		DrawWrapped(Hour->Brief, Faded(Pale, Reveal(1.9f)), Y + 14.f, 0.95f, Wrap);
 		DrawPrompt(TEXT("SPACE  engage"), T);
 		break;
 	}
