@@ -1,8 +1,8 @@
-# SUNDER: Ascension II — UE5 ship VFX: the shield, the explosion, the bomb and the form change (Niagara)
+# SUNDER: Ascension II — UE5 ship VFX: shield, explosion, bomb, form change and respawn (Niagara)
 
 The web game draws a ship's shield as a pulsing cyan ring that thickens with each layer (up to 3). This is that shield
-for the Unreal version, as two systems. The ship's explosion is in §5, its bomb blast in §7 and its form
-change in §9.
+for the Unreal version, as two systems. The ship's explosion is in §5, its bomb blast in §7, its form
+change in §9 and its respawn in §11.
 
 | System | When | Lives |
 |---|---|---|
@@ -11,11 +11,12 @@ change in §9.
 | `NS_Ship_Explosion` | the hull taking a hit (a small gold burst), the ship destroyed (the big one) | one-shot, pooled |
 | `NS_Ship_Bomb` | a bomb: the blast, a shockwave that sweeps the arena, and every wiped enemy shot fizzling | one-shot, pooled |
 | `NS_Ship_FormChange` | the ship rising a form (one ring per form, light up the screen) or a hit knocking it back one | one-shot, pooled, rides on the ship |
+| `NS_Ship_Respawn` | the ship coming back after a life is lost: light gathers, it flashes into being, then shimmers | one-shot, pooled, rides on the ship |
 
 > **Status:** written guidance, not yet built or run in-engine (no Unreal where it was written).
 > The C++ that drives them is `ASunderShipPawn` in [`Source/`](Source/README.md) (`ShieldFX`, `ShieldEventFX`,
-> `UpdateShield`, `ExplosionFX`, `SpawnExplosion`, `BombFX`, `SpawnBombBlast`, `FormFX`, `PlayFormChange`).
-> [`Scripts/create_ship_fx_assets.py`](Scripts/create_ship_fx_assets.py) makes the materials and the five empty systems and sets them on `BP_SunderShip`; the emitters below are built by hand. Module names are from UE 5.3–5.5;
+> `UpdateShield`, `ExplosionFX`, `SpawnExplosion`, `BombFX`, `SpawnBombBlast`, `FormFX`, `PlayFormChange`, `RespawnFX`, `Respawn`).
+> [`Scripts/create_ship_fx_assets.py`](Scripts/create_ship_fx_assets.py) makes the materials and the six empty systems and sets them on `BP_SunderShip`; the emitters below are built by hand. Module names are from UE 5.3–5.5;
 > the ones that moved between versions are marked ⚠.
 
 Read [`WEAPON_VFX.md`](WEAPON_VFX.md) §0 first. The same camera rules apply: Z is up, the camera looks down −Z, every
@@ -26,7 +27,7 @@ material is Unlit and Additive, and every particle stays flat on the play plane.
 `NS_Ship_ShieldEvent` has one, a hit or a break shows a plasma impact instead. Until `NS_Ship_Explosion` has one, a
 hull hit shows one gold plasma impact and the ship's destruction four in its colour. Until `NS_Ship_Bomb` has one, a
 bomb shows a ring of eleven cyan plasma impacts. Until `NS_Ship_FormChange` has one, a rise shows one plasma impact in the
-ship's accent and a fall shows nothing.
+ship's accent and a fall shows nothing. Until `NS_Ship_Respawn` has one, the ship simply reappears, with no warp-in.
 
 ---
 
@@ -457,3 +458,84 @@ Set in Emitter Spawn: `Emitter.Rise = User.Up > 0.5`, `Emitter.Crown = Emitter.R
 6. **Killing hit or respawn:** no form effect. A killing hit shows only the explosion, and a respawn resets the form
    quietly.
 7. **Weapon switch** (Spread ↔ Laser): no form effect, because the form doesn't change.
+
+---
+
+## 11. `NS_Ship_Respawn` (one-shot, rides on the ship)
+
+The web game has no respawn: one death is DAWN DENIED. The Unreal version gives the ship lives
+(`ASunderGameMode::Lives`). After a death it comes back at its start point `RespawnDelay` (2 s) later, at form 1, with
+a shield and 1.8 s of blinking invulnerability. This system turns that moment into a warp-in.
+
+**The sequence** (`ASunderShipPawn::Respawn` → `FinishRespawn`):
+1. **Gather** (0 → `User.WarpTime`, 0.45 s): light streams in to the start point and a ring closes on it. The ship is
+   still gone: it can't move, shoot, bomb or be hit.
+2. **Arrive** (at `User.WarpTime`): a flash, and the ship appears. Its shield's own gather plays at the same moment
+   (§3, event 2).
+3. **Shimmer** (`User.WarpTime` → + `User.Shimmer`, 1.8 s): a soft glow around the ship, pulsing with its blink, that
+   fades as its invulnerability runs out.
+
+The ship only waits for the warp once this system has an emitter. Before that it reappears at once, as it does now.
+
+### 11.1 User parameters
+
+`ASunderShipPawn::Respawn` sets these. The system is attached to the ship at its centre (the start point).
+
+| Name | Type | Preview default | What the ship sends |
+|---|---|---|---|
+| `User.Color` | Linear Color | (3.0, 2.1, 0.6, 1) | `DeathColor`: the ship's own colour (its shots and beam) |
+| `User.AccentColor` | Linear Color | (0.92, 2.43, 3.5, 1) | `FormColor`: the ship's accent (§9) |
+| `User.Size` | Float | 90 | `FormFXSize` × the form-1 scale |
+| `User.WarpTime` | Float | 0.45 | `RespawnWarpTime`: seconds before the ship appears |
+| `User.Shimmer` | Float | 1.8 | seconds of invulnerability after it appears (`HitInvulnerability` × 3) |
+
+### 11.2 Emitters
+
+**System:**
+- Local Space **on** for every emitter (it all happens on the ship).
+- Fixed Bounds ±900.
+- Effect Type `EFT_PlayerWeapon` (the script sets it): never culled.
+- Pooled by the script: max 2, primed 1.
+- Every emitter: CPU, Emitter State **Self, Once**.
+
+**A. `Gather`**: light streaming in
+- Burst 32 at 0.
+- Shape: a ring of radius `User.Size × 6` to `User.Size × 7`, flattened.
+- Position over life: lerp from the spawn position to 0 (the ship's centre) by `NormalizedAge` on an ease-in curve,
+  so they speed up as they arrive. (A Point Attraction Force to 0 also works.)
+- Lifetime `User.WarpTime × (0.85–1.0)`, so all of them arrive just as the ship appears.
+- Size 8 → 16. Colour `User.AccentColor`, alpha 0 → 1.
+- Sprite renderer: `MI_Spark`, Velocity Aligned (they streak inward).
+
+**B. `Gate`**: the ring closing on the start point
+- Burst 1. Lifetime `User.WarpTime`.
+- Size `User.Size × 5` → `User.Size × 0.9`, ease-in. Colour `User.AccentColor`, alpha 0.4 → 1.
+- Ring thickness (Dynamic Parameter 1) 0.4 → 1.
+- Sprite renderer: `MI_Shield_Ring`, Face Camera Plane.
+
+**C. `Arrive`**: the ship flashes into being
+- Spawn Burst Time `User.WarpTime`:
+  - 1 flash: size `User.Size × 3` → 0 over 0.25 s, colour `User.Color` lerped 60 % toward white;
+  - 1 ring: size `User.Size × 0.8` → `User.Size × 3.5` over 0.35 s, ease-out, colour `User.Color`, alpha 1 → 0;
+  - 16 sparks: radial on the plane, 300–700 u/s, Drag 2, lifetime 0.3–0.5, size 8–14 → 0, colour `User.Color`.
+- Sprite renderers: `MI_Ship_Flash` (flash), `MI_ShockRing` (ring), `MI_Spark` (sparks).
+
+**D. `Shimmer`**: the invulnerability
+- Spawn Burst Time `User.WarpTime`, 1 particle. Lifetime `User.Shimmer`.
+- Size `User.Size × 1.8`.
+- Colour `User.Color × 0.35`, alpha `(0.6 + 0.4 × sin(Age × 2π × 12)) × (1 − NormalizedAge)`: it pulses with the
+  ship's 12 Hz blink and fades out as the invulnerability ends.
+- Sprite renderer: `MI_Shield_Glow`, Face Camera Plane.
+
+**Budget:** about 53 particles over 2.3 s. Nothing to watch.
+
+## 12. Checks in play (respawn)
+
+1. **Warp-in:** after a death with lives left, light streams in to the start point and a ring closes on it, then the
+   ship appears in a flash. Its shield gathers at the same moment.
+2. **Untouchable while gathering:** shots and rams pass through the gathering light. The ship can't move or bomb until
+   it appears.
+3. **Shimmer:** a glow pulses with the blink and is gone when the blinking stops (1.8 s).
+4. **Colours:** the gather and gate are in the ship's accent, the arrival in its own colour. Try all three ships.
+5. **Game over:** on the last life there's no respawn and no warp.
+6. **Not built yet:** with an empty `NS_Ship_Respawn` the ship reappears at once, as before.

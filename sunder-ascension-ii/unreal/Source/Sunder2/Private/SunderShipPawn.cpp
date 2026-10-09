@@ -24,6 +24,7 @@
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraSystem.h"
 #include "Sound/SoundBase.h"
+#include "TimerManager.h"
 #include "SunderEnemy.h"
 #include "SunderKeeper.h"
 #include "ProjectilePoolSubsystem.h"
@@ -266,8 +267,31 @@ void ASunderShipPawn::Respawn()
 	SetActorLocation(StartLocation);
 	Health = MaxHealth;
 	SetPower(1);                                             // back to the first form, with a shield and the ship's bombs
-	State.Shield = FMath::Max(State.Shield, 1);
 	State.Bombs = FMath::Max(State.Bombs, Loadout.StartBombs);
+	// The warp-in: light gathers at the start point, then the ship appears (FinishRespawn). Without the system, at once.
+	float Warp = 0.f;
+	if (RespawnFX && RespawnFX->GetEmitterHandles().Num() > 0)
+	{
+		if (UNiagaraComponent* FX = UNiagaraFunctionLibrary::SpawnSystemAttached(RespawnFX, GetRootComponent(), NAME_None,
+			FVector::ZeroVector, FRotator::ZeroRotator, EAttachLocation::SnapToTarget, /*bAutoDestroy*/ false,
+			/*bAutoActivate*/ true, ENCPoolMethod::AutoRelease, /*bPreCullCheck*/ false))
+		{
+			Warp = RespawnWarpTime;
+			FX->SetVariableLinearColor(TEXT("Color"), DeathColor);
+			FX->SetVariableLinearColor(TEXT("AccentColor"), FormColor);
+			FX->SetVariableFloat(TEXT("Size"), FormFXSize * FormScale());
+			FX->SetVariableFloat(TEXT("WarpTime"), Warp);
+			FX->SetVariableFloat(TEXT("Shimmer"), HitInvulnerability * 3.f);
+			FX->SetTranslucentSortPriority(15);
+		}
+	}
+	if (Warp > 0.f) { GetWorldTimerManager().SetTimer(RespawnTimer, this, &ASunderShipPawn::FinishRespawn, Warp, false); }
+	else { FinishRespawn(); }
+}
+
+void ASunderShipPawn::FinishRespawn()
+{
+	State.Shield = FMath::Max(State.Shield, 1);              // its shield gathers as it appears (UpdateShield, event 2)
 	Invulnerable = HitInvulnerability * 3.f;
 	bDead = false;
 	Mesh->SetVisibility(true);

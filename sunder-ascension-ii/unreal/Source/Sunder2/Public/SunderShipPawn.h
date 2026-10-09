@@ -252,6 +252,18 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ship|Power-ups", meta = (ClampMin = "1"))
 	float FormFXSize = 90.f;
 
+	// ---- respawn
+	/** NS_Ship_Respawn (SHIP_VFX.md §11), one-shot and pooled, riding on the ship: light gathers at the start point for
+	 *  RespawnWarpTime, the ship flashes into being, then a shimmer for its invulnerability. User.Color = the ship's
+	 *  colour, User.AccentColor = its accent, User.Size, User.WarpTime, User.Shimmer. Until it has emitters, the ship
+	 *  simply reappears (no warp). */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ship|Hull")
+	TObjectPtr<UNiagaraSystem> RespawnFX;
+
+	/** Seconds the light gathers before the ship appears (it can't move, shoot or be hit meanwhile); 0 = no warp. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ship|Hull", meta = (ClampMin = "0"))
+	float RespawnWarpTime = 0.45f;
+
 	/** Seconds of invulnerability after a shield takes a hit. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ship|Power-ups")
 	float ShieldInvulnerability = 0.8f;
@@ -337,6 +349,8 @@ public:
 	/** Back at the start position with a full hull (called by the game mode while lives remain). */
 	UFUNCTION(BlueprintCallable, Category = "Ship|Hull")
 	void Respawn();
+	/** The ship is back: visible, hittable, flying (after the warp-in, or at once). */
+	void FinishRespawn();
 
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator,
 		AActor* DamageCauser) override;
@@ -377,6 +391,8 @@ private:
 	bool SpawnBombBlast(const FVector& Centre, const TArray<FVector>& Wiped);
 	/** FormFX for a form change (up or down), or a plasma impact for a rise until it's built. */
 	void PlayFormChange(bool bUp);
+
+	FTimerHandle RespawnTimer;
 	float ShieldRadiusNow() const { return ShieldRadius * FormScale(); }
 	void UpdateBodyScale();
 	float FormScale() const;
