@@ -64,7 +64,7 @@ void ASunderKeeper::BeginPlay()
 	FireCooldown = FirstShotDelay;
 	if (ASunderGameMode* Mode = GetWorld()->GetAuthGameMode<ASunderGameMode>())
 	{
-		Mode->AnnounceKeeper(this, FString::Printf(TEXT("HOUR %d  ·  %s"), Hour, *KeeperName), Taunt);
+		Mode->AnnounceKeeper(this, KeeperName, Taunt);
 	}
 	if (USunderMusicSubsystem* M = Music(); M && MusicLayers.Num() > 0)
 	{
@@ -146,6 +146,11 @@ void ASunderKeeper::Tick(float DeltaTime)
 void ASunderKeeper::Move(float DeltaTime)
 {
 	if (bDying) { return; }
+	if (bEntering && IntroTime < IntroHold)
+	{
+		IntroTime += DeltaTime;                               // its intro card first, then the Gate opens and it descends
+		return;
+	}
 	FVector P = GetActorLocation();
 	const float HoldX = ArenaCenter.X + ArenaHalfExtents.X * (1.f - 2.f * HoldDepth);
 	if (bEntering && !bArrivalShown)

@@ -16,6 +16,7 @@
 class UNiagaraComponent;
 class UNiagaraSystem;
 class USoundBase;
+class UTexture2D;
 
 /** The web game's boss attack patterns. */
 UENUM(BlueprintType)
@@ -44,6 +45,14 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Keeper")
 	FString Taunt;
+
+	/** Shown on its intro card, in its Hour's glow (T_Portrait_*, set by create_story_level.py); none = name and taunt. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Keeper")
+	TObjectPtr<UTexture2D> Portrait;
+
+	/** Seconds its intro card (name, portrait, taunt) holds before it starts to descend: the web game's BOSS_INTRO. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Keeper", meta = (ClampMin = "0"))
+	float IntroHold = 2.4f;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Keeper")
 	int32 Hour = 1;
@@ -198,6 +207,7 @@ private:
 
 	FVector BaseMeshScale = FVector::OneVector;
 	float BossTime = 0.f;
+	float IntroTime = 0.f;
 	float PatternClock = 0.f;
 	float SpiralAngle = 0.f;
 	float StrafeDir = 1.f;

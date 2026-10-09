@@ -3,6 +3,7 @@
 
 #include "Engine/Canvas.h"
 #include "Engine/Engine.h"
+#include "Engine/Texture2D.h"
 #include "Engine/World.h"
 #include "SunderGameMode.h"
 #include "SunderKeeper.h"
@@ -67,8 +68,14 @@ void ASunderHUD::DrawHUD()
 		}
 	}
 
+	// A Keeper's intro card (the web game's BOSS_INTRO) holds while it waits to descend; the wave banner gives way to it.
+	const ASunderKeeper* Keeper = Mode->GetActiveKeeper();
+	const float SinceKeeper = GetWorld()->GetTimeSeconds() - Mode->GetKeeperAnnouncedAt();
+	const float Hold = Keeper ? Keeper->IntroHold : 2.4f;
+	const bool bKeeperCard = !Mode->GetKeeperTitle().IsEmpty() && SinceKeeper < Hold + 0.5f;
+
 	const float Since = GetWorld()->GetTimeSeconds() - Mode->GetWaveAnnouncedAt();
-	if (!Mode->GetWaveName().IsEmpty() && Since < 2.2f)
+	if (!bKeeperCard && !Mode->GetWaveName().IsEmpty() && Since < 2.2f)
 	{
 		const FLinearColor Fade(Gold.R, Gold.G, Gold.B, FMath::Clamp(2.2f - Since, 0.f, 1.f));
 		const FString Banner = FString::Printf(TEXT("WAVE %d  ·  %s"), Mode->GetWaveNumber(), *Mode->GetWaveName());
@@ -77,18 +84,9 @@ void ASunderHUD::DrawHUD()
 		DrawText(Banner, Fade, (W - TW) * 0.5f, H * 0.3f, Font, 1.6f);
 	}
 
-	// A Keeper: banner and taunt as it arrives, then a boss bar across the top while it lives.
-	const float SinceKeeper = GetWorld()->GetTimeSeconds() - Mode->GetKeeperAnnouncedAt();
-	if (SinceKeeper < 3.5f && !Mode->GetKeeperTitle().IsEmpty())
-	{
-		const float A = FMath::Clamp(3.5f - SinceKeeper, 0.f, 1.f);
-		float TW = 0.f, TH = 0.f;
-		GetTextSize(Mode->GetKeeperTitle(), TW, TH, Font, 1.8f);
-		DrawText(Mode->GetKeeperTitle(), FLinearColor(1.f, 0.25f, 0.6f, A), (W - TW) * 0.5f, H * 0.36f, Font, 1.8f);
-		GetTextSize(Mode->GetKeeperTaunt(), TW, TH, Font, 1.1f);
-		DrawText(Mode->GetKeeperTaunt(), FLinearColor(Gold.R, Gold.G, Gold.B, A), (W - TW) * 0.5f, H * 0.36f + 44.f, Font, 1.1f);
-	}
-	if (const ASunderKeeper* Keeper = Mode->GetActiveKeeper())
+	// A Keeper: its intro card as it arrives, then a boss bar across the top while it lives.
+	if (bKeeperCard) { DrawKeeperCard(Keeper, Mode->GetKeeperTitle(), Mode->GetKeeperTaunt(), SinceKeeper, Hold, Font); }
+	if (Keeper && SinceKeeper >= Hold)                         // the boss bar once it starts to descend
 	{
 		const float BarW = W * 0.5f, X = (W - BarW) * 0.5f;
 		DrawRect(FLinearColor(0.f, 0.f, 0.f, 0.55f), X, 22.f, BarW, 12.f);
@@ -104,4 +102,44 @@ void ASunderHUD::DrawHUD()
 		GetTextSize(Text, TW, TH, Font, 2.4f);
 		DrawText(Text, FLinearColor(1.f, 0.25f, 0.6f), (W - TW) * 0.5f, H * 0.42f, Font, 2.4f);
 	}
+}
+
+void ASunderHUD::DrawKeeperCard(const ASunderKeeper* Keeper, const FString& Name, const FString& Quote, float Since, float Hold,
+	UFont* Font)
+{
+	// The web game's card: the screen dims, the Keeper's portrait fades in in its Hour's glow, its name, then its words.
+	const float W = Canvas->ClipX, H = Canvas->ClipY;
+	const float In = FMath::Clamp(Since / 0.25f, 0.f, 1.f), Out = FMath::Clamp((Hold + 0.5f - Since) / 0.5f, 0.f, 1.f);
+	const float A = FMath::Min(In, Out);
+	DrawRect(FLinearColor(0.02f, 0.016f, 0.047f, 0.6f * A), 0.f, 0.f, W, H);   // the web's rgba(5,4,12) veil, lighter: the fight goes on
+
+	FLinearColor Glow(1.f, 0.25f, 0.6f);
+	if (Keeper)
+	{
+		const FLinearColor& C = Keeper->KeeperColor;
+		const float Peak = FMath::Max3(C.R, C.G, C.B);
+		if (Peak > 0.f) { Glow = FLinearColor(C.R / Peak, C.G / Peak, C.B / Peak); }
+	}
+	float Y = H * 0.40f;
+	if (Keeper && Keeper->Portrait)
+	{
+		const float PS = H * 0.30f, PX = (W - PS) * 0.5f, PY = H * 0.47f - PS - 24.f;
+		const float PA = FMath::Min(FMath::Min(1.f, Since * 2.f + 0.2f), Out);
+		const float GS = PS * 1.35f;                                         // the glow: the portrait again, larger, additive
+		DrawTexture(Keeper->Portrait, (W - GS) * 0.5f, PY - (GS - PS) * 0.5f, GS, GS, 0.f, 0.f, 1.f, 1.f,
+			FLinearColor(Glow.R, Glow.G, Glow.B, 0.35f * PA), BLEND_Additive);
+		DrawTexture(Keeper->Portrait, PX, PY, PS, PS, 0.f, 0.f, 1.f, 1.f, FLinearColor(1.f, 1.f, 1.f, PA), BLEND_Translucent);
+		Y = H * 0.47f;
+	}
+	float TW = 0.f, TH = 0.f;
+	if (Keeper)
+	{
+		const FString Header = FString::Printf(TEXT("HOUR %d  ·  THE KEEPER"), Keeper->Hour);
+		GetTextSize(Header, TW, TH, Font, 0.9f);
+		DrawText(Header, FLinearColor(Glow.R, Glow.G, Glow.B, A), (W - TW) * 0.5f, Y - 30.f, Font, 0.9f);
+	}
+	GetTextSize(Name, TW, TH, Font, 1.8f);
+	DrawText(Name, FLinearColor(0.96f, 0.84f, 0.48f, A), (W - TW) * 0.5f, Y, Font, 1.8f);   // #F4D77B
+	GetTextSize(Quote, TW, TH, Font, 1.1f);
+	DrawText(Quote, FLinearColor(0.79f, 0.70f, 0.41f, A), (W - TW) * 0.5f, Y + 54.f, Font, 1.1f);   // #C9B368
 }
