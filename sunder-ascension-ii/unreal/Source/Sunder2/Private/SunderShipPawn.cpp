@@ -243,15 +243,16 @@ float ASunderShipPawn::TakeDamage(float DamageAmount, FDamageEvent const& Damage
 	Invulnerable = HitInvulnerability;
 	PlaySound(HitSound);
 	if (State.Power > 1) { SetPower(State.Power - 1); }      // the form falls back a step
-	if (Health > 0.f) { return DamageAmount; }
+	if (Health > 0.f)
+	{
+		SpawnExplosion(0);                                    // the web game's small gold burst on a hull hit
+		return DamageAmount;
+	}
 
 	bDead = true;                                             // hull gone: burst, vanish, tell the game mode
 	bShooting = false;
 	BeamWeapon->StopFire();
-	if (UImpactFXSubsystem* Impacts = GetWorld()->GetSubsystem<UImpactFXSubsystem>())
-	{
-		for (int32 i = 0; i < 4; ++i) { Impacts->QueueImpact(GetActorLocation(), FVector::ForwardVector, DeathColor); }
-	}
+	SpawnExplosion(1);
 	Mesh->SetVisibility(false);
 	SetActorEnableCollision(false);
 	UpdateShield(-1);
@@ -342,6 +343,29 @@ void ASunderShipPawn::UpdateShield(int32 Event)
 		{
 			Impacts->QueueImpact(GetActorLocation(), FVector::ForwardVector, ShieldColor);
 		}
+	}
+}
+
+void ASunderShipPawn::SpawnExplosion(int32 Event)
+{
+	if (ExplosionFX && ExplosionFX->GetEmitterHandles().Num() > 0)
+	{
+		// Pooled: it plays out in place while the ship is gone, and goes back to the pool when it finishes.
+		if (UNiagaraComponent* FX = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), ExplosionFX, GetActorLocation(),
+			FRotator::ZeroRotator, FVector(1.f), /*bAutoDestroy*/ false, /*bAutoActivate*/ true, ENCPoolMethod::AutoRelease, false))
+		{
+			FX->SetVariableFloat(TEXT("Event"), (float)Event);
+			FX->SetVariableLinearColor(TEXT("Color"), ExplosionColor);
+			FX->SetVariableLinearColor(TEXT("AccentColor"), DeathColor);
+			FX->SetVariableFloat(TEXT("Size"), ExplosionSize * FormScale());
+			FX->SetTranslucentSortPriority(16);
+			return;
+		}
+	}
+	if (UImpactFXSubsystem* Impacts = GetWorld()->GetSubsystem<UImpactFXSubsystem>())   // not built yet
+	{
+		if (Event == 1) { for (int32 i = 0; i < 4; ++i) { Impacts->QueueImpact(GetActorLocation(), FVector::ForwardVector, DeathColor); } }
+		else { Impacts->QueueImpact(GetActorLocation(), FVector::ForwardVector, ExplosionColor); }
 	}
 }
 

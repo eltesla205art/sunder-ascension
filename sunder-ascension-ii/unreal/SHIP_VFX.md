@@ -1,17 +1,18 @@
-# SUNDER: Ascension II — UE5 ship VFX: the shield (Niagara)
+# SUNDER: Ascension II — UE5 ship VFX: the shield and the explosion (Niagara)
 
 The web game draws a ship's shield as a pulsing cyan ring that thickens with each layer (up to 3). This is that shield
-for the Unreal version, as two systems:
+for the Unreal version, as two systems. A third, the ship's explosion, is in §5.
 
 | System | When | Lives |
 |---|---|---|
 | `NS_Ship_Shield` | while any shield is up | looping, rides on the ship; fades (not cut) when the last layer goes |
 | `NS_Ship_ShieldEvent` | a hit soaked (ripple), the last layer breaking (shatter), a layer forming (gather) | one-shot, pooled |
+| `NS_Ship_Explosion` | the hull taking a hit (a small gold burst), the ship destroyed (the big one) | one-shot, pooled |
 
 > **Status:** written guidance, not yet built or run in-engine (no Unreal where it was written).
 > The C++ that drives them is `ASunderShipPawn` in [`Source/`](Source/README.md) (`ShieldFX`, `ShieldEventFX`,
-> `UpdateShield`). [`Scripts/create_ship_fx_assets.py`](Scripts/create_ship_fx_assets.py) makes the materials and the two
-> empty systems and sets them on `BP_SunderShip`; the emitters below are built by hand. Module names are from UE 5.3–5.5;
+> `UpdateShield`, `ExplosionFX`, `SpawnExplosion`). [`Scripts/create_ship_fx_assets.py`](Scripts/create_ship_fx_assets.py)
+> makes the materials and the three empty systems and sets them on `BP_SunderShip`; the emitters below are built by hand. Module names are from UE 5.3–5.5;
 > the ones that moved between versions are marked ⚠.
 
 Read [`WEAPON_VFX.md`](WEAPON_VFX.md) §0 first. The same camera rules apply: Z is up, the camera looks down −Z, every
@@ -19,7 +20,8 @@ material is Unlit and Additive, and every particle stays flat on the play plane.
 `M_FX_Additive`, `MI_Spark`, `MI_ShockRing` and `SP_FlattenToPlane`.
 
 **Nothing breaks while you build.** Until `NS_Ship_Shield` has an emitter, the ship shows the placeholder disc. Until
-`NS_Ship_ShieldEvent` has one, a hit or a break shows a plasma impact instead.
+`NS_Ship_ShieldEvent` has one, a hit or a break shows a plasma impact instead. Until `NS_Ship_Explosion` has one, a
+hull hit shows one gold plasma impact and the ship's destruction four in its colour.
 
 ---
 
@@ -173,3 +175,89 @@ dynamic input (`User.Event == n` → 1, else 0), or by a scratch pad doing the s
 3. Take a hit with one layer: a shatter, and the loop fades away (no pop).
 4. Power up through the forms: the shield grows with the ship.
 5. Budget: `NS_Ship_Shield` under 0.1 ms in `stat Niagara`. Being the player's own effect, it's never culled.
+
+---
+
+## 5. `NS_Ship_Explosion` (one-shot)
+
+The web game's ship explosions (web/game.html `playerTakeDamage` and `onPlayerDied`):
+- **A hull hit** (no shield up, the ship survives): 20 gold sparks (#FFD54A) from the ship, and a small shake.
+- **The ship destroyed:** 50 gold sparks flung far (the "big" burst: 60–320 px/s, living up to 1.05 s), a hard shake
+  and the big explosion sound. The ship is gone until it respawns 2 s later (`RespawnDelay`).
+
+Here the hit stays small, so it never hides the bullets around you. The destruction gets the full treatment: a white-hot
+flash, the gold sparks, two shockwaves, shards of the hull in the ship's own colour, and an afterglow that lingers while
+the ship is gone.
+
+### 5.1 User parameters
+
+`ASunderShipPawn::SpawnExplosion` sets these:
+
+| Name | Type | Preview default | What the ship sends |
+|---|---|---|---|
+| `User.Event` | Float | 1 | 0 = a hull hit, 1 = the ship destroyed |
+| `User.Color` | Linear Color | (3.5, 2.33, 0.24, 1) | `ExplosionColor`: the web game's gold, the same for every ship |
+| `User.AccentColor` | Linear Color | (3.0, 2.1, 0.6, 1) | `DeathColor`: the ship's own colour from the hangar |
+| `User.Size` | Float | 80 | `ExplosionSize` (80) × the ship's form scale, so a bigger form bursts bigger |
+
+Make a bool from the event once, in Emitter Spawn: `Emitter.Death = User.Event > 0.5`, and use it in burst counts (a
+count of 0 spawns nothing).
+
+### 5.2 Emitters
+
+**System:**
+- World space (the ship is hidden or gone while it plays), Fixed Bounds ±1400.
+- Effect Type `EFT_PlayerWeapon` (the script sets it): never culled, since your own death must always show.
+- Pooled by the script: max 3, primed 1.
+- Every emitter: CPU, a Spawn Burst at age 0, Emitter State **Self, Once**.
+
+**A. `Flash`** (both events)
+- Burst 1. Lifetime: hit 0.1, death 0.3.
+- Size: hit `User.Size × 1.6`; death `User.Size × 6`. Curve 0.5 → 1 → 0 (death: hold near 1 for the first third).
+- Colour: `User.Color` lerped 70 % toward white, × 2 for death. Alpha 1 → 0.
+- Sprite renderer: `MI_Ship_Flash`, Face Camera Plane.
+
+**B. `Sparks`** (both events): the web game's gold dots
+- Burst: hit 20, death 50.
+- Shape Location: Sphere, radius `User.Size × 0.2`, then `SP_FlattenToPlane` (WEAPON_VFX §2.3).
+- Velocity from Point, flattened to the plane:
+  - hit: `User.Size × 1.9` to `User.Size × 11` (150–900 u/s, the web's small burst ×5);
+  - death: `User.Size × 3.75` to `User.Size × 20` (300–1600 u/s, its big burst).
+- Drag 1.2. Lifetime: hit 0.35–0.7; death 0.35–1.05.
+- Size: hit 8–20; death 8–28. Scale 1 → 0 over life.
+- Colour `User.Color`, alpha 1 → 0.
+- Sprite renderer: `MI_Spark`, Facing Velocity Aligned (stretch about 0.03 × speed).
+
+**C. `Shockwave`** (death only): two rings on the play plane
+- Burst `2 × Emitter.Death`. Particle 0 is fast and gold; particle 1 is slower, in the accent colour.
+- Lifetime: 0.35 / 0.7.
+- Size from `User.Size × 0.5` to `User.Size × 10` / `User.Size × 6`, ease-out.
+- Colour `User.Color` / `User.AccentColor`, alpha 1 → 0. Ring thickness (Dynamic Parameter 1) 1 → 0.3.
+- Sprite renderer: `MI_ShockRing`, Face Camera Plane.
+
+**D. `Shards`** (death only): the hull coming apart
+- Burst `12 × Emitter.Death`.
+- Velocity radial on the plane, `User.Size × 2` to `User.Size × 7`. Drag 0.6.
+- Lifetime 1.0–1.6. Sprite Rotation random, Rotation Rate ±360°/s.
+- Size: a sliver, 6 × 22, so a spinning shard reads as a fragment. Constant until the last 30 % of life, then → 0.
+- Colour `User.AccentColor` × 0.8, with a flicker toward white in the first 0.2 s.
+- Sprite renderer: `MI_Spark`, Face Camera Plane, non-uniform sprite size.
+
+**E. `Afterglow`** (death only): what's left while the ship is gone
+- Burst `1 × Emitter.Death`. Lifetime 1.8 (just under `RespawnDelay`, so it's gone before the ship comes back).
+- Size `User.Size × 3`, slowly shrinking to `User.Size × 1.5`.
+- Colour `User.AccentColor × 0.35`, alpha 1 → 0 on an ease-in curve (it lingers, then fades).
+- Sprite renderer: `MI_Shield_Glow`, Face Camera Plane.
+
+**Budget:** a hit is 21 particles for 0.7 s; the death is 66 for under 2 s. Neither needs care.
+
+## 6. Checks in play (explosion)
+
+1. **Hull hit** with no shield up: a small gold burst, and the ship stays readable inside it. Bullets nearby are
+   still visible.
+2. **Shield hit:** no gold burst. That's the shield's ripple (§3), not this.
+3. **Destroyed:** a white flash, gold sparks flung wide, two rings, shards in the ship's colour (try all three ships in
+   the hangar), and a glow that fades just before the respawn.
+4. **Forms:** destroyed at form 3 bursts bigger than at form 1. A hit drops the form first, so it bursts at the
+   lower form's size.
+5. **Game over:** the last life's explosion plays out fully under the Keeper's gloat.

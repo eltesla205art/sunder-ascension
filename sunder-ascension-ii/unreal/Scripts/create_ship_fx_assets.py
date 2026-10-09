@@ -1,16 +1,17 @@
-"""SUNDER: Ascension II — create the scriptable half of the ship's shield VFX (see ../SHIP_VFX.md) and wire it to the ship.
+"""SUNDER: Ascension II — create the scriptable half of the ship's VFX (see ../SHIP_VFX.md): its shield and its
+explosion, and wire them to the ship.
 
 Run inside the Unreal Editor (Tools → Execute Python Script…) AFTER create_weapon_fx_assets.py (for the master material
 and EFT_PlayerWeapon) and create_arena_level.py (for BP_SunderShip), with the C++ in unreal/Source compiled.
 
 Creates under /Game/FX/Ship:
-  Materials/  MI_Shield_Ring, MI_Shield_Glow (instances of M_FX_Additive)
-  Systems/    NS_Ship_Shield (looping), NS_Ship_ShieldEvent (one-shot, pooled): empty systems; build their emitters
-              by hand from SHIP_VFX.md
-and sets them on BP_SunderShip as Shield FX and Shield Event FX.
+  Materials/  MI_Shield_Ring, MI_Shield_Glow, MI_Ship_Flash (instances of M_FX_Additive)
+  Systems/    NS_Ship_Shield (looping), NS_Ship_ShieldEvent and NS_Ship_Explosion (one-shot, pooled): empty systems;
+              build their emitters by hand from SHIP_VFX.md
+and sets them on BP_SunderShip as Shield FX, Shield Event FX and Explosion FX.
 
-Empty systems are safe: the ship keeps its placeholder shield disc (and a plasma impact for hits) until a system has
-an emitter, then uses it with no further wiring.
+Empty systems are safe: the ship keeps its placeholder shield disc, and plasma impacts for shield hits, hull hits and
+its destruction, until a system has an emitter, then uses it with no further wiring.
 
 Safe to run again. Untested until its first run.
 """
@@ -62,6 +63,7 @@ def get_or_create(name, path, asset_class, factory):
 INSTANCES = {
     "MI_Shield_Ring": {"Mode": 2.0, "CoreSharpness": 3.0, "GlowSharpness": 1.2, "CoreBoost": 5.0, "RingThickness": 0.06},
     "MI_Shield_Glow": {"Mode": 1.0, "CoreSharpness": 0.8, "GlowSharpness": 0.5, "CoreBoost": 1.0},
+    "MI_Ship_Flash":  {"Mode": 1.0, "CoreSharpness": 2.0, "GlowSharpness": 0.6, "CoreBoost": 4.0},   # white-hot centre, wide
 }
 
 
@@ -92,7 +94,7 @@ def build_system(name, pool_max, pool_prime):
     return system
 
 
-def wire_ship(shield, event):
+def wire_ship(shield, event, explosion):
     if not EAL.does_asset_exist(SHIP_BP):
         raise RuntimeError(SHIP_BP + " not found; run create_arena_level.py first")
     bp = EAL.load_asset(SHIP_BP)
@@ -101,6 +103,8 @@ def wire_ship(shield, event):
         cdo.set_editor_property("shield_fx", shield)
     if event is not None:
         cdo.set_editor_property("shield_event_fx", event)
+    if explosion is not None:
+        cdo.set_editor_property("explosion_fx", explosion)
     unreal.BlueprintEditorLibrary.compile_blueprint(bp)
     EAL.save_loaded_asset(bp)
 
@@ -117,15 +121,18 @@ def main():
         for name in INSTANCES:
             step(name, build_instance, name, master)
     else:
-        MANUAL.append("Shield materials: run create_weapon_fx_assets.py first (needs " + MASTER + "), then this again")
+        MANUAL.append("Ship materials: run create_weapon_fx_assets.py first (needs " + MASTER + "), then this again")
 
     shield = step("NS_Ship_Shield (empty)", build_system, "NS_Ship_Shield", None, None)
     event = step("NS_Ship_ShieldEvent (empty)", build_system, "NS_Ship_ShieldEvent", 6, 2)
-    step("BP_SunderShip: Shield FX and Shield Event FX", wire_ship, shield, event)
+    # the explosion: a hull hit or the ship destroyed; at most a couple at once (a hit, then the death)
+    explosion = step("NS_Ship_Explosion (empty)", build_system, "NS_Ship_Explosion", 3, 1)
+    step("BP_SunderShip: Shield FX, Shield Event FX and Explosion FX", wire_ship, shield, event, explosion)
 
     MANUAL.extend([
         "NS_Ship_Shield and NS_Ship_ShieldEvent: add the user parameters (SHIP_VFX.md §1.1) and the emitters (§2, §3)",
         "Scratch pad dynamic input SP_LayerMask (SHIP_VFX.md §1.3); SP_FlattenToPlane is from WEAPON_VFX.md §2.3",
+        "NS_Ship_Explosion: add its user parameters (SHIP_VFX.md §5.1) and the emitters (§5.2)",
     ])
     log("---- done ({}) ----".format(len(DONE)))
     for label in DONE:

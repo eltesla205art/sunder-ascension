@@ -169,6 +169,21 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ship|Hull")
 	FLinearColor DeathColor = FLinearColor(3.0f, 2.1f, 0.6f, 1.f);
 
+	/** NS_Ship_Explosion (SHIP_VFX.md §5), one-shot and pooled. User.Event 0 = the hull takes a hit (the web game's
+	 *  small gold burst), 1 = the ship is destroyed (its big one); User.Color = ExplosionColor (the sparks),
+	 *  User.AccentColor = DeathColor (the ship's own colour: its debris), User.Size. Until it has emitters, plasma
+	 *  impacts stand in. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ship|Hull")
+	TObjectPtr<UNiagaraSystem> ExplosionFX;
+
+	/** The sparks' colour: the web game's gold (#FFD54A), whatever the ship. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ship|Hull")
+	FLinearColor ExplosionColor = FLinearColor(3.5f, 2.33f, 0.24f, 1.f);
+
+	/** User.Size for a form-1 ship; it grows with the form, like the ship. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ship|Hull", meta = (ClampMin = "1"))
+	float ExplosionSize = 80.f;
+
 	/** How the shots fire; set by ApplyLoadout from the hangar's ship. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Ship|Weapons")
 	ESunderShotStyle ShotStyle = ESunderShotStyle::TwinSpread;
@@ -329,6 +344,8 @@ private:
 	void PlaySound(USoundBase* Sound) const;
 	/** Keep the shield's look in step with its layers (and spawn an event: 0 hit, 1 break, 2 raise; -1 none). */
 	void UpdateShield(int32 Event);
+	/** 0 = a hull hit, 1 = destroyed: ExplosionFX, or plasma impacts until it's built. */
+	void SpawnExplosion(int32 Event);
 	float ShieldRadiusNow() const { return ShieldRadius * FormScale(); }
 	void UpdateBodyScale();
 	float FormScale() const;
