@@ -10,6 +10,9 @@
 #include "ImpactFXSubsystem.h"
 #include "Kismet/GameplayStatics.h"
 #include "Materials/MaterialInstanceDynamic.h"
+#include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraSystem.h"
 #include "ProjectilePoolSubsystem.h"
 #include "SunderGameMode.h"
 #include "SunderMusicSubsystem.h"
@@ -70,6 +73,21 @@ void ASunderEnemy::Setup(const FVector& InArenaCenter, const FVector2D& InArenaH
 	ShotSpeedScale = FMath::Max(InShotSpeedScale, 0.1f);
 	ScoreValue = FMath::RoundToInt(ScoreValue * FMath::Max(ScoreScale, 0.f));
 	SpawnLocation = GetActorLocation();
+}
+
+bool ASunderEnemy::SpawnExplosion()
+{
+	if (!ExplosionFX || ExplosionFX->GetEmitterHandles().Num() == 0) { return false; }   // unset, or not built yet
+	// Pooled: back to the pool by itself when its emitters finish, long after this enemy is gone.
+	UNiagaraComponent* FX = UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), ExplosionFX, GetActorLocation(),
+		FRotator::ZeroRotator, FVector(1.f), /*bAutoDestroy*/ false, /*bAutoActivate*/ true, ENCPoolMethod::AutoRelease,
+		/*bPreCullCheck*/ false);
+	if (!FX) { return false; }
+	FX->SetVariableLinearColor(TEXT("Color"), DeathColor);
+	FX->SetVariableFloat(TEXT("Size"), ExplosionSize > 0.f ? ExplosionSize : HitRadius);
+	FX->SetVariableFloat(TEXT("Big"), bBigBurst ? 1.f : 0.f);
+	FX->SetTranslucentSortPriority(12);
+	return true;
 }
 
 FVector ASunderEnemy::PlayerLocation() const
@@ -226,7 +244,8 @@ void ASunderEnemy::Die(bool bAwardScore)
 	bDead = true;
 	if (bAwardScore)
 	{
-		if (UImpactFXSubsystem* Impacts = GetWorld()->GetSubsystem<UImpactFXSubsystem>())
+		UImpactFXSubsystem* Impacts = SpawnExplosion() ? nullptr : GetWorld()->GetSubsystem<UImpactFXSubsystem>();
+		if (Impacts)   // no explosion system yet: the shared plasma impacts
 		{
 			Impacts->QueueImpact(GetActorLocation(), FVector::BackwardVector, DeathColor);
 			if (MaxHealth >= 100.f) { Impacts->QueueImpact(GetActorLocation(), FVector::BackwardVector, DeathColor); }   // big ones burst bigger

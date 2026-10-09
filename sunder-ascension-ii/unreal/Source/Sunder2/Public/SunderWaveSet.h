@@ -96,6 +96,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Waves")
 	TObjectPtr<USunderStageAudio> StageAudio;
 
+	/** The Hour's colour: its enemies burst in it when shot down, as in the web game (alpha 0 = each enemy's own
+	 *  DeathColor). Not applied to its Keeper. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Waves")
+	FLinearColor ExplosionTint = FLinearColor(0.f, 0.f, 0.f, 0.f);
+
 	// ---- the Hour's difficulty: applied to every enemy of this set (not to its Keeper, whose numbers are its own).
 	// create_hour_waves.py sets them from the web game's stage tuning, relative to Hour 1.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Waves|Difficulty", meta = (ClampMin = "0.1"))

@@ -15,7 +15,7 @@ C++ side of [`../WEAPON_VFX.md`](../WEAPON_VFX.md) and [`../KEEPER_VFX.md`](../K
 | `SunderPickup` | A falling power-up (Spread, Laser, Power, Bomb, Shield, Life): each kind's faceted gem from `blender/pickups.py` (`KindMeshes`), tilting to catch the light, or a placeholder diamond with its letter; dropped by enemies at the Hour's rate (bombers more), collected by flying into it | — |
 | `SunderTargetDummy` | Drifting target: takes beam and shot damage, swells when hit, bursts with an impact and respawns | — |
 | `SunderGameMode` | Default pawn = the ship, flown as the hangar's choice (`Ships`: the web game's three ships in Unreal units; `?Ship=` / `?Mode=` also work on the URL); Swarm mode; score, 3 lives, respawn after 2 s, DAWN DENIED and a restart (or back to `MenuLevel`, the title; in story mode, DAWN DENIED on the story level) when the last life goes; wave banner; tracks the active Keeper | — |
-| `SunderEnemy` | Enemy craft: moves Straight / Weave / Dive / Strafe / Zigzag, fires Aimed / Spread / Radial from the pool, rams, flashes when hit, bursts and scores on death; each type is a Blueprint child | — |
+| `SunderEnemy` | Enemy craft: moves Straight / Weave / Dive / Strafe / Zigzag, fires Aimed / Spread / Radial from the pool, rams, flashes when hit, bursts and scores on death (a Niagara explosion in its Death Color, the Hour's colour in an Hour — ENEMY_VFX.md §5 — with the plasma impacts until it's built); each type is a Blueprint child | — |
 | `SunderKeeper` | Keeper boss (child of `SunderEnemy`): enters invulnerable, fits its model to the screen, strafes; three phases (66% / 33%) that fire faster and dash in phase 3; eight attack patterns ported from the web game (Aimed Volley, Spread Fan, Horizontal Sweep, Radial Burst, Cross Ring, Spiral, Dual Spiral, Wall Barrage) rotating every 3.5 s; optional final-form mesh; a two-second death (shudder, bursts across the body, then the final burst); spawns its Niagara effects (aura, arrival Gate, muzzle flares, phase shockwave, death) and tints its shots, falling back to the plasma impacts for any system not built yet; plays its battle theme (building a layer per phase, Apep's final-form theme in phase 3) and its voice (intro, attack, phase, hurt, death, and a gloat at DAWN DENIED) | Keeper VFX |
 | `SunderMusicSubsystem` | World subsystem: layered music like the web game's: a theme's three same-length loops start together and crossfade by layer; `Duck` steps the music back under a voice; one theme at a time with fades. Also the current stage's sound: its ambience bed (fading between stages), its theme and its rate-limited cues | — |
 | `SunderFrontEndGameMode` | Base for the screens outside the arena: no pawn, `SunderMenuController` input (Confirm / Back / Navigate), cues that can wait a beat and duck the music | — |
@@ -28,7 +28,7 @@ C++ side of [`../WEAPON_VFX.md`](../WEAPON_VFX.md) and [`../KEEPER_VFX.md`](../K
 | `SunderStoryGameMode` | The story screens with the web game's sound and timing: opening crawl (lament + wind), hour map (theme builds act by act), briefing (drone over the Hour's own ambience), Hour survived (bell and interlude theme between acts), dawn, DAWN DENIED | — |
 | `SunderStoryHUD` | Canvas drawing for those screens: the crawl, the hour map's road of twelve gates through four acts, briefings over the Hour's backdrop with its Keeper's portrait, wrapped story text | — |
 | `SunderStageAudio` | Data asset (header only): one Hour's (or menu screen's) theme layers, ambience, and Start / Wave / Down / Clear cues | — |
-| `SunderWaveSet` | Data asset: waves of spawn groups (enemy type, count, timing, formation Column / Line / V / Random / Sides, lane, spacing), an optional Keeper per wave, stage audio for the set (and an optional per-wave switch), the Hour's difficulty (enemy health, speed, fire rate, bullet speed, points, pickup drop rate; not its Keeper's), loop scaling | — |
+| `SunderWaveSet` | Data asset: waves of spawn groups (enemy type, count, timing, formation Column / Line / V / Random / Sides, lane, spacing), an optional Keeper per wave, stage audio for the set (and an optional per-wave switch), the Hour's colour for its enemies' explosions, the Hour's difficulty (enemy health, speed, fire rate, bullet speed, points, pickup drop rate; not its Keeper's), loop scaling | — |
 | `SunderWaveDirector` | Level actor that plays a wave set: schedules formations along the top edge, spawns a wave's Keeper at the top centre, flies the story's current Hour (and reports it survived) in story mode, in Swarm skips Keepers, loops and quickens (the web game's 0.985 per second, down to `SwarmPaceFloor`); plays the stage's sound (Start cue and ambience on entering a stage, Wave cues, the theme building a layer each third of the way to the Keeper), waits for each wave to clear, loops tougher | — |
 | `SunderHUD` | Canvas HUD: score, lives, hull bar, the ship's name in its colour, the Swarm clock, wave banner, Keeper title and taunt, boss bar coloured by phase, DAWN DENIED | — |
 
@@ -98,8 +98,10 @@ Projectiles are team-aware: enemy shots only hit the ship, the player's shots ne
 14. [`../Scripts/create_pickup_art.py`](../Scripts/create_pickup_art.py): imports the six pickup gems from
     [`../Content/Pickups`](../Content/Pickups) (`blender/pickups.py <dir> 0 --fbx`), makes `BP_SunderPickup` with them, and
     sets it as the game mode's Pickup Class.
-15. [`../Scripts/create_enemy_fx_assets.py`](../Scripts/create_enemy_fx_assets.py): `MI_Enemy_Shot`, `EFT_EnemyShot` and an
-    empty `NS_Enemy_Shot`, set as `BP_EnemyShot`'s trail (size 30, violet); build the emitters from [`../ENEMY_VFX.md`](../ENEMY_VFX.md).
+15. [`../Scripts/create_enemy_fx_assets.py`](../Scripts/create_enemy_fx_assets.py): the enemy materials, `EFT_EnemyShot` /
+    `EFT_EnemyExplosion` and empty `NS_Enemy_Shot` / `NS_Enemy_Explosion`, set as `BP_EnemyShot`'s trail (size 30, violet)
+    and the five enemies' Explosion FX; build the emitters from [`../ENEMY_VFX.md`](../ENEMY_VFX.md). Run
+    `create_hour_waves.py` after it (again) so each Hour's explosions take its colour.
 
 ## Hook up
 

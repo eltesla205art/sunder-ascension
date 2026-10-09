@@ -211,6 +211,7 @@ void ASunderWaveDirector::Tick(float DeltaTime)
 				Enemy->Setup(ArenaCenter, ArenaHalfExtents, HealthScale * WaveSet->HealthScale, SpeedScale * WaveSet->SpeedScale,
 					FireScale * WaveSet->FireRateScale, WaveSet->ShotSpeedScale, WaveSet->ScoreScale);
 				Enemy->DropChance = FMath::Clamp(WaveSet->DropChance + Enemy->DropChanceBonus, 0.f, 1.f);
+				if (WaveSet->ExplosionTint.A > 0.f) { Enemy->DeathColor = WaveSet->ExplosionTint; }   // the Hour's colour
 			}
 			Alive.Add(Enemy);
 		}

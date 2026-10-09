@@ -17,7 +17,8 @@ Makes /Game/Sunder/Waves/Hours/DA_Waves_HourNN_<Stage>, twelve wave sets that:
     for the ones that get away), and each act's Hours have more waves than the last's (MIN_WAVES);
   • scale like it: enemy speed, fire rate, bullet speed, points and health by the web ratios to Hour 1 (HEALTH_CURVE
     can soften health), and drop pickups at the web Hour's rate + 4 % (battle math #4);
-  • end with the Hour's Keeper, in the Hour's own sound (its DA_StageAudio), and don't loop.
+  • end with the Hour's Keeper, in the Hour's own sound (its DA_StageAudio), and don't loop;
+  • burst its enemies in the Hour's colour when they're shot down, as the web game does (Explosion Tint).
 Then gives each Hour its set in DA_StoryData (if made), and, with ARENA_HOUR set, puts that Hour in L_SunderArena.
 
 Safe to run again. Untested until its first run.
@@ -120,6 +121,17 @@ def camel(text):
 
 
 # ------------------------------------------------------------------ the plan (pure Python: no editor calls)
+EXPLOSION_GLOW = 3.0   # the Hour's colour, brightest channel at this for bloom
+
+
+def hdr(hex_rgb, strength):
+    """sRGB hex → linear HDR colour, brightest channel = strength."""
+    rgb = [int(hex_rgb[i:i + 2], 16) / 255.0 for i in (1, 3, 5)]
+    lin = [c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4 for c in rgb]
+    peak = max(max(lin), 1e-4)
+    return [c / peak * strength for c in lin]
+
+
 def difficulty(t, first):
     """The Hour's scales relative to Hour 1, from the web game's tuning."""
     return {
@@ -240,6 +252,12 @@ def build_hour(hour, classes, first):
     data.set_editor_property("loop", False)
     for prop, value in difficulty(hour["tuning"], first).items():
         data.set_editor_property(prop, value)
+    if hour.get("tint"):
+        r, g, b = hdr(hour["tint"], EXPLOSION_GLOW)
+        try:
+            data.set_editor_property("explosion_tint", unreal.LinearColor(r, g, b, 1.0))
+        except Exception as exc:   # C++ from before Explosion Tint: compile unreal/Source again
+            MANUAL.append("{}: Explosion Tint not set ({})".format(name, exc))
     stage_audio = "{}/DA_StageAudio_{}".format(STAGE_AUDIO_DIR, camel(stage))
     if EAL.does_asset_exist(stage_audio):
         data.set_editor_property("stage_audio", EAL.load_asset(stage_audio))

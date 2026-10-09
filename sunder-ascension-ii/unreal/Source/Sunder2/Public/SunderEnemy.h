@@ -12,6 +12,7 @@ class UStaticMeshComponent;
 class UStaticMesh;
 class UMaterialInstanceDynamic;
 class ASunderProjectile;
+class UNiagaraSystem;
 
 UENUM(BlueprintType)
 enum class ESunderMovePattern : uint8
@@ -62,6 +63,19 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Enemy|Look")
 	FLinearColor DeathColor = FLinearColor(4.0f, 0.6f, 2.6f, 1.f);
+
+	/** NS_Enemy_Explosion (ENEMY_VFX.md §5): played where it's shot down, in DeathColor (the Hour's colour in an Hour).
+	 *  Until the system has emitters, the shared plasma impacts burst instead. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Enemy|Look")
+	TObjectPtr<UNiagaraSystem> ExplosionFX;
+
+	/** The explosion's User.Size; 0 = HitRadius. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Enemy|Look", meta = (ClampMin = "0"))
+	float ExplosionSize = 0.f;
+
+	/** The web game's big burst (bombers): more sparks, flung further, a wider ring and slow embers. User.Big. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Enemy|Look")
+	bool bBigBurst = false;
 
 	// ---- toughness and reward
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Enemy")
@@ -175,6 +189,8 @@ protected:
 	virtual void TryFire(float DeltaTime);
 	void FireVolley();
 	virtual void Die(bool bAwardScore);
+	/** Plays ExplosionFX here; false if it isn't set or built yet (the caller falls back to plasma impacts). */
+	bool SpawnExplosion();
 	FVector PlayerLocation() const;
 
 	UPROPERTY(Transient)
