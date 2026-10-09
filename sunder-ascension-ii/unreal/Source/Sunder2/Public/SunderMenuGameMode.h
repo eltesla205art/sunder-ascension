@@ -44,6 +44,21 @@ struct FSunderMenuShip
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ship")
 	TObjectPtr<UTexture2D> Sprite;
 
+	/** The web game's accent: the pulsing ring and engine glow around it in the hangar. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ship")
+	FLinearColor Accent = FLinearColor(0.55f, 0.85f, 1.f);
+
+	/** The web game's personality line, under its stats. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ship")
+	FString Personality;
+
+	/** Its stats card, as the web game shows them: hull hearts, bars (0–1) for speed, fire rate and power, bombs. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ship|Stats") int32 Hull = 3;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ship|Stats") float SpeedBar = 0.5f;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ship|Stats") float FireBar = 0.5f;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ship|Stats") float PowerBar = 0.f;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ship|Stats") int32 Bombs = 3;
+
 	/** Its engine: on the pad when chosen, and at launch. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Ship")
 	TObjectPtr<USoundBase> RevSound;
@@ -93,6 +108,10 @@ public:
 	/** Full-screen art behind both screens (title_bg). */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Menu")
 	TObjectPtr<UTexture2D> Backdrop;
+
+	/** The hangar's band behind the ship preview (the web game's hangar art, T_HangarBackdrop). */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Menu")
+	TObjectPtr<UTexture2D> HangarBackdrop;
 
 	/** The level Launch opens, with ?Ship=<id>?Mode=Story|Swarm. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Menu")

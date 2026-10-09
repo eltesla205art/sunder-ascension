@@ -12,9 +12,11 @@ unreal/Content/Audio/Menus:
              (and SFX_Menu_Title_Leaderboard, imported for later: the Unreal build has no leaderboard yet)
 
 Does:
-  1. imports them into /Game/Sunder/Audio/Menus, and the title art and ship sprites (art/blender) into /Game/Sunder/UI;
+  1. imports them into /Game/Sunder/Audio/Menus, and the title art and ship sprites (art/blender) and the hangar
+     art (Content/UI/T_HangarBackdrop.jpg, from art/hangar-mk2-a.webp) into /Game/Sunder/UI;
   2. makes DA_MenuAudio_Title and DA_MenuAudio_Hangar (theme + ambience for each screen);
-  3. makes BP_SunderMenuGameMode with the sounds, the three ships and the backdrop;
+  3. makes BP_SunderMenuGameMode with the sounds, the three ships (with their hangar cards: accent,
+     personality, stats) and the title and hangar backdrops;
   4. makes the level L_SunderTitle using it;
   5. (RETURN_TO_TITLE) sets BP_SunderGameMode to go back to the title after DAWN DENIED.
 
@@ -43,6 +45,13 @@ SHIPS = [
     ("scarab", "SCARAB WARBRINGER", "The Juggernaut", "#D94033"),
     ("ibis", "IBIS PHANTOM", "The Swift", "#4DD980"),
 ]
+# Their hangar cards (web SHIPS): accent, personality, hull, speed px/s, fire interval s, bullet damage, bombs. The bars
+# use the web game's statBar ranges: speed 250–400, fire 0.20–0.09 s, power 1–2.
+SHIP_CARDS = {
+    "sunborn": ("#8CD9FF", "Noble, steady, born to lead. Master of none's weakness, jack of every strength.", 3, 320, 0.14, 1, 3),
+    "scarab": ("#FF8C33", "Fierce and unmoving. Trades speed for raw devastation. Hits like the fall of a dynasty.", 4, 250, 0.20, 2, 4),
+    "ibis": ("#BFFFD9", "Quick, clever, elusive. Death by a thousand cuts. Gone before the enemy knows it's hit.", 2, 400, 0.09, 1, 3),
+}
 
 TOOLS = unreal.AssetToolsHelpers.get_asset_tools()
 EAL = unreal.EditorAssetLibrary
@@ -116,7 +125,10 @@ def import_art():
     art = repo_path("..", "art", "blender")
     renamed = {"title_bg": "T_TitleBackdrop", "ship_sunborn": "T_Ship_Sunborn", "ship_scarab": "T_Ship_Scarab",
                "ship_ibis": "T_Ship_Ibis"}
-    import_files([(os.path.join(art, k + ".png"), v) for k, v in renamed.items()], UI_DIR)
+    files = [(os.path.join(art, k + ".png"), v) for k, v in renamed.items()]
+    files.append((repo_path("Content", "UI", "T_HangarBackdrop.jpg"), "T_HangarBackdrop"))   # the web hangar art, as JPEG
+    import_files(files, UI_DIR)
+    renamed["hangar"] = "T_HangarBackdrop"
     textures = {}
     for new in renamed.values():
         tex = EAL.load_asset("{}/{}".format(UI_DIR, new))
@@ -217,6 +229,15 @@ def build_menu_mode(screens, textures):
         ship.set_editor_property("name", title)
         ship.set_editor_property("ship_class", ship_class)
         ship.set_editor_property("tint", color(tint))
+        if sid in SHIP_CARDS:
+            accent, personality, hull, speed, fire, damage, bombs = SHIP_CARDS[sid]
+            ship.set_editor_property("accent", color(accent))
+            ship.set_editor_property("personality", personality)
+            ship.set_editor_property("hull", hull)
+            ship.set_editor_property("speed_bar", round((speed - 250) / 150.0, 3))
+            ship.set_editor_property("fire_bar", round((0.20 - fire) / 0.11, 3))
+            ship.set_editor_property("power_bar", round((damage - 1) / 1.0, 3))
+            ship.set_editor_property("bombs", bombs)
         sprite = textures.get("T_Ship_" + sid.capitalize())
         if sprite is not None:
             ship.set_editor_property("sprite", sprite)
@@ -227,6 +248,8 @@ def build_menu_mode(screens, textures):
     cdo.set_editor_property("ships", ships)
     if textures.get("T_TitleBackdrop") is not None:
         cdo.set_editor_property("backdrop", textures["T_TitleBackdrop"])
+    if textures.get("T_HangarBackdrop") is not None:
+        cdo.set_editor_property("hangar_backdrop", textures["T_HangarBackdrop"])
     cdo.set_editor_property("arena_level", "L_SunderArena")
     unreal.BlueprintEditorLibrary.compile_blueprint(bp)
     EAL.save_loaded_asset(bp)

@@ -31,14 +31,14 @@ void ASunderMenuHUD::DrawHUD()
 	const float W = Canvas->ClipX, H = Canvas->ClipY, T = Menu->GetScreenTime();
 	const ESunderMenuScreen Screen = Menu->GetScreen();
 
-	// The title art, fitted to the screen height and centred; dimmer in the hangar, fading out on launch.
+	// The title art, fitted to the screen height and centred; faint behind the hangar, fading out on launch.
 	DrawRect(FLinearColor(0.01f, 0.01f, 0.03f), 0.f, 0.f, W, H);
 	float AW = H * (480.f / 720.f);                            // the art's width on screen (the web game's 480 × 720)
 	if (UTexture2D* Art = Menu->Backdrop)
 	{
 		const float Aspect = Art->GetSizeY() > 0 ? (float)Art->GetSizeX() / Art->GetSizeY() : 1.f;
 		AW = H * Aspect;
-		float Light = Screen == ESunderMenuScreen::Title ? FMath::Clamp(T / 1.2f, 0.f, 1.f) : 0.45f;
+		float Light = Screen == ESunderMenuScreen::Title ? FMath::Clamp(T / 1.2f, 0.f, 1.f) : 0.18f;   // the hangar: a dark night, its own band on top
 		if (Screen == ESunderMenuScreen::Launching) { Light *= 1.f - FMath::Clamp(T / FMath::Max(Menu->LaunchDelay, 0.01f), 0.f, 1.f); }
 		DrawTexture(Art, (W - AW) * 0.5f, 0.f, AW, H, 0.f, 0.f, 1.f, 1.f, FLinearColor(Light, Light, Light, 1.f));
 	}
@@ -49,47 +49,7 @@ void ASunderMenuHUD::DrawHUD()
 		return;
 	}
 
-	// The hangar: three bays across the screen; the chosen one lit in its colour.
-	DrawCentered(TEXT("HANGAR  ·  CHOOSE YOUR SHIP"), Gold, H * 0.08f, 1.6f);
-	const TArray<FSunderMenuShip>& Ships = Menu->Ships;
-	const int32 N = Ships.Num();
-	UFont* Font = GEngine ? GEngine->GetLargeFont() : nullptr;
-	for (int32 i = 0; i < N; ++i)
-	{
-		const FSunderMenuShip& Ship = Ships[i];
-		const bool bOn = i == Menu->GetShipIndex();
-		const float CX = W * (i + 1) / (N + 1);
-		const float Size = FMath::Min(W / (N + 1), H * 0.32f) * (bOn ? 1.f : 0.75f);
-		const float Bob = bOn ? 6.f * FMath::Sin(T * 2.4f) : 0.f;
-		const float Top = H * 0.24f + (bOn ? 0.f : Size * 0.15f) + Bob;
-		if (bOn) { DrawRect(FLinearColor(Ship.Tint.R, Ship.Tint.G, Ship.Tint.B, 0.12f), CX - Size * 0.6f, Top - 12.f, Size * 1.2f, Size + 24.f); }
-		if (Ship.Sprite)
-		{
-			const float L = bOn ? 1.f : 0.45f;
-			DrawTexture(Ship.Sprite, CX - Size * 0.5f, Top, Size, Size, 0.f, 0.f, 1.f, 1.f, FLinearColor(L, L, L, 1.f));
-		}
-		float TW = 0.f, TH = 0.f;
-		GetTextSize(Ship.Name, TW, TH, Font, bOn ? 1.1f : 0.9f);
-		DrawText(Ship.Name, bOn ? Ship.Tint : Dim, CX - TW * 0.5f, Top + Size + 18.f, Font, bOn ? 1.1f : 0.9f);
-		if (bOn)
-		{
-			GetTextSize(Ship.ShipClass, TW, TH, Font, 0.9f);
-			DrawText(Ship.ShipClass, Cyan, CX - TW * 0.5f, Top + Size + 48.f, Font, 0.9f);
-		}
-	}
-
-	const bool bStory = Menu->GetModeIndex() == 0;
-	DrawCentered(bStory ? TEXT("[ STORY ]      SWARM  ") : TEXT("  STORY      [ SWARM ]"), bStory ? Gold : Magenta, H * 0.78f, 1.3f);
-	if (Screen == ESunderMenuScreen::Launching)
-	{
-		const FString Name = Ships.IsValidIndex(Menu->GetShipIndex()) ? Ships[Menu->GetShipIndex()].Name : FString();
-		DrawCentered(FString::Printf(TEXT("LAUNCH  ·  %s"), *Name), Gold, H * 0.88f, 1.4f);
-		DrawRect(FLinearColor(0.f, 0.f, 0.f, FMath::Clamp(T / FMath::Max(Menu->LaunchDelay, 0.01f), 0.f, 1.f)), 0.f, 0.f, W, H);
-	}
-	else
-	{
-		DrawCentered(TEXT("A / D  ship    ·    W / S  mode    ·    SPACE  launch    ·    ESC  back"), Dim, H * 0.88f, 0.9f);
-	}
+	DrawHangar(Menu, T, Screen == ESunderMenuScreen::Launching);
 }
 
 
@@ -199,4 +159,130 @@ void ASunderMenuHUD::DrawWebText(const FString& Text, const FLinearColor& Color,
 		}
 	}
 	DrawText(Text, Color, X, Y, Font, Scale);
+}
+
+void ASunderMenuHUD::DrawHangar(const ASunderMenuGameMode* Menu, float T, bool bLaunching)
+{
+	// The web game's ship select (drawShipSelect), on its 480 × 720 layout centred on the screen: the hangar band behind
+	// a large preview ringed in the ship's accent, its name and class, its stats card and personality, the browse
+	// arrows, STORY / SWARM and the LAUNCH button. The band runs the full width of the screen.
+	const float W = Canvas->ClipX, H = Canvas->ClipY, S = H / 720.f, X0 = (W - 480.f * S) * 0.5f;
+	auto At = [&](float X, float Y) { return FVector2D(X0 + X * S, Y * S); };
+	auto Faded = [](const FLinearColor& C, float Alpha) { return FLinearColor(C.R, C.G, C.B, FMath::Clamp(Alpha, 0.f, 1.f)); };
+	auto Disc = [&](const FVector2D& C, float R, const FLinearColor& Color) { Canvas->K2_DrawPolygon(nullptr, C, FVector2D(R, R), 32, Color); };
+	auto Ring = [&](const FVector2D& C, float R, const FLinearColor& Color, float Thick)
+	{
+		for (int32 k = 0; k < 48; ++k)
+		{
+			const float A0 = UE_TWO_PI * k / 48, A1 = UE_TWO_PI * (k + 1) / 48;
+			DrawLine(C.X + FMath::Cos(A0) * R, C.Y + FMath::Sin(A0) * R, C.X + FMath::Cos(A1) * R, C.Y + FMath::Sin(A1) * R, Color, Thick);
+		}
+	};
+	auto Box = [&](float X, float Y, float BW, float BH, const FLinearColor& Fill, const FLinearColor& Edge, float Thick)
+	{
+		const FVector2D P = At(X, Y);
+		DrawRect(Fill, P.X, P.Y, BW * S, BH * S);
+		DrawLine(P.X, P.Y, P.X + BW * S, P.Y, Edge, Thick);
+		DrawLine(P.X, P.Y + BH * S, P.X + BW * S, P.Y + BH * S, Edge, Thick);
+		DrawLine(P.X, P.Y, P.X, P.Y + BH * S, Edge, Thick);
+		DrawLine(P.X + BW * S, P.Y, P.X + BW * S, P.Y + BH * S, Edge, Thick);
+	};
+	const FLinearColor Night(0.04f, 0.035f, 0.094f), Sand(0.79f, 0.70f, 0.41f), Gilt(0.83f, 0.69f, 0.22f), Sky(0.56f, 0.89f, 1.f);
+
+	// The hangar band: its art at a third strength, fading into the night above and below, a dark spotlight behind the
+	// ship so it reads in front.
+	const float BH = 271.f * S, BY = (210.f - 135.5f) * S;
+	if (UTexture2D* Bay = Menu->HangarBackdrop)
+	{
+		const float Aspect = Bay->GetSizeY() > 0 ? (float)Bay->GetSizeX() / Bay->GetSizeY() : 1.77f;
+		const float VL = FMath::Min(1.f, BH / (W / Aspect));       // a full-width slice of the art, centred
+		DrawTexture(Bay, 0.f, BY, W, BH, 0.f, (1.f - VL) * 0.5f, 1.f, VL, FLinearColor(1.f, 1.f, 1.f, 0.32f));
+		for (int32 i = 0; i < 20; ++i)
+		{
+			const float F = i / 20.f;
+			const float Fade = F < 0.22f ? 1.f - F / 0.22f : F > 0.62f ? (F - 0.62f) / 0.38f : 0.f;
+			DrawRect(Faded(Night, Fade), 0.f, BY + BH * F, W, BH / 20.f + 1.f);
+		}
+		for (int32 k = 0; k < 8; ++k) { Disc(At(240.f, 210.f), (150.f - 15.f * k) * S, Faded(Night, 0.2f)); }
+	}
+
+	DrawWebText(TEXT("CHOOSE YOUR STARCRAFT"), Sand, 70.f, 20.f);
+	if (!Menu->Ships.IsValidIndex(Menu->GetShipIndex())) { return; }
+	const FSunderMenuShip& Ship = Menu->Ships[Menu->GetShipIndex()];
+
+	// The preview at twice the web's ship size, its engine glowing in its accent, a ring pulsing round it.
+	const FVector2D C = At(240.f, 210.f);
+	const float Size = 84.f * 2.f * S, Flick = 0.75f + 0.25f * FMath::Sin(T * 38.f);
+	for (int32 k = 0; k < 4; ++k) { Disc(FVector2D(C.X, C.Y + Size * 0.4f), Size * 0.3f * Flick * (1.f - 0.2f * k), Faded(Ship.Accent, 0.2f)); }
+	if (Ship.Sprite) { DrawTexture(Ship.Sprite, C.X - Size * 0.5f, C.Y - Size * 0.5f, Size, Size, 0.f, 0.f, 1.f, 1.f, FLinearColor::White); }
+	Ring(C, (105.f + 6.f * FMath::Sin(T * 3.f)) * S, Faded(Ship.Accent, 0.25f + 0.2f * FMath::Sin(T * 3.f)), 2.f);
+
+	DrawWebText(Ship.Name, Ship.Tint, 350.f, 24.f);
+	DrawWebText(FString::Printf(TEXT("\u2014 %s \u2014"), *Ship.ShipClass), Sand, 376.f, 15.f);
+	DrawWebText(FString::Printf(TEXT("%d / %d"), Menu->GetShipIndex() + 1, Menu->Ships.Num()), Sand, 398.f, 13.f);
+
+	// Its stats card: hull as hearts (small gold diamonds here), the web's ten-cell bars, bombs.
+	UFont* Font = GEngine ? GEngine->GetLargeFont() : nullptr;
+	float RW = 0.f, RH = 0.f;
+	GetTextSize(TEXT("Ay"), RW, RH, Font, 1.f);
+	const float LabelScale = RH > 0.f ? 15.f * S * 1.25f / RH : 1.f;
+	auto Label = [&](const TCHAR* Text, float Y) { const FVector2D P = At(110.f, Y); DrawText(Text, Gilt, P.X, P.Y - 15.f * S, Font, LabelScale); };
+	auto Bar = [&](float Y, float Pct)
+	{
+		const int32 Filled = FMath::RoundToInt(FMath::Clamp(Pct, 0.f, 1.f) * 10.f);
+		for (int32 k = 0; k < 10; ++k)
+		{
+			const FVector2D P = At(176.f + k * 11.f, Y - 12.f);
+			DrawRect(k < Filled ? Gilt : Faded(Gilt, 0.22f), P.X, P.Y, 9.f * S, 12.f * S);
+		}
+	};
+	Label(TEXT("HULL"), 420.f);
+	for (int32 k = 0; k < Ship.Hull; ++k)
+	{
+		const FVector2D P = At(182.f + k * 18.f, 414.f);
+		Canvas->K2_DrawPolygon(nullptr, P, FVector2D(6.f * S, 6.f * S), 4, FLinearColor(0.85f, 0.25f, 0.2f));
+	}
+	Label(TEXT("SPEED"), 444.f);  Bar(444.f, Ship.SpeedBar);
+	Label(TEXT("FIRE"), 468.f);   Bar(468.f, Ship.FireBar);
+	Label(TEXT("POWER"), 492.f);  Bar(492.f, Ship.PowerBar);
+	Label(TEXT("BOMBS"), 516.f);
+	{
+		const FVector2D P = At(176.f, 516.f);
+		DrawText(FString::FromInt(Ship.Bombs), Gilt, P.X, P.Y - 15.f * S, Font, LabelScale);
+	}
+	DrawWebText(Ship.Personality, FLinearColor(0.61f, 0.54f, 0.31f), 540.f, 12.f);
+
+	// The browse arrows, the mode toggle and the LAUNCH button (the web's touch controls, here as the keys' map).
+	for (const float BX : { 52.f, 428.f })
+	{
+		const FVector2D P = At(BX, 210.f);
+		Disc(P, 40.f * S, FLinearColor(0.07f, 0.063f, 0.12f, 0.92f));
+		Ring(P, 40.f * S, Sky, 2.f);
+		float TW = 0.f, TH = 0.f;
+		const TCHAR* Arrow = BX < 240.f ? TEXT("<") : TEXT(">");
+		GetTextSize(Arrow, TW, TH, Font, LabelScale * 1.8f);
+		DrawText(Arrow, Sky, P.X - TW * 0.5f, P.Y - TH * 0.5f, Font, LabelScale * 1.8f);
+	}
+	const bool bStory = Menu->GetModeIndex() == 0;
+	for (int32 m = 0; m < 2; ++m)
+	{
+		const bool bOn = (m == 0) == bStory;
+		const float BX = m == 0 ? 240.f - 112.f : 240.f + 4.f;
+		Box(BX, 566.f, 108.f, 38.f, bOn ? FLinearColor(0.56f, 0.89f, 1.f, 0.28f) : FLinearColor(0.07f, 0.063f, 0.12f, 0.9f),
+			bOn ? Sky : Faded(Sky, 0.35f), bOn ? 2.5f : 1.5f);
+		const FString Mode = m == 0 ? TEXT("STORY") : TEXT("SWARM");
+		float TW = 0.f, TH = 0.f;
+		GetTextSize(Mode, TW, TH, Font, LabelScale);
+		const FVector2D P = At(BX + 54.f, 585.f);
+		DrawText(Mode, bOn ? FLinearColor(0.94f, 0.98f, 1.f) : FLinearColor(0.49f, 0.58f, 0.66f), P.X - TW * 0.5f, P.Y - TH * 0.5f, Font, LabelScale);
+	}
+	const float LP = bLaunching ? 1.f : 0.8f + 0.2f * FMath::Sin(T * 3.f);
+	Box(240.f - 110.f, 616.f, 220.f, 48.f, Faded(Gilt, 0.9f * LP), FLinearColor(0.96f, 0.84f, 0.48f), 2.f);
+	DrawWebText(bLaunching ? TEXT("LAUNCHING") : TEXT("LAUNCH"), FLinearColor(0.1f, 0.075f, 0.02f), 648.f, 20.f);
+	DrawWebText(TEXT("A / D  browse    \u00B7    W / S  mode    \u00B7    SPACE  launch    \u00B7    ESC  back"), Sand, 696.f, 12.f);
+
+	if (bLaunching)                                            // the screen goes to black as the engines take the ship out
+	{
+		DrawRect(FLinearColor(0.f, 0.f, 0.f, FMath::Clamp(T / FMath::Max(Menu->LaunchDelay, 0.01f), 0.f, 1.f)), 0.f, 0.f, W, H);
+	}
 }
