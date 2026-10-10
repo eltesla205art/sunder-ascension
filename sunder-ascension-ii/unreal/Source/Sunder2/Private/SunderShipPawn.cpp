@@ -31,6 +31,7 @@
 #include "SunderGameMode.h"
 #include "SunderProjectile.h"
 #include "UObject/ConstructorHelpers.h"
+#include "SunderSettingsSubsystem.h"
 
 ASunderShipPawn::ASunderShipPawn()
 {
@@ -489,7 +490,7 @@ void ASunderShipPawn::PlayFormChange(bool bUp)
 
 void ASunderShipPawn::PlaySound(USoundBase* Sound) const
 {
-	if (Sound) { UGameplayStatics::PlaySound2D(this, Sound, SoundVolume); }
+	if (Sound) { UGameplayStatics::PlaySound2D(this, Sound, SoundVolume * USunderSettingsSubsystem::EffectsGain(this)); }
 }
 
 void ASunderShipPawn::CollectPickup(ESunderPickupKind Kind)

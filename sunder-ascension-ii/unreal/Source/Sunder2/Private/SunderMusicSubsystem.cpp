@@ -5,6 +5,7 @@
 #include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundBase.h"
+#include "SunderSettingsSubsystem.h"
 
 namespace
 {
@@ -113,7 +114,7 @@ void USunderMusicSubsystem::PlayStageCue(ESunderStageCue Cue)
 	float& Last = LastCueTime[(int32)Cue];
 	if (MinGap > 0.f && Now - Last < MinGap) { return; }    // a barrage of kills mustn't become noise
 	Last = Now;
-	UGameplayStatics::PlaySound2D(this, Sound, CueVolume);
+	UGameplayStatics::PlaySound2D(this, Sound, CueVolume * USunderSettingsSubsystem::EffectsGain(this));
 	if (Cue == ESunderStageCue::Start) { Duck(Sound->GetDuration() * 0.7f); }
 }
 
@@ -146,7 +147,8 @@ void USunderMusicSubsystem::Tick(float DeltaTime)
 	{
 		DuckGain = FMath::FInterpConstantTo(DuckGain, 1.f, DeltaTime, 1.f / 0.6f);
 	}
-	const float Bus = MusicVolume * DuckGain;
+	const float Bus = MusicVolume * DuckGain * USunderSettingsSubsystem::MusicGain(this);   // the player's music volume
+	if (AmbienceComponent) { AmbienceComponent->SetVolumeMultiplier(FMath::Max(AmbienceVolume * USunderSettingsSubsystem::MusicGain(this), SilentGain)); }
 
 	if (!bStarted && Current.Num() > 0)
 	{

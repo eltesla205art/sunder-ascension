@@ -20,7 +20,8 @@ enum class ESunderMenuScreen : uint8
 {
 	Title,
 	Hangar,
-	Launching
+	Launching,
+	Settings      // music and effects volume, display, performance mode, VSync, hitbox (USunderSettingsSubsystem)
 };
 
 USTRUCT(BlueprintType)
@@ -139,12 +140,17 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Menu") int32 GetShipIndex() const { return ShipIndex; }
 	/** 0 = Story, 1 = Swarm. */
 	UFUNCTION(BlueprintPure, Category = "Menu") int32 GetModeIndex() const { return ModeIndex; }
+	/** The title's choice: 0 = begin (to the hangar), 1 = settings. */
+	UFUNCTION(BlueprintPure, Category = "Menu") int32 GetTitleIndex() const { return TitleIndex; }
+	/** The highlighted row on the settings screen (an ESunderSetting). */
+	UFUNCTION(BlueprintPure, Category = "Menu") int32 GetSettingIndex() const { return SettingIndex; }
 protected:
 	virtual void BeginPlay() override;
 
 private:
 	void EnterTitle();
 	void EnterHangar();
+	void EnterSettings();
 	void QueueRev(float Delay);
 	void PlayRev();
 	void OpenArena();
@@ -152,6 +158,8 @@ private:
 	ESunderMenuScreen Screen = ESunderMenuScreen::Title;
 	int32 ShipIndex = 0;
 	int32 ModeIndex = 0;
+	int32 TitleIndex = 0;
+	int32 SettingIndex = 0;
 	float LastMoveCue = -100.f;
 	FTimerHandle RevTimer;
 	FTimerHandle LaunchTimer;

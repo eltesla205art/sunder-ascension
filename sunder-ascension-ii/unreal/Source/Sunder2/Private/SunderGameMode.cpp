@@ -14,6 +14,7 @@
 #include "Sound/SoundBase.h"
 #include "TimerManager.h"
 #include "Misc/CoreDelegates.h"
+#include "SunderSettingsSubsystem.h"
 
 ASunderGameMode::ASunderGameMode()
 {
@@ -85,7 +86,7 @@ void ASunderGameMode::PlayExplosion(bool bBig)
 	const float Now = GetWorld()->GetTimeSeconds();
 	if (!bBig && Now - LastExplosionAt < 0.03f) { return; }   // a bomb's sweep: one boom per frame or two, not one per kill
 	if (!bBig) { LastExplosionAt = Now; }
-	UGameplayStatics::PlaySound2D(this, Sound, ExplosionVolume);
+	UGameplayStatics::PlaySound2D(this, Sound, ExplosionVolume * USunderSettingsSubsystem::EffectsGain(this));
 }
 
 void ASunderGameMode::TrySpawnPickup(const FVector& Location, float Chance)

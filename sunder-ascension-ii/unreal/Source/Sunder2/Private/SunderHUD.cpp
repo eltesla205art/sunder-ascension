@@ -8,6 +8,9 @@
 #include "SunderGameMode.h"
 #include "SunderKeeper.h"
 #include "SunderShipPawn.h"
+#include "SunderSettingsSubsystem.h"
+#include "Components/SphereComponent.h"
+#include "Engine/GameInstance.h"
 
 void ASunderHUD::DrawHUD()
 {
@@ -39,6 +42,22 @@ void ASunderHUD::DrawHUD()
 			GetTextSize(Card, CW, CH, Font, 1.2f);
 			DrawText(Card, Gold, (W - CW) * 0.5f, H * 0.22f, Font, 1.2f);
 		}
+	}
+
+	// Accessibility (Settings → SHOW HITBOX): the ship's real hit sphere as a ring, always visible.
+	const USunderSettingsSubsystem* Settings = GetGameInstance() ? GetGameInstance()->GetSubsystem<USunderSettingsSubsystem>() : nullptr;
+	if (const ASunderShipPawn* Ship = Cast<ASunderShipPawn>(GetOwningPawn()); Ship && Settings && Settings->ShowHitbox() && Ship->IsAlive() && Ship->Collision)
+	{
+		const FVector Centre = Ship->Collision->GetComponentLocation();
+		const FVector C = Project(Centre), Edge = Project(Centre + FVector(0.f, Ship->Collision->GetScaledSphereRadius(), 0.f));
+		const float R = FMath::Max(FVector2D(Edge.X - C.X, Edge.Y - C.Y).Size(), 3.f);
+		const FLinearColor Ring(0.56f, 0.89f, 1.f, 0.9f);
+		for (int32 k = 0; k < 32; ++k)
+		{
+			const float A0 = UE_TWO_PI * k / 32, A1 = UE_TWO_PI * (k + 1) / 32;
+			DrawLine(C.X + FMath::Cos(A0) * R, C.Y + FMath::Sin(A0) * R, C.X + FMath::Cos(A1) * R, C.Y + FMath::Sin(A1) * R, Ring, 2.f);
+		}
+		DrawRect(FLinearColor::White, C.X - 2.f, C.Y - 2.f, 4.f, 4.f);
 	}
 
 	if (const ASunderShipPawn* Ship = Cast<ASunderShipPawn>(GetOwningPawn()))

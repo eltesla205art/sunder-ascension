@@ -9,6 +9,7 @@
 #include "SunderMusicSubsystem.h"
 #include "SunderStageAudio.h"
 #include "SunderStorySubsystem.h"
+#include "SunderSettingsSubsystem.h"
 #include "SunderLoadoutSubsystem.h"
 #include "TimerManager.h"
 
@@ -63,9 +64,18 @@ void ASunderMenuGameMode::Confirm()
 	switch (Screen)
 	{
 	case ESunderMenuScreen::Title:
+		if (TitleIndex == 1) { PlayCue(ModeSound, false); EnterSettings(); break; }
 		PlayCue(StartSound, true);
 		EnterHangar();
 		QueueRev(0.9f);                                      // the chosen ship answers as the bay opens
+		break;
+	case ESunderMenuScreen::Settings:
+		if (SettingIndex == (int32)ESunderSetting::Back) { PlayCue(BackSound, false); EnterTitle(); break; }
+		if (USunderSettingsSubsystem* Settings = GetGameInstance()->GetSubsystem<USunderSettingsSubsystem>())
+		{
+			Settings->Change((ESunderSetting)SettingIndex, 1);  // SPACE steps a setting on (toggles flip)
+			PlayCue(ModeSound, false);
+		}
 		break;
 	case ESunderMenuScreen::Hangar:
 		Screen = ESunderMenuScreen::Launching;
@@ -85,8 +95,16 @@ void ASunderMenuGameMode::Confirm()
 	}
 }
 
+void ASunderMenuGameMode::EnterSettings()
+{
+	Screen = ESunderMenuScreen::Settings;
+	SettingIndex = 0;
+	MarkScreenOpened();                                      // the title's music and ambience carry on underneath
+}
+
 void ASunderMenuGameMode::Back()
 {
+	if (Screen == ESunderMenuScreen::Settings) { PlayCue(BackSound, false); EnterTitle(); return; }
 	if (Screen != ESunderMenuScreen::Hangar) { return; }
 	PlayCue(BackSound, false);
 	GetWorldTimerManager().ClearTimer(RevTimer);
@@ -95,6 +113,29 @@ void ASunderMenuGameMode::Back()
 
 void ASunderMenuGameMode::Navigate(int32 X, int32 Y)
 {
+	if (Screen == ESunderMenuScreen::Title)
+	{
+		if (Y != 0) { TitleIndex = 1 - TitleIndex; PlayCue(MoveSound, false); }
+		return;
+	}
+	if (Screen == ESunderMenuScreen::Settings)
+	{
+		const int32 Rows = (int32)ESunderSetting::Back + 1;
+		if (Y != 0)                                          // up is +1 from the controller
+		{
+			SettingIndex = (SettingIndex - Y + Rows) % Rows;
+			PlayCue(MoveSound, false);
+		}
+		else if (X != 0 && SettingIndex != (int32)ESunderSetting::Back)
+		{
+			if (USunderSettingsSubsystem* Settings = GetGameInstance()->GetSubsystem<USunderSettingsSubsystem>())
+			{
+				Settings->Change((ESunderSetting)SettingIndex, X);
+				PlayCue(ModeSound, false);
+			}
+		}
+		return;
+	}
 	if (X != 0) { MoveShip(X); }
 	if (Y != 0) { ToggleMode(); }
 }

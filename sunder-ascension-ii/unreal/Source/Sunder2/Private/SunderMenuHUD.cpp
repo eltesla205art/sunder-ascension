@@ -6,6 +6,8 @@
 #include "Engine/Texture2D.h"
 #include "Engine/World.h"
 #include "SunderMenuGameMode.h"
+#include "SunderSettingsSubsystem.h"
+#include "Engine/GameInstance.h"
 
 namespace
 {
@@ -38,7 +40,8 @@ void ASunderMenuHUD::DrawHUD()
 	{
 		const float Aspect = Art->GetSizeY() > 0 ? (float)Art->GetSizeX() / Art->GetSizeY() : 1.f;
 		AW = H * Aspect;
-		float Light = Screen == ESunderMenuScreen::Title ? FMath::Clamp(T / 1.2f, 0.f, 1.f) : 0.18f;   // the hangar: a dark night, its own band on top
+		float Light = Screen == ESunderMenuScreen::Title ? FMath::Clamp(T / 1.2f, 0.f, 1.f)
+			: Screen == ESunderMenuScreen::Settings ? 0.25f : 0.18f;   // the hangar: a dark night, its own band on top
 		if (Screen == ESunderMenuScreen::Launching) { Light *= 1.f - FMath::Clamp(T / FMath::Max(Menu->LaunchDelay, 0.01f), 0.f, 1.f); }
 		DrawTexture(Art, (W - AW) * 0.5f, 0.f, AW, H, 0.f, 0.f, 1.f, 1.f, FLinearColor(Light, Light, Light, 1.f));
 	}
@@ -49,6 +52,11 @@ void ASunderMenuHUD::DrawHUD()
 		return;
 	}
 
+	if (Screen == ESunderMenuScreen::Settings)
+	{
+		DrawSettings(Menu, T);
+		return;
+	}
 	DrawHangar(Menu, T, Screen == ESunderMenuScreen::Launching);
 }
 
@@ -132,8 +140,11 @@ void ASunderMenuHUD::DrawTitle(const ASunderMenuGameMode* Menu, float T, float A
 	DrawWebText(TEXT("\u2014\u2014  THE TWELVE GATES  \u2014\u2014"), Faded(FLinearColor(0.83f, 0.69f, 0.22f), A), 168.f, 15.f);
 
 	// The prompts and the credits.
+	// The choice under the logo: begin (the web game's pulsing prompt) or settings; W / S moves between them.
 	const float Pulse = 0.4f + 0.6f * FMath::Abs(FMath::Sin(T * 2.2f));
-	DrawWebText(TEXT("PRESS SPACE / ENTER TO BEGIN"), Faded(FLinearColor(1.f, 0.96f, 0.79f), A * Pulse), 612.f, 17.f);
+	const bool bBegin = Menu->GetTitleIndex() == 0;
+	DrawWebText(TEXT("PRESS SPACE / ENTER TO BEGIN"), Faded(FLinearColor(1.f, 0.96f, 0.79f), A * (bBegin ? Pulse : 0.35f)), 612.f, 17.f);
+	DrawWebText(bBegin ? TEXT("SETTINGS") : TEXT(">  SETTINGS  <"), Faded(FLinearColor(0.56f, 0.89f, 1.f), A * (bBegin ? 0.55f : Pulse)), 646.f, 14.f);
 	DrawWebText(TEXT("PART II  \u00B7  EARLY BUILD"), Faded(FLinearColor(0.56f, 0.89f, 1.f), 0.55f * A), 720.f - 34.f, 11.f);
 	DrawWebText(TEXT("AN ASCENSION MEDIA GROUP PRODUCTION"), Faded(FLinearColor(0.79f, 0.70f, 0.41f), 0.6f * A), 720.f - 16.f, 11.f);
 }
@@ -285,4 +296,70 @@ void ASunderMenuHUD::DrawHangar(const ASunderMenuGameMode* Menu, float T, bool b
 	{
 		DrawRect(FLinearColor(0.f, 0.f, 0.f, FMath::Clamp(T / FMath::Max(Menu->LaunchDelay, 0.01f), 0.f, 1.f)), 0.f, 0.f, W, H);
 	}
+}
+
+void ASunderMenuHUD::DrawSettings(const ASunderMenuGameMode* Menu, float T)
+{
+	// A glass panel in the menus' style (DESIGN.md: night indigo, gold hairline, cyan on the focused row): each setting's
+	// name on the left, its value on the right, volumes as ten-cell bars, BACK at the foot.
+	const USunderSettingsSubsystem* Settings = Menu->GetGameInstance() ? Menu->GetGameInstance()->GetSubsystem<USunderSettingsSubsystem>() : nullptr;
+	if (!Settings) { return; }
+	const float W = Canvas->ClipX, H = Canvas->ClipY, S = H / 720.f;
+	const float A = FMath::Clamp(T / 0.25f, 0.f, 1.f);
+	const FLinearColor Gilt(0.83f, 0.69f, 0.22f), Sky(0.56f, 0.89f, 1.f), Sand(0.79f, 0.70f, 0.41f);
+	auto Faded = [](const FLinearColor& C, float Alpha) { return FLinearColor(C.R, C.G, C.B, FMath::Clamp(Alpha, 0.f, 1.f)); };
+	UFont* Font = GEngine ? GEngine->GetLargeFont() : nullptr;
+	float RW = 0.f, RH = 0.f;
+	GetTextSize(TEXT("Ay"), RW, RH, Font, 1.f);
+	const float TextScale = RH > 0.f ? 16.f * S * 1.25f / RH : 1.f;
+
+	const float PW = FMath::Min(W * 0.8f, 560.f * S), PX = (W - PW) * 0.5f, PY = 150.f * S, Rows = (float)ESunderSetting::Back + 1;
+	const float RowH = 48.f * S, PH = Rows * RowH + 40.f * S;
+	DrawRect(FLinearColor(0.043f, 0.059f, 0.165f, 0.82f * A), PX, PY, PW, PH);     // night indigo glass
+	for (const float Y : { PY, PY + PH }) { DrawLine(PX, Y, PX + PW, Y, Faded(Gilt, A), 1.f); }
+	for (const float X : { PX, PX + PW }) { DrawLine(X, PY, X, PY + PH, Faded(Gilt, A), 1.f); }
+
+	DrawWebText(TEXT("SETTINGS"), Faded(FLinearColor(0.96f, 0.84f, 0.48f), A), 110.f, 30.f, FLinearColor(0.83f, 0.69f, 0.22f));
+	for (int32 i = 0; i < (int32)Rows; ++i)
+	{
+		const ESunderSetting Setting = (ESunderSetting)i;
+		const bool bOn = i == Menu->GetSettingIndex();
+		const float Y = PY + 20.f * S + i * RowH, MidY = Y + RowH * 0.5f;
+		if (bOn)                                              // the focused row: a cyan wash and a light sweep across it
+		{
+			DrawRect(Faded(Sky, 0.16f * A), PX + 8.f * S, Y + 4.f * S, PW - 16.f * S, RowH - 8.f * S);
+			const float Sweep = FMath::Frac(T * 0.5f);
+			DrawRect(Faded(Sky, 0.12f * A * FMath::Sin(Sweep * UE_PI)), PX + 8.f * S + (PW - 60.f * S) * Sweep, Y + 4.f * S, 44.f * S, RowH - 8.f * S);
+		}
+		float TW = 0.f, TH = 0.f;
+		const FString Name = USunderSettingsSubsystem::Label(Setting);
+		GetTextSize(Name, TW, TH, Font, TextScale);
+		if (Setting == ESunderSetting::Back)
+		{
+			DrawText(Name, Faded(bOn ? FLinearColor(0.94f, 0.98f, 1.f) : Sand, A), (W - TW) * 0.5f, MidY - TH * 0.5f, Font, TextScale);
+			continue;
+		}
+		DrawText(Name, Faded(bOn ? FLinearColor(0.94f, 0.98f, 1.f) : Sand, A), PX + 28.f * S, MidY - TH * 0.5f, Font, TextScale);
+		const float RightX = PX + PW - 28.f * S;
+		if (Setting == ESunderSetting::MusicVolume || Setting == ESunderSetting::EffectsVolume)
+		{
+			const int32 V = Setting == ESunderSetting::MusicVolume ? Settings->GetMusicVolume() : Settings->GetEffectsVolume();
+			const float Cell = 14.f * S, BarW = 10.f * Cell;
+			for (int32 k = 0; k < 10; ++k)
+			{
+				DrawRect(k < V ? Faded(bOn ? Sky : Gilt, A) : Faded(Gilt, 0.2f * A), RightX - BarW + k * Cell, MidY - 7.f * S, Cell - 3.f * S, 14.f * S);
+			}
+			const FString Num = FString::FromInt(V);
+			GetTextSize(Num, TW, TH, Font, TextScale);
+			DrawText(Num, Faded(Sand, A), RightX - BarW - 20.f * S - TW, MidY - TH * 0.5f, Font, TextScale);
+		}
+		else
+		{
+			const FString Value = bOn ? FString::Printf(TEXT("<  %s  >"), *Settings->Describe(Setting)) : Settings->Describe(Setting);
+			GetTextSize(Value, TW, TH, Font, TextScale);
+			DrawText(Value, Faded(bOn ? Sky : Gilt, A), RightX - TW, MidY - TH * 0.5f, Font, TextScale);
+		}
+	}
+	DrawWebText(TEXT("W / S  choose    \u00B7    A / D  change    \u00B7    SPACE  toggle    \u00B7    ESC  back"),
+		Faded(Sand, A), 680.f, 12.f);
 }

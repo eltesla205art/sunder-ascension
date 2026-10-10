@@ -21,6 +21,8 @@ private:
 	/** The hangar: the web game's drawShipSelect (hangar band, ringed preview, name, class, stats, personality,
 	 *  browse arrows, STORY / SWARM, LAUNCH), then the fade to black on launch. */
 	void DrawHangar(const class ASunderMenuGameMode* Menu, float T, bool bLaunching);
+	/** Settings: a glass panel of rows (music and effects volume bars, display, performance mode, VSync, hitbox, back). */
+	void DrawSettings(const class ASunderMenuGameMode* Menu, float T);
 	/** Centred text placed by the web game's baseline and pixel size; Glow (alpha > 0) adds its soft shadow. */
 	void DrawWebText(const FString& Text, const FLinearColor& Color, float BaselineY, float Px,
 		const FLinearColor& Glow = FLinearColor(0.f, 0.f, 0.f, 0.f));

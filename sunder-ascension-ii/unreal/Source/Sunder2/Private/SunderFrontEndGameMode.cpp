@@ -7,6 +7,7 @@
 #include "SunderMenuController.h"
 #include "SunderMusicSubsystem.h"
 #include "TimerManager.h"
+#include "SunderSettingsSubsystem.h"
 
 ASunderFrontEndGameMode::ASunderFrontEndGameMode()
 {
@@ -32,7 +33,7 @@ USunderMusicSubsystem* ASunderFrontEndGameMode::Music() const
 void ASunderFrontEndGameMode::PlayCueNow(USoundBase* Sound, bool bDuck)
 {
 	if (!Sound) { return; }
-	UGameplayStatics::PlaySound2D(this, Sound);
+	UGameplayStatics::PlaySound2D(this, Sound, USunderSettingsSubsystem::EffectsGain(this));
 	if (bDuck)
 	{
 		if (USunderMusicSubsystem* M = Music()) { M->Duck(Sound->GetDuration() * 0.7f); }

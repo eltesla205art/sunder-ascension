@@ -16,6 +16,7 @@
 #include "SunderGameMode.h"
 #include "SunderMusicSubsystem.h"
 #include "SunderProjectile.h"
+#include "SunderSettingsSubsystem.h"
 
 ASunderKeeper::ASunderKeeper()
 {
@@ -92,7 +93,7 @@ void ASunderKeeper::PlayVoice(USoundBase* Sound, float MinGap, float& LastPlayed
 	const float Now = GetWorld()->GetTimeSeconds();
 	if (MinGap > 0.f && Now - LastPlayed < MinGap) { return; }   // a barrage mustn't turn into noise
 	LastPlayed = Now;
-	UGameplayStatics::PlaySound2D(this, Sound, VoiceVolume);
+	UGameplayStatics::PlaySound2D(this, Sound, VoiceVolume * USunderSettingsSubsystem::EffectsGain(this));
 	if (bDuck)
 	{
 		if (USunderMusicSubsystem* M = Music()) { M->Duck(Sound->GetDuration() * 0.7f); }   // the web game's duck length
