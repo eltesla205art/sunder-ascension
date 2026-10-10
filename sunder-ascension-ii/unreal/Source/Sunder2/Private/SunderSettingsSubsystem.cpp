@@ -26,6 +26,8 @@ void USunderSettingsSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	GConfig->GetBool(Section, TEXT("ShowHitbox"), bShowHitbox, GGameUserSettingsIni);
 	GConfig->GetInt(Section, TEXT("ScreenShake"), ScreenShake, GGameUserSettingsIni);
 	ScreenShake = FMath::Clamp(ScreenShake, 0, 2);
+	GConfig->GetInt(Section, TEXT("BulletColours"), BulletColours, GGameUserSettingsIni);
+	BulletColours = FMath::Clamp(BulletColours, 0, 2);
 	MusicVolume = FMath::Clamp(MusicVolume, 0, 10);
 	EffectsVolume = FMath::Clamp(EffectsVolume, 0, 10);
 }
@@ -37,6 +39,7 @@ void USunderSettingsSubsystem::Save() const
 	GConfig->SetInt(Section, TEXT("EffectsVolume"), EffectsVolume, GGameUserSettingsIni);
 	GConfig->SetBool(Section, TEXT("ShowHitbox"), bShowHitbox, GGameUserSettingsIni);
 	GConfig->SetInt(Section, TEXT("ScreenShake"), ScreenShake, GGameUserSettingsIni);
+	GConfig->SetInt(Section, TEXT("BulletColours"), BulletColours, GGameUserSettingsIni);
 	GConfig->Flush(false, GGameUserSettingsIni);
 }
 
@@ -50,6 +53,7 @@ void USunderSettingsSubsystem::Change(ESunderSetting Setting, int32 Direction)
 	case ESunderSetting::EffectsVolume: EffectsVolume = FMath::Clamp(EffectsVolume + Step, 0, 10); break;
 	case ESunderSetting::ShowHitbox:    bShowHitbox = !bShowHitbox; break;
 	case ESunderSetting::ScreenShake:   ScreenShake = (ScreenShake + Step + 3) % 3; break;
+	case ESunderSetting::BulletColours: BulletColours = (BulletColours + Step + 3) % 3; break;
 	case ESunderSetting::WindowMode:
 		if (S)
 		{
@@ -93,6 +97,7 @@ FString USunderSettingsSubsystem::Describe(ESunderSetting Setting) const
 	case ESunderSetting::EffectsVolume: return Bar(EffectsVolume);
 	case ESunderSetting::ShowHitbox:    return bShowHitbox ? TEXT("ON") : TEXT("OFF");
 	case ESunderSetting::ScreenShake:   return ScreenShake == 0 ? TEXT("OFF") : ScreenShake == 1 ? TEXT("LOW") : TEXT("FULL");
+	case ESunderSetting::BulletColours: return BulletColours == 0 ? TEXT("STANDARD") : BulletColours == 1 ? TEXT("RED-GREEN SAFE") : TEXT("BLUE-YELLOW SAFE");
 	case ESunderSetting::WindowMode:
 		if (!S) { return TEXT("-"); }
 		switch (S->GetFullscreenMode())
@@ -117,6 +122,7 @@ FString USunderSettingsSubsystem::Label(ESunderSetting Setting)
 	case ESunderSetting::Performance:   return TEXT("MODE");
 	case ESunderSetting::VSync:         return TEXT("VSYNC");
 	case ESunderSetting::ScreenShake:   return TEXT("SCREEN SHAKE");
+	case ESunderSetting::BulletColours: return TEXT("BULLET COLOURS");
 	case ESunderSetting::ShowHitbox:    return TEXT("SHOW HITBOX");
 	default:                            return TEXT("BACK");
 	}
@@ -128,6 +134,35 @@ float USunderSettingsSubsystem::MusicGain(const UObject* WorldContext)
 	const UGameInstance* GI = World ? World->GetGameInstance() : nullptr;
 	const USunderSettingsSubsystem* Self = GI ? GI->GetSubsystem<USunderSettingsSubsystem>() : nullptr;
 	return Self ? Self->MusicVolume / 10.f : 1.f;
+}
+
+void USunderSettingsSubsystem::PaletteFor(int32 Mode, FLinearColor& OutEnemy, FLinearColor& OutPlayer)
+{
+	switch (Mode)
+	{
+	case 1:  // protanopia / deuteranopia: orange against sky blue (Okabe–Ito #E69F00 / #56B4E9)
+		OutEnemy = FLinearColor(3.5f, 1.53f, 0.f);
+		OutPlayer = FLinearColor(0.4f, 1.96f, 3.5f);
+		break;
+	case 2:  // tritanopia: vermillion against sky blue (Okabe–Ito #D55E00 / #56B4E9)
+		OutEnemy = FLinearColor(3.5f, 0.59f, 0.f);
+		OutPlayer = FLinearColor(0.4f, 1.96f, 3.5f);
+		break;
+	default: // the game's own: the enemy shot's violet, the Sunborn's gold
+		OutEnemy = FLinearColor(1.3f, 0.12f, 2.7f);
+		OutPlayer = FLinearColor(3.0f, 2.1f, 0.6f);
+		break;
+	}
+}
+
+bool USunderSettingsSubsystem::BulletPalette(const UObject* WorldContext, FLinearColor& OutEnemy, FLinearColor& OutPlayer)
+{
+	const UWorld* World = WorldContext ? WorldContext->GetWorld() : nullptr;
+	const UGameInstance* GI = World ? World->GetGameInstance() : nullptr;
+	const USunderSettingsSubsystem* Self = GI ? GI->GetSubsystem<USunderSettingsSubsystem>() : nullptr;
+	if (!Self || Self->BulletColours == 0) { return false; }
+	PaletteFor(Self->BulletColours, OutEnemy, OutPlayer);
+	return true;
 }
 
 float USunderSettingsSubsystem::ShakeScale(const UObject* WorldContext)

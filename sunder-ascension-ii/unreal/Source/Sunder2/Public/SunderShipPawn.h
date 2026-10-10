@@ -396,6 +396,9 @@ private:
 	void PlayFormChange(bool bUp);
 
 	FTimerHandle RespawnTimer;
+	/** The beam's own colour (the loadout's), restored when the colourblind palette is off. */
+	FLinearColor BaseBeamColor = FLinearColor::White;
+	bool bBeamColorCaptured = false;
 	float ShieldRadiusNow() const { return ShieldRadius * FormScale(); }
 	void UpdateBodyScale();
 	float FormScale() const;

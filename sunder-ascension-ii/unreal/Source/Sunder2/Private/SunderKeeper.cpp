@@ -204,7 +204,9 @@ void ASunderKeeper::ShootFrom(const FVector& Origin, const FVector& Direction, f
 	if (UProjectilePoolSubsystem* Pool = GetWorld()->GetSubsystem<UProjectilePoolSubsystem>())
 	{
 		ASunderProjectile* Shot = Pool->Acquire(ShotClass, Origin, Direction, this, this, BulletSpeed * SpeedScale);
-		if (Shot && bTintShots) { Shot->SetShotColor(KeeperColor); }
+		FLinearColor SafeEnemy, SafePlayer;
+		if (Shot && USunderSettingsSubsystem::BulletPalette(this, SafeEnemy, SafePlayer)) { Shot->SetShotColor(SafeEnemy); }   // colourblind-safe
+		else if (Shot && bTintShots) { Shot->SetShotColor(KeeperColor); }
 	}
 }
 

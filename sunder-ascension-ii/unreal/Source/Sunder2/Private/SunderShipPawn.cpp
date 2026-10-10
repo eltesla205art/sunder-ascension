@@ -207,7 +207,14 @@ void ASunderShipPawn::OnMoveUp(const FInputActionValue& Value) { MoveInput.X = V
 void ASunderShipPawn::OnMoveUpReleased(const FInputActionValue& Value) { MoveInput.X = 0.f; }
 void ASunderShipPawn::OnMoveRight(const FInputActionValue& Value) { MoveInput.Y = Value.Get<float>(); }
 void ASunderShipPawn::OnMoveRightReleased(const FInputActionValue& Value) { MoveInput.Y = 0.f; }
-void ASunderShipPawn::OnBeamPressed(const FInputActionValue& Value) { if (!bDead) { BeamWeapon->StartFire(); } }
+void ASunderShipPawn::OnBeamPressed(const FInputActionValue& Value)
+{
+	if (bDead) { return; }
+	if (!bBeamColorCaptured) { BaseBeamColor = BeamWeapon->BeamColor; bBeamColorCaptured = true; }
+	FLinearColor SafeEnemy, SafePlayer;                       // the beam follows Settings → BULLET COLOURS too
+	BeamWeapon->BeamColor = USunderSettingsSubsystem::BulletPalette(this, SafeEnemy, SafePlayer) ? SafePlayer : BaseBeamColor;
+	BeamWeapon->StartFire();
+}
 void ASunderShipPawn::OnBeamReleased(const FInputActionValue& Value) { BeamWeapon->StopFire(); }
 void ASunderShipPawn::OnShootPressed(const FInputActionValue& Value) { bShooting = true; }
 void ASunderShipPawn::OnShootReleased(const FInputActionValue& Value) { bShooting = false; }
@@ -351,6 +358,8 @@ void ASunderShipPawn::ApplyLoadout(const FSunderShipLoadout& InLoadout)
 	SpreadAngle = InLoadout.SpreadAngle;
 	ShotColor = InLoadout.Color;
 	if (BeamWeapon) { BeamWeapon->BeamColor = InLoadout.Color; }   // picked up the next time the beam starts
+	BaseBeamColor = InLoadout.Color;
+	bBeamColorCaptured = true;
 	DeathColor = InLoadout.Color;
 	FormColor = InLoadout.Accent;
 	if (!bBaseScaleCaptured) { BaseMeshScale = Mesh->GetRelativeScale3D(); bBaseScaleCaptured = true; }
@@ -610,7 +619,9 @@ void ASunderShipPawn::FireShots()
 	const bool bLaser = State.Weapon == ESunderWeapon::Laser;
 	// Battle math #1: (base + Laser bonus) × power level.
 	const float Damage = ShotDamage > 0.f ? (ShotDamage + (bLaser ? LaserBonusDamage : 0.f)) * State.Power : 0.f;
-	const FLinearColor Color = bLaser ? LaserColor : ShotColor;
+	FLinearColor SafeEnemy, SafePlayer;                       // Settings → BULLET COLOURS: a colourblind-safe palette
+	const FLinearColor Color = USunderSettingsSubsystem::BulletPalette(this, SafeEnemy, SafePlayer) ? SafePlayer
+		: (bLaser ? LaserColor : ShotColor);
 	auto Fire = [&](float OffsetY, float AngleDeg)
 	{
 		const FVector Dir = FVector::ForwardVector.RotateAngleAxis(AngleDeg, FVector::UpVector);

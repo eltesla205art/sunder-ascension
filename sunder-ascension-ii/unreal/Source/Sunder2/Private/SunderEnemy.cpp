@@ -18,6 +18,7 @@
 #include "SunderMusicSubsystem.h"
 #include "SunderProjectile.h"
 #include "SunderShipPawn.h"
+#include "SunderSettingsSubsystem.h"
 #include "UObject/ConstructorHelpers.h"
 
 ASunderEnemy::ASunderEnemy()
@@ -207,7 +208,13 @@ void ASunderEnemy::FireVolley()
 
 	// The Hour's bullet speed: the shot's own speed × the wave set's ShotSpeedScale (0 = the shot's own, unscaled).
 	const float ShotSpeed = ShotSpeedScale != 1.f ? ShotClass->GetDefaultObject<ASunderProjectile>()->Speed * ShotSpeedScale : 0.f;
-	auto Fire = [&](const FVector& Dir) { Pool->Acquire(ShotClass, Origin, Dir, this, this, ShotSpeed); };
+	FLinearColor SafeEnemy, SafePlayer;                       // Settings → BULLET COLOURS: a colourblind-safe palette
+	const bool bSafe = USunderSettingsSubsystem::BulletPalette(this, SafeEnemy, SafePlayer);
+	auto Fire = [&](const FVector& Dir)
+	{
+		ASunderProjectile* Shot = Pool->Acquire(ShotClass, Origin, Dir, this, this, ShotSpeed);
+		if (Shot && bSafe) { Shot->SetShotColor(SafeEnemy); }
+	};
 
 	switch (FirePattern)
 	{

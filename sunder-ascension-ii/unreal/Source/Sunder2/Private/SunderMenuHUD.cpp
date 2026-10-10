@@ -358,6 +358,15 @@ void ASunderMenuHUD::DrawSettings(const ASunderMenuGameMode* Menu, float T)
 			const FString Value = bOn ? FString::Printf(TEXT("<  %s  >"), *Settings->Describe(Setting)) : Settings->Describe(Setting);
 			GetTextSize(Value, TW, TH, Font, TextScale);
 			DrawText(Value, Faded(bOn ? Sky : Gilt, A), RightX - TW, MidY - TH * 0.5f, Font, TextScale);
+			if (Setting == ESunderSetting::BulletColours)          // swatches: an enemy shot, then one of yours
+			{
+				FLinearColor Enemy, Player;
+				USunderSettingsSubsystem::PaletteFor(Settings->GetBulletColours(), Enemy, Player);
+				auto Shown = [](const FLinearColor& C) { const float P = FMath::Max3(C.R, C.G, C.B); return P > 0.f ? FLinearColor(C.R / P, C.G / P, C.B / P) : C; };
+				const float R = 8.f * S, SX = RightX - TW - 28.f * S;
+				Canvas->K2_DrawPolygon(nullptr, FVector2D(SX - 3.f * R, MidY), FVector2D(R, R), 24, Faded(Shown(Enemy), A));
+				Canvas->K2_DrawPolygon(nullptr, FVector2D(SX, MidY), FVector2D(R, R), 24, Faded(Shown(Player), A));
+			}
 		}
 	}
 	DrawWebText(TEXT("W / S  choose    \u00B7    A / D  change    \u00B7    SPACE  toggle    \u00B7    ESC  back"),

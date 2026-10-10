@@ -16,6 +16,7 @@ enum class ESunderSetting : uint8
 	Performance,
 	VSync,
 	ScreenShake,
+	BulletColours,
 	ShowHitbox,
 	Back
 };
@@ -38,6 +39,15 @@ public:
 	/** The shake multiplier for the arena (1 when there is no game instance yet). */
 	static float ShakeScale(const UObject* WorldContext);
 
+	/** Accessibility (DESIGN.md: colourblind-safe bullet palettes): 0 standard, 1 red-green safe (protanopia /
+	 *  deuteranopia), 2 blue-yellow safe (tritanopia). */
+	UFUNCTION(BlueprintPure, Category = "Settings") int32 GetBulletColours() const { return BulletColours; }
+	/** The bullet colours to use (HDR): true when a colourblind palette is on, with every enemy and Keeper shot in
+	 *  OutEnemy and the ship's shots and beam in OutPlayer (Okabe–Ito colours). */
+	static bool BulletPalette(const UObject* WorldContext, FLinearColor& OutEnemy, FLinearColor& OutPlayer);
+	/** A mode's pair for the settings screen's swatches (mode 0: the standard violet and gold). */
+	static void PaletteFor(int32 Mode, FLinearColor& OutEnemy, FLinearColor& OutPlayer);
+
 	/** Step a setting left (-1) or right (+1); toggles flip either way. Saved and applied at once. */
 	UFUNCTION(BlueprintCallable, Category = "Settings") void Change(ESunderSetting Setting, int32 Direction);
 	/** The value as the settings screen shows it ("7", "FULLSCREEN", "ON"…). */
@@ -55,4 +65,5 @@ private:
 	int32 EffectsVolume = 8;
 	bool bShowHitbox = false;
 	int32 ScreenShake = 2;
+	int32 BulletColours = 0;
 };
