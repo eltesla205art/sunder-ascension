@@ -12,6 +12,13 @@
 namespace
 {
 	const TCHAR* Tabs[3] = { TEXT("KEEPERS"), TEXT("HOURS"), TEXT("SHIPS") };
+	const TCHAR* ActNames[5] = { TEXT(""), TEXT("ACT I: DUSK"), TEXT("ACT II: MIDNIGHT"), TEXT("ACT III: THE DEEP NIGHT"), TEXT("ACT IV: DAWN OR NOTHING") };
+	FLinearColor AccentOf(uint32 Hex) { return FLinearColor(FColor((Hex >> 16) & 255, (Hex >> 8) & 255, Hex & 255)); }
+	void Frame(AHUD* Hud, float X, float Y, float W, float H, const FLinearColor& C, float T)
+	{
+		Hud->DrawRect(C, X, Y, W, T); Hud->DrawRect(C, X, Y + H - T, W, T);
+		Hud->DrawRect(C, X, Y + T, T, H - 2.f * T); Hud->DrawRect(C, X + W - T, Y + T, T, H - 2.f * T);
+	}
 	FLinearColor Faded(const FLinearColor& C, float A) { return FLinearColor(C.R, C.G, C.B, FMath::Clamp(A, 0.f, 1.f)); }
 	float ScaleFor(AHUD* Hud, UFont* Font, float Px)
 	{
@@ -34,8 +41,16 @@ int32 FSunderCodexPanel::Count() const
 bool FSunderCodexPanel::Navigate(int32 X, int32 Y, float Now)
 {
 	if (X != 0) { Tab = (Tab + (X > 0 ? 1 : -1) + 3) % 3; OpenedAt = Now; return true; }
-	if (Y != 0) { Index[Tab] = (Index[Tab] - Y + Count()) % Count(); return true; }   // up is +1
+	if (Y != 0) { Index[Tab] = (Index[Tab] - Y + Count()) % Count(); MovedAt = Now; return true; }   // up is +1
 	return false;
+}
+
+UTexture2D* FSunderCodexPanel::Portrait(int32 i) const
+{
+	// The Keeper portraits create_story_level.py imports (art/blender/keepers), loaded on first sight.
+	if (Portraits.Num() < UE_ARRAY_COUNT(GCodexKeepers)) { Portraits.SetNum(UE_ARRAY_COUNT(GCodexKeepers)); }
+	if (!Portraits[i].IsValid()) { Portraits[i].Reset(LoadObject<UTexture2D>(nullptr, GCodexKeepers[i].Portrait)); }
+	return Portraits[i].Get();
 }
 
 float FSunderCodexPanel::DrawWrapped(AHUD* Hud, const FString& Text, const FLinearColor& Color, float X, float Y, float Width, float Px) const
@@ -104,6 +119,13 @@ void FSunderCodexPanel::Draw(AHUD* Hud, const USunderCodexSubsystem* Codex, floa
 		}
 	}
 
+	if (Tab == 0)
+	{
+		DrawKeepers(Hud, Codex, PX, PY, PW, PH, A, Now);
+		Centre(TEXT("W / S  Keepers    ·    A / D  tabs    ·    ESC  back"), Faded(Sand, A), 690.f, 12.f);
+		return;
+	}
+
 	// The list on the left: number and name, or ??? while locked.
 	const int32 N = Count(), Sel = Index[Tab];
 	const float ListX = PX + 18.f * S, ListW = PW * 0.32f, RowH = FMath::Min(40.f * S, (PH - 30.f * S) / FMath::Max(N, 1));
@@ -112,8 +134,7 @@ void FSunderCodexPanel::Draw(AHUD* Hud, const USunderCodexSubsystem* Codex, floa
 	{
 		FString Label;
 		bool bOpen = true;
-		if (Tab == 0) { bOpen = Codex && Codex->IsMet(GCodexKeepers[i].Hour); Label = FString::Printf(TEXT("%2d  %s"), GCodexKeepers[i].Hour, bOpen ? GCodexKeepers[i].Name : TEXT("???")); }
-		else if (Tab == 1)
+		if (Tab == 1)
 		{
 			bOpen = Codex && Codex->IsReached(GCodexHours[i].Num);
 			FString Short = GCodexHours[i].Name;
@@ -135,40 +156,7 @@ void FSunderCodexPanel::Draw(AHUD* Hud, const USunderCodexSubsystem* Codex, floa
 	// The entry on the right.
 	const float DX = PX + PW * 0.38f, DW = PW * 0.58f;
 	float Y = PY + 22.f * S;
-	if (Tab == 0)
-	{
-		const FSunderCodexKeeper& K = GCodexKeepers[Sel];
-		if (!Codex || !Codex->IsMet(K.Hour))
-		{
-			Y = DrawWrapped(Hud, TEXT("???"), Faded(Dim, A), DX, Y, DW, 24.f);
-			DrawWrapped(Hud, FString::Printf(TEXT("A Keeper waits beyond gate %d. Reach Hour %d to meet it."), K.Hour, K.Hour), Faded(Sand, A), DX, Y + 8.f * S, DW, 13.f);
-			return;
-		}
-		const bool bBeaten = Codex->IsBeaten(K.Hour);
-		if (Portraits.Num() < UE_ARRAY_COUNT(GCodexKeepers)) { Portraits.SetNum(UE_ARRAY_COUNT(GCodexKeepers)); }
-		if (!Portraits[Sel].IsValid()) { Portraits[Sel].Reset(LoadObject<UTexture2D>(nullptr, K.Portrait)); }
-		float TextW = DW;
-		if (UTexture2D* Portrait = Portraits[Sel].Get())              // the portrait, top right of the entry
-		{
-			const float P = 150.f * S;
-			Hud->DrawTexture(Portrait, DX + DW - P, Y, P, P, 0.f, 0.f, 1.f, 1.f, FLinearColor(1.f, 1.f, 1.f, A));
-			TextW = DW - P - 16.f * S;
-		}
-		Y = DrawWrapped(Hud, K.Name, Faded(Gold, A), DX, Y, TextW, 24.f);
-		Y = DrawWrapped(Hud, K.Epithet, Faded(Sky, A), DX, Y, TextW, 15.f);
-		Y = DrawWrapped(Hud, K.HourLine, Faded(Sand, A), DX, Y + 6.f * S, TextW, 12.f);
-		Y = DrawWrapped(Hud, K.Quote, Faded(Gilt, A), DX, Y + 10.f * S, TextW, 13.f);
-		Y = FMath::Max(Y, PY + 22.f * S + 160.f * S);
-		if (!bBeaten)
-		{
-			DrawWrapped(Hud, TEXT("Beat it to learn what it is."), Faded(Dim, A), DX, Y + 10.f * S, DW, 13.f);
-			return;
-		}
-		Y = DrawWrapped(Hud, K.Lore, Faded(Pale, A), DX, Y + 10.f * S, DW, 13.f);
-		Y = DrawWrapped(Hud, FString::Printf(TEXT("ATTACKS  %s"), K.Patterns), Faded(Sand, A), DX, Y + 12.f * S, DW, 12.f);
-		DrawWrapped(Hud, FString::Printf(TEXT("ARENA  %s"), K.Arena), Faded(Sand, A), DX, Y + 4.f * S, DW, 12.f);
-	}
-	else if (Tab == 1)
+	if (Tab == 1)
 	{
 		const FSunderCodexHour& Hr = GCodexHours[Sel];
 		if (!Codex || !Codex->IsReached(Hr.Num))
@@ -195,4 +183,106 @@ void FSunderCodexPanel::Draw(AHUD* Hud, const USunderCodexSubsystem* Codex, floa
 		Y = DrawWrapped(Hud, Sh.Personality, Faded(Pale, A), DX, Y + 14.f * S, DW, 13.f);
 		DrawWrapped(Hud, FString::Printf(TEXT("FORMS  %s"), Sh.Forms), Faded(Sand, A), DX, Y + 14.f * S, DW, 12.f);
 	}
+}
+
+void FSunderCodexPanel::DrawKeepers(AHUD* Hud, const USunderCodexSubsystem* Codex, float PX, float PY, float PW, float PH, float A, float Now) const
+{
+	// The web Codex (keepers.html): a row of glass portrait cards, one per Keeper with its Hour beneath, a gold rule
+	// between the acts, the chosen card lifted and ringed in cyan; above it the chosen Keeper, its portrait large in the
+	// glow of its accent colour. A Keeper not yet met is a dark silhouette.
+	const float S = Hud->Canvas->ClipY / 720.f;
+	const FLinearColor Gold(0.96f, 0.84f, 0.48f), Gilt(0.83f, 0.69f, 0.22f), Sky(0.56f, 0.89f, 1.f), Sand(0.79f, 0.70f, 0.41f),
+		Pale(0.85f, 0.85f, 0.9f), Dim(0.45f, 0.45f, 0.52f), Glass(0.043f, 0.059f, 0.165f, 0.75f), Shadow(0.015f, 0.012f, 0.04f, 0.92f);
+	UFont* Font = GEngine ? GEngine->GetLargeFont() : nullptr;
+	const int32 N = UE_ARRAY_COUNT(GCodexKeepers), Sel = Index[0];
+	auto Met = [&](int32 i) { return Codex && Codex->IsMet(GCodexKeepers[i].Hour); };
+
+	// The cards: 60 wide (48 of portrait), 8 apart, 16 between acts; shrunk to fit a narrow panel.
+	int32 ActGaps = 0;
+	for (int32 i = 1; i < N; ++i) { ActGaps += GCodexKeepers[i].Act != GCodexKeepers[i - 1].Act; }
+	const float Natural = N * 60.f + (N - 1 - ActGaps) * 8.f + ActGaps * 16.f;
+	const float K = FMath::Min(1.f, (PW / S - 40.f) / Natural) * S;
+	const float CW = 60.f * K, CH = 78.f * K, Pad = 6.f * K, PS = 48.f * K;
+	const float Top = PY + PH - 12.f * S - CH;
+	const float LabelScale = ScaleFor(Hud, Font, 10.f * K / S);
+	float X = PX + (PW - Natural * K) * 0.5f;
+	for (int32 i = 0; i < N; ++i)
+	{
+		if (i > 0 && GCodexKeepers[i].Act != GCodexKeepers[i - 1].Act)
+		{
+			Hud->DrawRect(Faded(Gilt, 0.45f * A), X + 7.5f * K, Top + CH * 0.12f, 1.f, CH * 0.76f);   // the act's rule
+			X += 16.f * K;
+		}
+		else if (i > 0) { X += 8.f * K; }
+		const bool bOn = i == Sel, bMet = Met(i);
+		const float Lift = bOn ? FMath::Clamp((Now - MovedAt) / 0.15f, 0.f, 1.f) : 0.f;   // rises 8 and grows 6 %
+		const float Grow = 1.f + 0.06f * Lift, W = CW * Grow, H = CH * Grow;
+		const float CX = X + (CW - W) * 0.5f, CY = Top + (CH - H) * 0.5f - 8.f * K * Lift;
+		Hud->DrawRect(Faded(Glass, Glass.A * A), CX, CY, W, H);
+		if (bOn)
+		{
+			for (int32 g = 1; g <= 4; ++g)                                     // the cyan glow, fading outward
+			{
+				const float O = g * 3.f * K;
+				Frame(Hud, CX - O, CY - O, W + 2.f * O, H + 2.f * O, Faded(Sky, 0.1f * (5 - g) / 4.f * A), 3.f * K);
+			}
+			Frame(Hud, CX, CY, W, H, Faded(Sky, A), FMath::Max(1.f, 1.5f * K));
+		}
+		else { Frame(Hud, CX, CY, W, H, Faded(Pale, 0.16f * A), 1.f); }
+		const float P = PS * Grow, IX = CX + Pad * Grow, IY = CY + Pad * Grow;
+		if (UTexture2D* Tex = Portrait(i))
+		{
+			Hud->DrawTexture(Tex, IX + 2.f * K, IY + 4.f * K, P, P, 0.f, 0.f, 1.f, 1.f, Faded(Shadow, 0.6f * A));   // the drop shadow
+			Hud->DrawTexture(Tex, IX, IY, P, P, 0.f, 0.f, 1.f, 1.f, bMet ? FLinearColor(1.f, 1.f, 1.f, A) : Faded(Shadow, A));
+		}
+		if (!bMet)
+		{
+			float TW = 0.f, TH = 0.f;
+			const float QScale = ScaleFor(Hud, Font, 18.f * K / S);
+			Hud->GetTextSize(TEXT("?"), TW, TH, Font, QScale);
+			Hud->DrawText(TEXT("?"), Faded(Dim, A), IX + (P - TW) * 0.5f, IY + (P - TH) * 0.5f, Font, QScale);
+		}
+		const FString Label = FString::Printf(TEXT("HOUR %d"), GCodexKeepers[i].Hour);
+		float TW = 0.f, TH = 0.f;
+		Hud->GetTextSize(Label, TW, TH, Font, LabelScale * Grow);
+		Hud->DrawText(Label, Faded(bOn ? Sky : bMet ? Sand : Dim, A), CX + (W - TW) * 0.5f, IY + P + 4.f * K * Grow, Font, LabelScale * Grow);
+		X += CW;
+	}
+
+	// The chosen Keeper: its portrait large on the left in its accent's glow, its words on the right.
+	const FSunderCodexKeeper& Kp = GCodexKeepers[Sel];
+	const float BY = PY + 46.f * S, Big = FMath::Min(210.f * S, Top - 40.f * S - BY), BX = PX + 56.f * S;   // its glow stays inside the panel
+	const float TX = BX + Big + 36.f * S, TextW = PX + PW - 36.f * S - TX;
+	float Y = PY + 26.f * S;
+	UTexture2D* Tex = Portrait(Sel);
+	if (!Met(Sel))
+	{
+		if (Tex) { Hud->DrawTexture(Tex, BX, BY, Big, Big, 0.f, 0.f, 1.f, 1.f, Faded(Shadow, A)); }
+		Y = DrawWrapped(Hud, FString::Printf(TEXT("KEEPER CODEX \u2014 %s"), ActNames[FMath::Clamp(Kp.Act, 0, 4)]), Faded(Sky, A), TX, Y, TextW, 11.f);
+		Y = DrawWrapped(Hud, TEXT("???"), Faded(Dim, A), TX, Y + 6.f * S, TextW, 26.f);
+		DrawWrapped(Hud, FString::Printf(TEXT("A Keeper waits beyond gate %d. Reach Hour %d to meet it."), Kp.Hour, Kp.Hour), Faded(Sand, A), TX, Y + 8.f * S, TextW, 13.f);
+		return;
+	}
+	if (Tex)
+	{
+		const FLinearColor Glow = AccentOf(Kp.Accent);
+		const float Breath = 0.85f + 0.15f * FMath::Sin(Now * 1.6f);       // the glow breathes, as on the intro card
+		const float GS = Big * 1.35f;
+		Hud->DrawTexture(Tex, BX - (GS - Big) * 0.5f, BY - (GS - Big) * 0.5f, GS, GS, 0.f, 0.f, 1.f, 1.f,
+			FLinearColor(Glow.R, Glow.G, Glow.B, 0.35f * Breath * A), BLEND_Additive);
+		Hud->DrawTexture(Tex, BX, BY, Big, Big, 0.f, 0.f, 1.f, 1.f, FLinearColor(1.f, 1.f, 1.f, A), BLEND_Translucent);
+	}
+	Y = DrawWrapped(Hud, FString::Printf(TEXT("KEEPER CODEX \u2014 %s"), ActNames[FMath::Clamp(Kp.Act, 0, 4)]), Faded(Sky, A), TX, Y, TextW, 11.f);
+	Y = DrawWrapped(Hud, Kp.Name, Faded(Gold, A), TX, Y + 6.f * S, TextW, 26.f);
+	Y = DrawWrapped(Hud, Kp.Epithet, Faded(Sky, A), TX, Y, TextW, 15.f);
+	Y = DrawWrapped(Hud, Kp.HourLine, Faded(Sand, A), TX, Y + 6.f * S, TextW, 12.f);
+	Y = DrawWrapped(Hud, Kp.Quote, Faded(Gilt, A), TX, Y + 10.f * S, TextW, 13.f);
+	if (!Codex->IsBeaten(Kp.Hour))
+	{
+		DrawWrapped(Hud, TEXT("Beat it to learn what it is."), Faded(Dim, A), TX, Y + 10.f * S, TextW, 13.f);
+		return;
+	}
+	Y = DrawWrapped(Hud, Kp.Lore, Faded(Pale, A), TX, Y + 10.f * S, TextW, 13.f);
+	Y = DrawWrapped(Hud, FString::Printf(TEXT("ATTACKS  %s"), Kp.Patterns), Faded(Sand, A), TX, Y + 12.f * S, TextW, 12.f);
+	DrawWrapped(Hud, FString::Printf(TEXT("ARENA  %s"), Kp.Arena), Faded(Sand, A), TX, Y + 4.f * S, TextW, 12.f);
 }
