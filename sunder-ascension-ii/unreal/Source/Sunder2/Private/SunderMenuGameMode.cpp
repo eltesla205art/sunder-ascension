@@ -22,7 +22,18 @@ void ASunderMenuGameMode::BeginPlay()
 {
 	Super::BeginPlay();
 	// From the arena's pause menu (ESC: quit to ship select) the menu opens on the hangar, as in the web game.
-	if (UGameplayStatics::HasOption(OptionsString, TEXT("Hangar"))) { EnterHangar(); }
+	// The hangar remembers the last choice (USunderLoadoutSubsystem): the ship you flew and Story / Swarm.
+	if (const USunderLoadoutSubsystem* Loadout = GetGameInstance() ? GetGameInstance()->GetSubsystem<USunderLoadoutSubsystem>() : nullptr)
+	{
+		const int32 Found = Ships.IndexOfByPredicate([Loadout](const FSunderMenuShip& Ship) { return Ship.Id.Equals(Loadout->GetShipId(), ESearchCase::IgnoreCase); });
+		if (Found != INDEX_NONE) { ShipIndex = Found; }
+		ModeIndex = Loadout->GetMode() == ESunderPlayMode::Swarm ? 1 : 0;
+	}
+	if (UGameplayStatics::HasOption(OptionsString, TEXT("Hangar")))
+	{
+		EnterHangar();
+		QueueRev(0.9f);                                      // your ship answers as the bay opens, as from the title
+	}
 	else { EnterTitle(); }
 }
 
