@@ -44,7 +44,7 @@ namespace
 		UStaticMeshComponent* C = Owner->CreateDefaultSubobject<UStaticMeshComponent>(Name);
 		C->SetupAttachment(Parent);
 		C->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		C->SetCastShadow(false);
+		C->SetCastShadow(true);                                 // under the key light, onto the plinth
 		C->SetVisibleInSceneCaptureOnly(true);                  // the level's cameras never see the stage
 		C->LightingChannels.bChannel0 = false;
 		C->LightingChannels.bChannel1 = true;
@@ -73,6 +73,12 @@ ASunderCodexStage::ASunderCodexStage()
 
 	// keepers.html's lighting stack, turning with the Keeper as the web camera orbits it.
 	Key = MakeSun(this, Rig, TEXT("Key"), Web(-5.f, 8.f, 6.f), 0xffe3c0, 3.4f);
+	// keepers.html: the key alone casts shadows (soft PCF, a 12 m box round the Keeper), the Keeper onto its plinth.
+	// Only the stage's parts share its lighting channel, so nothing in the level shades it or is shaded.
+	Key->CastShadows = true;
+	Key->DynamicShadowDistanceMovableLight = 2000.f;          // the camera to just past the plinth: crisp cascades
+	Key->DynamicShadowCascades = 2;
+	Key->LightSourceAngle = 1.f;                              // a soft edge, like PCFSoftShadowMap
 	RimLight = MakeSun(this, Rig, TEXT("RimLight"), Web(4.f, 3.f, -7.f), 0x7d9cff, 2.8f);
 	Fill = MakeSun(this, Rig, TEXT("Fill"), Web(3.f, 2.5f, 9.f), 0xc8d2ff, 1.1f);
 	SkyLight = MakeSun(this, Rig, TEXT("HemisphereSky"), FVector(0.f, 0.f, 1.f), 0x5a6aa8, 0.55f);
@@ -129,6 +135,7 @@ ASunderCodexStage::ASunderCodexStage()
 	Backdrop->LightingChannels.bChannel1 = false;
 	Backdrop->LightingChannels.bChannel2 = true;
 	Backdrop->SetRenderCustomDepth(false);                      // the sky isn't fogged (three.js's background)
+	Backdrop->SetCastShadow(false);
 	Horizon = CreateDefaultSubobject<UPointLightComponent>(TEXT("Horizon"));
 	Horizon->SetupAttachment(Capture);
 	Horizon->SetRelativeLocation(FVector(Back - 600.f * K, 0.f, -Half - 380.f * K));
@@ -250,7 +257,17 @@ bool ASunderCodexStage::Show(const FString& Id, const FLinearColor& Accent, floa
 	Glows.Reset();
 	GlowFor.Reset();
 	FindGlows(Body);
-	for (int32 i = 0; i < Moving; ++i) { FindGlows(Parts[i]); }
+	for (int32 i = 0; i < Moving; ++i)
+	{
+		FindGlows(Parts[i]);
+		// keepers.html: light sources (stars, cores, embers) cast no shadow. A part that is all glow is one.
+		bool bAllGlow = Parts[i]->GetNumMaterials() > 0;
+		for (int32 m = 0; m < Parts[i]->GetNumMaterials(); ++m)
+		{
+			bAllGlow &= Cast<UMaterialInstanceDynamic>(Parts[i]->GetMaterial(m)) != nullptr;
+		}
+		Parts[i]->SetCastShadow(!bAllGlow);
+	}
 	if (!Model) { return false; }
 
 	// keepers.html's prepare(): 5 across (here FitSize), standing on the plinth, centred over it. A tall Keeper is held
@@ -299,7 +316,7 @@ UStaticMeshComponent* ASunderCodexStage::PartComponent(int32 i)
 		UStaticMeshComponent* Part = NewObject<UStaticMeshComponent>(this, *FString::Printf(TEXT("Part%d"), Parts.Num()));
 		Part->SetupAttachment(Body);
 		Part->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		Part->SetCastShadow(false);
+		Part->SetCastShadow(true);
 		Part->SetVisibleInSceneCaptureOnly(true);
 		Part->LightingChannels.bChannel0 = false;
 		Part->LightingChannels.bChannel1 = true;
