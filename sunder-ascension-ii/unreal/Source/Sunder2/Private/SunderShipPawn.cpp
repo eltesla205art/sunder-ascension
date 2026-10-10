@@ -140,24 +140,27 @@ void ASunderShipPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 		FEnhancedActionKeyMapping& KeyMapping = Mapping->MapKey(Action, Key);
 		KeyMapping.Modifiers.Add(NewObject<UInputModifierNegate>(Mapping));
 	};
-	Mapping->MapKey(MoveUpAction, EKeys::W);
-	MapNegated(MoveUpAction, EKeys::S);
+	// Keyboard keys from Settings → CONTROLS (the web game's W A S D, SPACE, J, X, P until remapped); the mouse and the
+	// gamepad stay fixed.
+	const USunderSettingsSubsystem* Settings = USunderSettingsSubsystem::Get(this);
+	auto KeyFor = [Settings](ESunderControl Control) { return Settings ? Settings->GetKey(Control) : USunderSettingsSubsystem::DefaultKey(Control); };
+	Mapping->MapKey(MoveUpAction, KeyFor(ESunderControl::MoveUp));
+	MapNegated(MoveUpAction, KeyFor(ESunderControl::MoveDown));
 	Mapping->MapKey(MoveUpAction, EKeys::Gamepad_LeftY);
-	Mapping->MapKey(MoveRightAction, EKeys::D);
-	MapNegated(MoveRightAction, EKeys::A);
+	Mapping->MapKey(MoveRightAction, KeyFor(ESunderControl::MoveRight));
+	MapNegated(MoveRightAction, KeyFor(ESunderControl::MoveLeft));
 	Mapping->MapKey(MoveRightAction, EKeys::Gamepad_LeftX);
-	Mapping->MapKey(BeamAction, EKeys::SpaceBar);
+	Mapping->MapKey(BeamAction, KeyFor(ESunderControl::Beam));
 	Mapping->MapKey(BeamAction, EKeys::Gamepad_RightTrigger);
-	Mapping->MapKey(ShootAction, EKeys::J);
+	Mapping->MapKey(ShootAction, KeyFor(ESunderControl::Shoot));
 	Mapping->MapKey(ShootAction, EKeys::LeftMouseButton);
 	Mapping->MapKey(ShootAction, EKeys::Gamepad_FaceButton_Bottom);
-	Mapping->MapKey(BombAction, EKeys::X);
-	Mapping->MapKey(BombAction, EKeys::K);
+	Mapping->MapKey(BombAction, KeyFor(ESunderControl::Bomb));
 	Mapping->MapKey(BombAction, EKeys::Gamepad_FaceButton_Top);
 	Mapping->MapKey(BombAction, EKeys::Gamepad_RightShoulder);
-	Mapping->MapKey(PauseAction, EKeys::P);
+	Mapping->MapKey(PauseAction, KeyFor(ESunderControl::Pause));
 	Mapping->MapKey(PauseAction, EKeys::Gamepad_Special_Right);
-	Mapping->MapKey(ResumeAction, EKeys::SpaceBar);
+	Mapping->MapKey(ResumeAction, KeyFor(ESunderControl::Beam));   // the beam's key resumes, as SPACE does by default
 	Mapping->MapKey(ResumeAction, EKeys::Gamepad_FaceButton_Bottom);
 	Mapping->MapKey(BackAction, EKeys::Escape);
 	Mapping->MapKey(BackAction, EKeys::Gamepad_Special_Left);

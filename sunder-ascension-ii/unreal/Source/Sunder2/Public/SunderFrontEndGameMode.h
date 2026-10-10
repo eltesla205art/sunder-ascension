@@ -23,6 +23,8 @@ public:
 	virtual void Back() {}
 	/** Arrows / WASD / D-pad / left stick: X = left -1 / right +1, Y = down -1 / up +1. */
 	virtual void Navigate(int32 X, int32 Y) {}
+	/** A key pressed while a screen is waiting to bind one (Settings → CONTROLS); true = taken, the menu ignores it. */
+	virtual bool CaptureKey(const FKey& Key) { return false; }
 
 	/** Seconds since the current screen opened (for fades). */
 	UFUNCTION(BlueprintPure, Category = "Sunder|Screens")

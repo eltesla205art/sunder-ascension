@@ -71,6 +71,7 @@ void ASunderMenuGameMode::Confirm()
 		break;
 	case ESunderMenuScreen::Settings:
 		if (SettingIndex == (int32)ESunderSetting::Back) { PlayCue(BackSound, false); EnterTitle(); break; }
+		if (SettingIndex == (int32)ESunderSetting::Controls) { PlayCue(ModeSound, false); EnterControls(); break; }
 		if (USunderSettingsSubsystem* Settings = GetGameInstance()->GetSubsystem<USunderSettingsSubsystem>())
 		{
 			Settings->Change((ESunderSetting)SettingIndex, 1);  // SPACE steps a setting on (toggles flip)
@@ -90,9 +91,50 @@ void ASunderMenuGameMode::Confirm()
 		}
 		GetWorldTimerManager().SetTimer(LaunchTimer, this, &ASunderMenuGameMode::OpenArena, FMath::Max(LaunchDelay, 0.01f), false);
 		break;
+	case ESunderMenuScreen::Controls:
+	{
+		const int32 Count = (int32)ESunderControl::Count;
+		if (ControlIndex < Count) { bCapturingKey = true; PlayCue(ModeSound, false); break; }   // PRESS A KEY…
+		if (ControlIndex == Count)                            // RESET TO DEFAULTS
+		{
+			if (USunderSettingsSubsystem* Settings = GetGameInstance()->GetSubsystem<USunderSettingsSubsystem>())
+			{
+				Settings->ResetKeys();
+				Settings->Save();
+			}
+			PlayCue(ModeSound, false);
+			break;
+		}
+		PlayCue(BackSound, false);                           // BACK
+		EnterSettings();
+		SettingIndex = (int32)ESunderSetting::Controls;
+		break;
+	}
 	default:
 		break;
 	}
+}
+
+void ASunderMenuGameMode::EnterControls()
+{
+	Screen = ESunderMenuScreen::Controls;
+	ControlIndex = 0;
+	bCapturingKey = false;
+	MarkScreenOpened();
+}
+
+bool ASunderMenuGameMode::CaptureKey(const FKey& Key)
+{
+	if (Screen != ESunderMenuScreen::Controls || !bCapturingKey) { return false; }
+	bCapturingKey = false;
+	if (Key == EKeys::Escape) { PlayCue(BackSound, false); return true; }   // ESC cancels the binding
+	if (!USunderSettingsSubsystem::CanBind(Key)) { return true; }            // ignored; press another
+	if (USunderSettingsSubsystem* Settings = GetGameInstance()->GetSubsystem<USunderSettingsSubsystem>())
+	{
+		Settings->SetKey((ESunderControl)ControlIndex, Key);
+	}
+	PlayCue(ModeSound, false);
+	return true;
 }
 
 void ASunderMenuGameMode::EnterSettings()
@@ -105,6 +147,13 @@ void ASunderMenuGameMode::EnterSettings()
 void ASunderMenuGameMode::Back()
 {
 	if (Screen == ESunderMenuScreen::Settings) { PlayCue(BackSound, false); EnterTitle(); return; }
+	if (Screen == ESunderMenuScreen::Controls)
+	{
+		PlayCue(BackSound, false);
+		EnterSettings();
+		SettingIndex = (int32)ESunderSetting::Controls;
+		return;
+	}
 	if (Screen != ESunderMenuScreen::Hangar) { return; }
 	PlayCue(BackSound, false);
 	GetWorldTimerManager().ClearTimer(RevTimer);
@@ -118,6 +167,12 @@ void ASunderMenuGameMode::Navigate(int32 X, int32 Y)
 		if (Y != 0) { TitleIndex = 1 - TitleIndex; PlayCue(MoveSound, false); }
 		return;
 	}
+	if (Screen == ESunderMenuScreen::Controls)
+	{
+		const int32 Rows = (int32)ESunderControl::Count + 2;  // the controls, RESET, BACK
+		if (Y != 0) { ControlIndex = (ControlIndex - Y + Rows) % Rows; PlayCue(MoveSound, false); }
+		return;
+	}
 	if (Screen == ESunderMenuScreen::Settings)
 	{
 		const int32 Rows = (int32)ESunderSetting::Back + 1;
@@ -126,7 +181,7 @@ void ASunderMenuGameMode::Navigate(int32 X, int32 Y)
 			SettingIndex = (SettingIndex - Y + Rows) % Rows;
 			PlayCue(MoveSound, false);
 		}
-		else if (X != 0 && SettingIndex != (int32)ESunderSetting::Back)
+		else if (X != 0 && SettingIndex != (int32)ESunderSetting::Back && SettingIndex != (int32)ESunderSetting::Controls)
 		{
 			if (USunderSettingsSubsystem* Settings = GetGameInstance()->GetSubsystem<USunderSettingsSubsystem>())
 			{

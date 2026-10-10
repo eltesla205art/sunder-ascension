@@ -20,7 +20,17 @@ namespace
 void USunderSettingsSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
+	ResetKeys();
 	if (!GConfig) { return; }
+	for (int32 i = 0; i < (int32)ESunderControl::Count; ++i)
+	{
+		FString Name;
+		if (GConfig->GetString(Section, *FString::Printf(TEXT("Key_%s"), *ControlLabel((ESunderControl)i).Replace(TEXT(" "), TEXT(""))), Name, GGameUserSettingsIni))
+		{
+			const FKey Key(*Name);
+			if (CanBind(Key)) { Keys[i] = Key; }
+		}
+	}
 	GConfig->GetInt(Section, TEXT("MusicVolume"), MusicVolume, GGameUserSettingsIni);
 	GConfig->GetInt(Section, TEXT("EffectsVolume"), EffectsVolume, GGameUserSettingsIni);
 	GConfig->GetBool(Section, TEXT("ShowHitbox"), bShowHitbox, GGameUserSettingsIni);
@@ -40,6 +50,11 @@ void USunderSettingsSubsystem::Save() const
 	GConfig->SetBool(Section, TEXT("ShowHitbox"), bShowHitbox, GGameUserSettingsIni);
 	GConfig->SetInt(Section, TEXT("ScreenShake"), ScreenShake, GGameUserSettingsIni);
 	GConfig->SetInt(Section, TEXT("BulletColours"), BulletColours, GGameUserSettingsIni);
+	for (int32 i = 0; i < Keys.Num(); ++i)
+	{
+		GConfig->SetString(Section, *FString::Printf(TEXT("Key_%s"), *ControlLabel((ESunderControl)i).Replace(TEXT(" "), TEXT(""))),
+			*Keys[i].GetFName().ToString(), GGameUserSettingsIni);
+	}
 	GConfig->Flush(false, GGameUserSettingsIni);
 }
 
@@ -108,6 +123,7 @@ FString USunderSettingsSubsystem::Describe(ESunderSetting Setting) const
 		}
 	case ESunderSetting::Performance: return IsPerformanceMode(S) ? TEXT("PERFORMANCE  (120 FPS)") : TEXT("FIDELITY  (60 FPS)");
 	case ESunderSetting::VSync:       return S && S->IsVSyncEnabled() ? TEXT("ON") : TEXT("OFF");
+	case ESunderSetting::Controls:    return TEXT("KEYBOARD");
 	default:                          return FString();
 	}
 }
@@ -123,6 +139,7 @@ FString USunderSettingsSubsystem::Label(ESunderSetting Setting)
 	case ESunderSetting::VSync:         return TEXT("VSYNC");
 	case ESunderSetting::ScreenShake:   return TEXT("SCREEN SHAKE");
 	case ESunderSetting::BulletColours: return TEXT("BULLET COLOURS");
+	case ESunderSetting::Controls:      return TEXT("CONTROLS");
 	case ESunderSetting::ShowHitbox:    return TEXT("SHOW HITBOX");
 	default:                            return TEXT("BACK");
 	}
@@ -134,6 +151,77 @@ float USunderSettingsSubsystem::MusicGain(const UObject* WorldContext)
 	const UGameInstance* GI = World ? World->GetGameInstance() : nullptr;
 	const USunderSettingsSubsystem* Self = GI ? GI->GetSubsystem<USunderSettingsSubsystem>() : nullptr;
 	return Self ? Self->MusicVolume / 10.f : 1.f;
+}
+
+FKey USunderSettingsSubsystem::DefaultKey(ESunderControl Control)
+{
+	switch (Control)                                          // the arena's keys before remapping (as the web game's)
+	{
+	case ESunderControl::MoveUp:    return EKeys::W;
+	case ESunderControl::MoveDown:  return EKeys::S;
+	case ESunderControl::MoveLeft:  return EKeys::A;
+	case ESunderControl::MoveRight: return EKeys::D;
+	case ESunderControl::Beam:      return EKeys::SpaceBar;
+	case ESunderControl::Shoot:     return EKeys::J;
+	case ESunderControl::Bomb:      return EKeys::X;
+	case ESunderControl::Pause:     return EKeys::P;
+	default:                        return EKeys::Invalid;
+	}
+}
+
+FString USunderSettingsSubsystem::ControlLabel(ESunderControl Control)
+{
+	switch (Control)
+	{
+	case ESunderControl::MoveUp:    return TEXT("MOVE UP");
+	case ESunderControl::MoveDown:  return TEXT("MOVE DOWN");
+	case ESunderControl::MoveLeft:  return TEXT("MOVE LEFT");
+	case ESunderControl::MoveRight: return TEXT("MOVE RIGHT");
+	case ESunderControl::Beam:      return TEXT("BEAM");
+	case ESunderControl::Shoot:     return TEXT("SHOOT");
+	case ESunderControl::Bomb:      return TEXT("BOMB");
+	case ESunderControl::Pause:     return TEXT("PAUSE");
+	default:                        return FString();
+	}
+}
+
+bool USunderSettingsSubsystem::CanBind(const FKey& Key)
+{
+	return Key.IsValid() && !Key.IsGamepadKey() && !Key.IsMouseButton() && !Key.IsAxis1D() && !Key.IsAxis2D()
+		&& Key != EKeys::Escape && Key != EKeys::AnyKey;
+}
+
+FString USunderSettingsSubsystem::KeyName(const FKey& Key)
+{
+	return Key.IsValid() ? Key.GetDisplayName().ToString().ToUpper() : TEXT("-");
+}
+
+FKey USunderSettingsSubsystem::GetKey(ESunderControl Control) const
+{
+	return Keys.IsValidIndex((int32)Control) ? Keys[(int32)Control] : DefaultKey(Control);
+}
+
+void USunderSettingsSubsystem::SetKey(ESunderControl Control, const FKey& Key)
+{
+	const int32 Index = (int32)Control;
+	if (!Keys.IsValidIndex(Index) || !CanBind(Key)) { return; }
+	const int32 Other = Keys.IndexOfByKey(Key);
+	if (Other != INDEX_NONE && Other != Index) { Keys[Other] = Keys[Index]; }   // swap, so nothing is left unbound
+	Keys[Index] = Key;
+	Save();
+}
+
+void USunderSettingsSubsystem::ResetKeys()
+{
+	Keys.SetNum((int32)ESunderControl::Count);
+	for (int32 i = 0; i < Keys.Num(); ++i) { Keys[i] = DefaultKey((ESunderControl)i); }
+}
+
+const USunderSettingsSubsystem* USunderSettingsSubsystem::Get(const UObject* WorldContext)
+{
+	const UWorld* World = WorldContext ? WorldContext->GetWorld() : nullptr;
+	const UGameInstance* GI = World ? World->GetGameInstance() : nullptr;
+	return GI ? GI->GetSubsystem<USunderSettingsSubsystem>() : nullptr;
 }
 
 void USunderSettingsSubsystem::PaletteFor(int32 Mode, FLinearColor& OutEnemy, FLinearColor& OutPlayer)

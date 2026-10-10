@@ -18,6 +18,8 @@ class SUNDER2_API ASunderMenuController : public APlayerController
 protected:
 	virtual void BeginPlay() override;
 	virtual void SetupInputComponent() override;
+	/** Hands raw key presses to a screen that is binding a key, before the menu's own actions see them. */
+	virtual bool InputKey(const FInputKeyParams& Params) override;
 
 private:
 	class ASunderFrontEndGameMode* Screens() const;

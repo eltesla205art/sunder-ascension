@@ -50,6 +50,15 @@ void ASunderMenuController::BeginPlay()
 	SetShowMouseCursor(false);
 }
 
+bool ASunderMenuController::InputKey(const FInputKeyParams& Params)
+{
+	if (Params.Event == IE_Pressed && !Params.Key.IsGamepadKey())
+	{
+		if (ASunderFrontEndGameMode* S = Screens(); S && S->CaptureKey(Params.Key)) { return true; }
+	}
+	return Super::InputKey(Params);
+}
+
 ASunderFrontEndGameMode* ASunderMenuController::Screens() const
 {
 	return GetWorld() ? GetWorld()->GetAuthGameMode<ASunderFrontEndGameMode>() : nullptr;

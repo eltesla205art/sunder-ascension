@@ -21,7 +21,8 @@ enum class ESunderMenuScreen : uint8
 	Title,
 	Hangar,
 	Launching,
-	Settings      // music and effects volume, display, performance mode, VSync, hitbox (USunderSettingsSubsystem)
+	Settings,     // music and effects volume, display, performance mode, VSync, hitbox (USunderSettingsSubsystem)
+	Controls      // the ship's keyboard bindings: pick a control, press a key
 };
 
 USTRUCT(BlueprintType)
@@ -144,6 +145,10 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Menu") int32 GetTitleIndex() const { return TitleIndex; }
 	/** The highlighted row on the settings screen (an ESunderSetting). */
 	UFUNCTION(BlueprintPure, Category = "Menu") int32 GetSettingIndex() const { return SettingIndex; }
+	/** Controls screen: the highlighted row (an ESunderControl, then RESET, then BACK), and whether it waits for a key. */
+	UFUNCTION(BlueprintPure, Category = "Menu") int32 GetControlIndex() const { return ControlIndex; }
+	UFUNCTION(BlueprintPure, Category = "Menu") bool IsCapturingKey() const { return bCapturingKey; }
+	virtual bool CaptureKey(const FKey& Key) override;
 protected:
 	virtual void BeginPlay() override;
 
@@ -151,6 +156,7 @@ private:
 	void EnterTitle();
 	void EnterHangar();
 	void EnterSettings();
+	void EnterControls();
 	void QueueRev(float Delay);
 	void PlayRev();
 	void OpenArena();
@@ -160,6 +166,8 @@ private:
 	int32 ModeIndex = 0;
 	int32 TitleIndex = 0;
 	int32 SettingIndex = 0;
+	int32 ControlIndex = 0;
+	bool bCapturingKey = false;
 	float LastMoveCue = -100.f;
 	FTimerHandle RevTimer;
 	FTimerHandle LaunchTimer;

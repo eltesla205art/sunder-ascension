@@ -4,6 +4,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "InputCoreTypes.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "SunderSettingsSubsystem.generated.h"
 
@@ -18,7 +19,23 @@ enum class ESunderSetting : uint8
 	ScreenShake,
 	BulletColours,
 	ShowHitbox,
+	Controls,     // opens the key bindings
 	Back
+};
+
+/** The ship's remappable keyboard controls (DESIGN.md: remappable controls). Gamepad buttons stay fixed. */
+UENUM(BlueprintType)
+enum class ESunderControl : uint8
+{
+	MoveUp,
+	MoveDown,
+	MoveLeft,
+	MoveRight,
+	Beam,
+	Shoot,
+	Bomb,
+	Pause,
+	Count UMETA(Hidden)
 };
 
 UCLASS()
@@ -48,6 +65,20 @@ public:
 	/** A mode's pair for the settings screen's swatches (mode 0: the standard violet and gold). */
 	static void PaletteFor(int32 Mode, FLinearColor& OutEnemy, FLinearColor& OutPlayer);
 
+	// ---- key bindings (the ship reads them when the arena loads)
+	FKey GetKey(ESunderControl Control) const;
+	/** Bind a keyboard key; a key another control already uses swaps over, so nothing is left unbound. */
+	void SetKey(ESunderControl Control, const FKey& Key);
+	void ResetKeys();
+	static FKey DefaultKey(ESunderControl Control);
+	static FString ControlLabel(ESunderControl Control);
+	/** A key the binding screen accepts: a keyboard key, not ESC (it cancels) and not a mouse or gamepad button. */
+	static bool CanBind(const FKey& Key);
+	/** The key's name as the screens show it ("W", "SPACE BAR", "LEFT SHIFT"…). */
+	static FString KeyName(const FKey& Key);
+	/** Any context's settings (nullptr without a game instance). */
+	static const USunderSettingsSubsystem* Get(const UObject* WorldContext);
+
 	/** Step a setting left (-1) or right (+1); toggles flip either way. Saved and applied at once. */
 	UFUNCTION(BlueprintCallable, Category = "Settings") void Change(ESunderSetting Setting, int32 Direction);
 	/** The value as the settings screen shows it ("7", "FULLSCREEN", "ON"…). */
@@ -58,12 +89,14 @@ public:
 	static float MusicGain(const UObject* WorldContext);
 	static float EffectsGain(const UObject* WorldContext);
 
-private:
 	void Save() const;
+
+private:
 
 	int32 MusicVolume = 8;
 	int32 EffectsVolume = 8;
 	bool bShowHitbox = false;
 	int32 ScreenShake = 2;
 	int32 BulletColours = 0;
+	TArray<FKey> Keys;            // indexed by ESunderControl
 };

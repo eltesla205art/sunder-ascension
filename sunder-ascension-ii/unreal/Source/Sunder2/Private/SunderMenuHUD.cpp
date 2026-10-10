@@ -41,7 +41,7 @@ void ASunderMenuHUD::DrawHUD()
 		const float Aspect = Art->GetSizeY() > 0 ? (float)Art->GetSizeX() / Art->GetSizeY() : 1.f;
 		AW = H * Aspect;
 		float Light = Screen == ESunderMenuScreen::Title ? FMath::Clamp(T / 1.2f, 0.f, 1.f)
-			: Screen == ESunderMenuScreen::Settings ? 0.25f : 0.18f;   // the hangar: a dark night, its own band on top
+			: (Screen == ESunderMenuScreen::Settings || Screen == ESunderMenuScreen::Controls) ? 0.25f : 0.18f;   // the hangar: a dark night, its own band on top
 		if (Screen == ESunderMenuScreen::Launching) { Light *= 1.f - FMath::Clamp(T / FMath::Max(Menu->LaunchDelay, 0.01f), 0.f, 1.f); }
 		DrawTexture(Art, (W - AW) * 0.5f, 0.f, AW, H, 0.f, 0.f, 1.f, 1.f, FLinearColor(Light, Light, Light, 1.f));
 	}
@@ -55,6 +55,11 @@ void ASunderMenuHUD::DrawHUD()
 	if (Screen == ESunderMenuScreen::Settings)
 	{
 		DrawSettings(Menu, T);
+		return;
+	}
+	if (Screen == ESunderMenuScreen::Controls)
+	{
+		DrawControls(Menu, T);
 		return;
 	}
 	DrawHangar(Menu, T, Screen == ESunderMenuScreen::Launching);
@@ -314,7 +319,7 @@ void ASunderMenuHUD::DrawSettings(const ASunderMenuGameMode* Menu, float T)
 	const float TextScale = RH > 0.f ? 16.f * S * 1.25f / RH : 1.f;
 
 	const float PW = FMath::Min(W * 0.8f, 560.f * S), PX = (W - PW) * 0.5f, PY = 150.f * S, Rows = (float)ESunderSetting::Back + 1;
-	const float RowH = 48.f * S, PH = Rows * RowH + 40.f * S;
+	const float RowH = 44.f * S, PH = Rows * RowH + 40.f * S;   // ten rows fit above the hint line
 	DrawRect(FLinearColor(0.043f, 0.059f, 0.165f, 0.82f * A), PX, PY, PW, PH);     // night indigo glass
 	for (const float Y : { PY, PY + PH }) { DrawLine(PX, Y, PX + PW, Y, Faded(Gilt, A), 1.f); }
 	for (const float X : { PX, PX + PW }) { DrawLine(X, PY, X, PY + PH, Faded(Gilt, A), 1.f); }
@@ -371,4 +376,59 @@ void ASunderMenuHUD::DrawSettings(const ASunderMenuGameMode* Menu, float T)
 	}
 	DrawWebText(TEXT("W / S  choose    \u00B7    A / D  change    \u00B7    SPACE  toggle    \u00B7    ESC  back"),
 		Faded(Sand, A), 680.f, 12.f);
+}
+
+void ASunderMenuHUD::DrawControls(const ASunderMenuGameMode* Menu, float T)
+{
+	// The same glass panel as Settings: each control with its key on the right; the chosen row waits for a key with a
+	// pulsing PRESS A KEY; RESET TO DEFAULTS and BACK at the foot; the gamepad's fixed layout noted beneath.
+	const USunderSettingsSubsystem* Settings = USunderSettingsSubsystem::Get(Menu);
+	if (!Settings) { return; }
+	const float W = Canvas->ClipX, H = Canvas->ClipY, S = H / 720.f;
+	const float A = FMath::Clamp(T / 0.25f, 0.f, 1.f);
+	const FLinearColor Gilt(0.83f, 0.69f, 0.22f), Sky(0.56f, 0.89f, 1.f), Sand(0.79f, 0.70f, 0.41f), Bright(0.94f, 0.98f, 1.f);
+	auto Faded = [](const FLinearColor& C, float Alpha) { return FLinearColor(C.R, C.G, C.B, FMath::Clamp(Alpha, 0.f, 1.f)); };
+	UFont* Font = GEngine ? GEngine->GetLargeFont() : nullptr;
+	float RW = 0.f, RH = 0.f;
+	GetTextSize(TEXT("Ay"), RW, RH, Font, 1.f);
+	const float TextScale = RH > 0.f ? 15.f * S * 1.25f / RH : 1.f;
+
+	const int32 Count = (int32)ESunderControl::Count, Rows = Count + 2;
+	const float PW = FMath::Min(W * 0.8f, 520.f * S), PX = (W - PW) * 0.5f, PY = 140.f * S, RowH = 42.f * S, PH = Rows * RowH + 30.f * S;
+	DrawRect(FLinearColor(0.043f, 0.059f, 0.165f, 0.82f * A), PX, PY, PW, PH);
+	for (const float Y : { PY, PY + PH }) { DrawLine(PX, Y, PX + PW, Y, Faded(Gilt, A), 1.f); }
+	for (const float X : { PX, PX + PW }) { DrawLine(X, PY, X, PY + PH, Faded(Gilt, A), 1.f); }
+	DrawWebText(TEXT("CONTROLS"), Faded(FLinearColor(0.96f, 0.84f, 0.48f), A), 104.f, 30.f, FLinearColor(0.83f, 0.69f, 0.22f));
+
+	for (int32 i = 0; i < Rows; ++i)
+	{
+		const bool bOn = i == Menu->GetControlIndex();
+		const float Y = PY + 15.f * S + i * RowH, MidY = Y + RowH * 0.5f;
+		if (bOn) { DrawRect(Faded(Sky, 0.16f * A), PX + 8.f * S, Y + 3.f * S, PW - 16.f * S, RowH - 6.f * S); }
+		float TW = 0.f, TH = 0.f;
+		if (i >= Count)                                        // RESET TO DEFAULTS, BACK
+		{
+			const FString Name = i == Count ? TEXT("RESET TO DEFAULTS") : TEXT("BACK");
+			GetTextSize(Name, TW, TH, Font, TextScale);
+			DrawText(Name, Faded(bOn ? Bright : Sand, A), (W - TW) * 0.5f, MidY - TH * 0.5f, Font, TextScale);
+			continue;
+		}
+		const ESunderControl Control = (ESunderControl)i;
+		const FString Name = USunderSettingsSubsystem::ControlLabel(Control);
+		GetTextSize(Name, TW, TH, Font, TextScale);
+		DrawText(Name, Faded(bOn ? Bright : Sand, A), PX + 28.f * S, MidY - TH * 0.5f, Font, TextScale);
+		const bool bWaiting = bOn && Menu->IsCapturingKey();
+		const FString Key = bWaiting ? TEXT("PRESS A KEY  (ESC cancels)") : USunderSettingsSubsystem::KeyName(Settings->GetKey(Control));
+		const float KA = bWaiting ? 0.45f + 0.55f * FMath::Abs(FMath::Sin(T * 4.f)) : 1.f;
+		GetTextSize(Key, TW, TH, Font, TextScale);
+		const float KX = PX + PW - 28.f * S - TW;
+		if (!bWaiting)                                         // the key in a keycap
+		{
+			DrawRect(Faded(bOn ? Sky : Gilt, 0.14f * A), KX - 8.f * S, MidY - TH * 0.5f - 3.f * S, TW + 16.f * S, TH + 6.f * S);
+		}
+		DrawText(Key, Faded(bOn ? Sky : Gilt, A * KA), KX, MidY - TH * 0.5f, Font, TextScale);
+	}
+	DrawWebText(TEXT("Gamepad: left stick move  \u00B7  RT beam  \u00B7  A shoot  \u00B7  Y / RB bomb  \u00B7  Start pause"),
+		Faded(Sand, 0.7f * A), 140.f + (Rows * 42.f + 30.f) + 26.f, 11.f);
+	DrawWebText(TEXT("W / S  choose    \u00B7    SPACE  rebind    \u00B7    ESC  back"), Faded(Sand, A), 690.f, 12.f);
 }
