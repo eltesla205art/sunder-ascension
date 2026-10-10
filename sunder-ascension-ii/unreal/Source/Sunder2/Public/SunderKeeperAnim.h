@@ -30,9 +30,14 @@ class SUNDER2_API USunderKeeperAnim : public UDataAsset
 	GENERATED_BODY()
 
 public:
-	/** Everything that holds still (Apep's coils too: their wave bends the mesh, which rigid parts can't carry). */
+	/** Everything that holds still. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Keeper Anim")
 	TObjectPtr<UStaticMesh> Body;
+
+	/** Apep: the body posed at every frame of the loop, for his coil wave, which bends the mesh where rigid parts can't.
+	 *  The viewer flips through them in place of Body, as the web GLB blends its wave morph targets. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Keeper Anim")
+	TArray<TObjectPtr<UStaticMesh>> BodyFrames;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Keeper Anim")
 	TArray<FSunderKeeperAnimPart> Parts;
@@ -43,4 +48,7 @@ public:
 
 	/** Part i at Time seconds into the loop: neighbouring frames blended, as glTF's LINEAR keys play. */
 	FTransform Sample(int32 Part, float Time) const;
+
+	/** The body at Time seconds into the loop: its frame from BodyFrames, or Body. */
+	UStaticMesh* BodyAt(float Time) const;
 };

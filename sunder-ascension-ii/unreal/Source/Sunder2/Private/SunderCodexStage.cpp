@@ -204,7 +204,7 @@ bool ASunderCodexStage::Show(const FString& Id, const FLinearColor& Accent, floa
 	if (Anim && !Anim->Body) { Anim = nullptr; }
 	if (!Model && Anim) { Model = Anim->Body; }
 	Body->EmptyOverrideMaterials();
-	Body->SetStaticMesh(Anim ? Anim->Body.Get() : Model);
+	Body->SetStaticMesh(Anim ? Anim->BodyAt(0.f) : Model);
 	const int32 Moving = Anim ? Anim->Parts.Num() : 0;
 	for (int32 i = 0; i < FMath::Max(Moving, Parts.Num()); ++i)
 	{
@@ -216,6 +216,7 @@ bool ASunderCodexStage::Show(const FString& Id, const FLinearColor& Accent, floa
 		if (bUsed) { Part->SetRelativeTransform(Anim->Sample(i, 0.f)); }
 	}
 	Glows.Reset();
+	GlowFor.Reset();
 	FindGlows(Body);
 	for (int32 i = 0; i < Moving; ++i) { FindGlows(Parts[i]); }
 	if (!Model) { return false; }
@@ -245,6 +246,13 @@ UTextureRenderTarget2D* ASunderCodexStage::Render(float Now)
 	for (UMaterialInstanceDynamic* Glow : Glows) { if (Glow) { Glow->SetScalarParameterValue(TEXT("GlowPulse"), Pulse); } }
 	if (Anim)                                                   // the loop, from when it came on, a loop a second
 	{
+		UStaticMesh* Coils = Anim->BodyAt(Now - ShownAt);       // Apep's coil wave: his body's frame
+		if (Coils && Coils != Body->GetStaticMesh())
+		{
+			Body->EmptyOverrideMaterials();
+			Body->SetStaticMesh(Coils);
+			FindGlows(Body);                                    // the same glowing instances, on this frame's slots
+		}
 		for (int32 i = 0; i < Anim->Parts.Num() && i < Parts.Num(); ++i) { Parts[i]->SetRelativeTransform(Anim->Sample(i, Now - ShownAt)); }
 	}
 	Capture->CaptureScene();
@@ -272,15 +280,20 @@ UStaticMeshComponent* ASunderCodexStage::PartComponent(int32 i)
 
 void ASunderCodexStage::FindGlows(UStaticMeshComponent* Component)
 {
-	// The slots wearing create_keeper_glow.py's materials (they have a GlowPulse) get their own instance to breathe.
+	// The slots wearing create_keeper_glow.py's materials (they have a GlowPulse) wear an instance that breathes, one
+	// per material, so Apep's body frames (whose slots come in their own order) reuse them.
 	if (!Component || !Component->GetStaticMesh()) { return; }
 	for (int32 i = 0; i < Component->GetNumMaterials(); ++i)
 	{
 		UMaterialInterface* Material = Component->GetMaterial(i);
 		float Pulse = 0.f;
-		if (Material && Material->GetScalarParameterValue(FHashedMaterialParameterInfo(TEXT("GlowPulse")), Pulse))
+		if (!Material || !Material->GetScalarParameterValue(FHashedMaterialParameterInfo(TEXT("GlowPulse")), Pulse)) { continue; }
+		TObjectPtr<UMaterialInstanceDynamic>& Glow = GlowFor.FindOrAdd(Material);
+		if (!Glow)
 		{
-			Glows.Add(Component->CreateDynamicMaterialInstance(i, Material));
+			Glow = UMaterialInstanceDynamic::Create(Material, this);
+			Glows.Add(Glow);
 		}
+		Component->SetMaterial(i, Glow);
 	}
 }

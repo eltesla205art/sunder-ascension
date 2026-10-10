@@ -8,12 +8,14 @@ blender/keepers.py <dir> 8 --fbx-anim into unreal/Content/Keepers/Anim/SM_Keeper
   SM_Keeper_<Id>_Body.fbx     the fixed body, in the Keeper model's own space
   SM_Keeper_<Id>_<Part>.fbx   each moving part about its own pivot
   SM_Keeper_<Id>_Anim.json    each part's transform for every frame of one loop (32 a second), in Unreal's axes
+  SM_Keeper_Apep_Body_FNN.fbx Apep's body at each of those frames: his coil wave bends it, so the viewer flips through
+                              them (the web GLB blends wave morph targets instead)
 
 Does, for each of the twelve Keepers:
   1. imports the parts into /Game/Sunder/Keepers/Anim/SM_Keeper_<Id> (materials found among the Keepers' own);
   2. makes /Game/Sunder/Keepers/Anim/DA_KeeperAnim_<Id> with the body, the parts and their frames.
 The Codex viewer (ASunderCodexStage) plays a Keeper's loop as soon as its asset exists; without one it shows the still
-model. Apep's coil wave bends his body, which rigid parts can't carry: his coils hold still, his moving parts move.
+model.
 
 Safe to run again. Untested until its first run.
 """
@@ -129,7 +131,8 @@ def build(kid):
         raise RuntimeError("not found: {} (run blender/keepers.py <dir> 8 --fbx-anim)".format(path))
     with open(path) as fh:
         data = json.load(fh)
-    meshes = import_parts(kid, [data["body"]] + [p["name"] for p in data["parts"]])
+    frames = data.get("body_frames", [])
+    meshes = import_parts(kid, [data["body"]] + [p["name"] for p in data["parts"]] + frames)
 
     name = "DA_KeeperAnim_" + camel(kid)
     full = "{}/{}".format(DEST, name)
@@ -148,10 +151,12 @@ def build(kid):
         part.set_editor_property("frames", [frame(f) for f in p["frames"]])
         parts.append(part)
     asset.set_editor_property("body", meshes[data["body"]])
+    asset.set_editor_property("body_frames", [meshes[name] for name in frames])
     asset.set_editor_property("parts", parts)
     asset.set_editor_property("frames_per_second", float(data["fps"]))
     EAL.save_loaded_asset(asset)
-    log("{}: body and {} moving parts, {} frames".format(name, len(parts), data["frames"]))
+    log("{}: body{} and {} moving parts, {} frames".format(
+        name, " ({} wave frames)".format(len(frames)) if frames else "", len(parts), data["frames"]))
 
 
 def main():

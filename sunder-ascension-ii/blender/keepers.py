@@ -1037,8 +1037,10 @@ def export_fbx_anim(kid, out):
          <out>/<SM_Keeper_Id>/<SM_Keeper_Id>_<Part>.fbx  each moving part about its own pivot
          <out>/<SM_Keeper_Id>/<SM_Keeper_Id>_Anim.json   each part's transform for LOOP + 1 frames, in Unreal's axes
                                                          (Blender (x, y, z) m -> Unreal (x, -y, z) * 100 units)
-    create_keeper_anim.py imports them into a DA_KeeperAnim_<Id> data asset. Apep's coil wave bends its body, which
-    rigid parts can't carry, so his coils hold still in Unreal (his moving parts still move)."""
+         <out>/<SM_Keeper_Id>/<SM_Keeper_Id>_Body_FNN.fbx  (Apep) the body at each frame of the loop: his coil wave
+                                                         bends it, which rigid parts can't carry, so Unreal flips
+                                                         through these as the web GLB blends its wave morphs
+    create_keeper_anim.py imports them into a DA_KeeperAnim_<Id> data asset."""
     import json
     folder = os.path.join(out, unreal_name(kid))
     os.makedirs(folder, exist_ok=True)
@@ -1081,8 +1083,22 @@ def export_fbx_anim(kid, out):
     bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
     body.name = part_asset(kid, "")
     export(body, os.path.join(folder, body.name + ".fbx"))
+    body_frames = []
+    if kid.startswith("apep"):                     # the coil wave: the body itself, posed for every frame
+        for f in range(LOOP):
+            random.seed(7)
+            wave = bake_parts({"": build_keeper(kid, math.tau * f / LOOP)[""]})[""][0]
+            for o in [o for o in bpy.context.scene.objects if o is not wave]:
+                bpy.data.objects.remove(o)
+            bpy.ops.object.select_all(action="DESELECT")
+            wave.select_set(True)
+            bpy.context.view_layer.objects.active = wave
+            bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+            wave.name = "{}_F{:02d}".format(part_asset(kid, ""), f)
+            export(wave, os.path.join(folder, wave.name + ".fbx"))
+            body_frames.append(wave.name)
     with open(os.path.join(folder, unreal_name(kid) + "_Anim.json"), "w") as fh:
-        json.dump({"keeper": kid, "fps": LOOP, "frames": LOOP + 1, "body": part_asset(kid, ""),
+        json.dump({"keeper": kid, "fps": LOOP, "frames": LOOP + 1, "body": part_asset(kid, ""), "body_frames": body_frames,
                    "parts": [{"name": part_asset(kid, n), "frames": tracks[n]} for n in movers]}, fh, separators=(",", ":"))
     return len(movers)
 

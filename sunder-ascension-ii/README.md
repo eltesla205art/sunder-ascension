@@ -50,7 +50,7 @@ original *SUNDER: Ascension — The Nine Bows* (`web/`, `godot/`, `docs/`), whic
 | `unreal/Content/Story/story.json` | The story's words and each Hour's battle tuning for Unreal, exported from `web/game.html` by `unreal/Tools/export_story_text.cjs` |
 | `unreal/Tools/export_codex_text.cjs` | Generates the Unreal Codex's words (`Source/Sunder2/Private/SunderCodexEntries.inl`) from `web/keepers.html`, `web/game.html` and `story.json` |
 | `unreal/Tools/render_web_audio.cjs` | Renders the Keeper, stage, menu, story and game-effect WAVs from the web game's synth in Chromium (Playwright) |
-| `unreal/Content/Keepers/Anim/` | The Keepers' animation loops for the Unreal Codex viewer: per Keeper its fixed body, each moving part about its pivot (FBX) and every frame of one loop (JSON), from `blender/keepers.py --fbx-anim` (the same loop as the web GLBs) |
+| `unreal/Content/Keepers/Anim/` | The Keepers' animation loops for the Unreal Codex viewer: per Keeper its fixed body, each moving part about its pivot (FBX), every frame of one loop (JSON), and Apep's body at every frame for his coil wave (FBX), from `blender/keepers.py --fbx-anim` (the same loop as the web GLBs) |
 | `unreal/Content/Keepers/keeper_glows.json` | The Keepers' glowing materials (base, metal, roughness, glow colour and strength, capped as the web Codex caps them), from `blender/keepers.py --glows` |
 | `unreal/Content/Keepers/` | The thirteen Keeper models as FBX for Unreal (one mesh each, plus Apep's final form), from `blender/keepers.py --fbx` |
 | `art/blender/` | Full-resolution Blender renders (title backdrop, ship sprites, `keepers/` boss sprites and portraits) |

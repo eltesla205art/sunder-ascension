@@ -60,7 +60,8 @@ private:
 	UPROPERTY() TObjectPtr<USunderKeeperAnim> Anim;                      // the shown Keeper's loop, if imported
 	UPROPERTY() TArray<TObjectPtr<UStaticMeshComponent>> Parts;          // its moving parts, reused between Keepers
 
-	UPROPERTY() TArray<TObjectPtr<UMaterialInstanceDynamic>> Glows;     // its glowing slots, pulsed in Render
+	UPROPERTY() TArray<TObjectPtr<UMaterialInstanceDynamic>> Glows;     // its glowing materials, pulsed in Render
+	UPROPERTY() TMap<TObjectPtr<UMaterialInterface>, TObjectPtr<UMaterialInstanceDynamic>> GlowFor;   // one each, however many slots or frames wear it
 
 	UStaticMeshComponent* PartComponent(int32 i);
 	void FindGlows(UStaticMeshComponent* Component);

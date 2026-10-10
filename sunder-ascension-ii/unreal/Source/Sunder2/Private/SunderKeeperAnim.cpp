@@ -15,3 +15,11 @@ FTransform USunderKeeperAnim::Sample(int32 Part, float Time) const
 	Out.SetScale3D(FMath::Lerp(Frames[A].GetScale3D(), Frames[B].GetScale3D(), T));
 	return Out;
 }
+
+UStaticMesh* USunderKeeperAnim::BodyAt(float Time) const
+{
+	if (BodyFrames.Num() == 0) { return Body; }
+	const int32 Frame = FMath::FloorToInt(FMath::Fmod(FMath::Max(Time, 0.f) * FramesPerSecond, (float)BodyFrames.Num()));
+	UStaticMesh* Mesh = BodyFrames[FMath::Clamp(Frame, 0, BodyFrames.Num() - 1)];
+	return Mesh ? Mesh : Body.Get();
+}
