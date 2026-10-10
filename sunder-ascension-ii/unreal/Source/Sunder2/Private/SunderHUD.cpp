@@ -119,17 +119,33 @@ void ASunderHUD::DrawHUD()
 
 	if (Mode->IsGameOver()) { DrawDefeatCard(Mode, GetWorld()->GetTimeSeconds() - Mode->GetGameOverAt(), Font); }
 
-	if (Mode->IsCombatPaused())                                // the web game's pause overlay
+	if (Mode->IsCombatPaused())                                // the web game's pause overlay, now a small menu
 	{
 		DrawRect(FLinearColor(0.02f, 0.016f, 0.047f, 0.74f), 0.f, 0.f, W, H);
-		const float Wrap = FMath::Min(W * 0.8f, 1100.f);
-		const float Y = DrawCentredWrapped(TEXT("PAUSED"), FLinearColor(0.96f, 0.84f, 0.48f), H * 0.5f - 64.f, 2.4f, Wrap, Font);
-		const USunderSettingsSubsystem* Keys = USunderSettingsSubsystem::Get(this);   // the keys as remapped
-		const FString PauseKey = USunderSettingsSubsystem::KeyName(Keys ? Keys->GetKey(ESunderControl::Pause) : EKeys::P);
-		const FString BeamKey = USunderSettingsSubsystem::KeyName(Keys ? Keys->GetKey(ESunderControl::Beam) : EKeys::SpaceBar);
-		const float Y2 = DrawCentredWrapped(FString::Printf(TEXT("%s / %s  \u2014  resume"), *PauseKey, *BeamKey), FLinearColor(0.56f, 0.89f, 1.f), Y + 18.f, 1.1f, Wrap, Font);
-		DrawCentredWrapped(TEXT("ESC  \u2014  quit to ship select"), FLinearColor(0.79f, 0.70f, 0.41f), Y2 + 8.f, 1.1f, Wrap, Font);
+		const float Now = GetWorld()->GetRealTimeSeconds();   // the world is paused; the menu still breathes
+		if (Mode->IsPauseSettingsOpen())                       // the same settings / controls pages as the title's
+		{
+			Mode->GetSettingsPanel().Draw(this, USunderSettingsSubsystem::Get(this), Now);
+		}
+		else
+		{
+			const float Wrap = FMath::Min(W * 0.8f, 1100.f);
+			float Y = DrawCentredWrapped(TEXT("PAUSED"), FLinearColor(0.96f, 0.84f, 0.48f), H * 0.5f - 110.f, 2.4f, Wrap, Font);
+			static const TCHAR* Rows[3] = { TEXT("RESUME"), TEXT("SETTINGS"), TEXT("QUIT TO SHIP SELECT") };
+			for (int32 i = 0; i < 3; ++i)
+			{
+				const bool bOn = i == Mode->GetPauseRow();
+				const float Pulse = 0.7f + 0.3f * FMath::Sin(Now * 4.f);
+				const FString Row = bOn ? FString::Printf(TEXT(">  %s  <"), Rows[i]) : FString(Rows[i]);
+				Y = DrawCentredWrapped(Row, bOn ? FLinearColor(0.56f, 0.89f, 1.f, Pulse) : FLinearColor(0.79f, 0.70f, 0.41f), Y + 14.f, 1.3f, Wrap, Font);
+			}
+			const USunderSettingsSubsystem* Keys = USunderSettingsSubsystem::Get(this);   // the keys as remapped
+			const FString PauseKey = USunderSettingsSubsystem::KeyName(Keys ? Keys->GetKey(ESunderControl::Pause) : EKeys::P);
+			DrawCentredWrapped(FString::Printf(TEXT("%s  resume    \u00B7    UP / DOWN  choose    \u00B7    SPACE  select    \u00B7    ESC  quit"), *PauseKey),
+				FLinearColor(0.79f, 0.70f, 0.41f, 0.8f), Y + 30.f, 0.9f, Wrap, Font);
+		}
 	}
+
 }
 
 void ASunderHUD::DrawKeeperCard(const ASunderKeeper* Keeper, const FString& Name, const FString& Quote, float Since, float Hold,

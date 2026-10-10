@@ -349,6 +349,9 @@ public:
 	/** Back at the start position with a full hull (called by the game mode while lives remain). */
 	UFUNCTION(BlueprintCallable, Category = "Ship|Hull")
 	void Respawn();
+
+	/** (Re)map the keys and buttons from Settings → CONTROLS; the pause menu calls it when its settings close. */
+	void MapBindings();
 	/** The ship is back: visible, hittable, flying (after the warp-in, or at once). */
 	void FinishRespawn();
 
@@ -383,6 +386,12 @@ private:
 	void OnPausePressed(const FInputActionValue& Value);
 	void OnResumePressed(const FInputActionValue& Value);
 	void OnBackPressed(const FInputActionValue& Value);
+	void OnCancelPressed(const FInputActionValue& Value);
+	void OnNavUp(const FInputActionValue& Value);
+	void OnNavDown(const FInputActionValue& Value);
+	void OnNavLeft(const FInputActionValue& Value);
+	void OnNavRight(const FInputActionValue& Value);
+	void Nav(int32 X, int32 Y);
 	void OnBombPressed(const FInputActionValue& Value);
 	void SetPower(int32 NewPower);
 	void PlaySound(USoundBase* Sound) const;
@@ -410,7 +419,9 @@ private:
 	UPROPERTY(Transient) TObjectPtr<UInputAction> BombAction;
 	UPROPERTY(Transient) TObjectPtr<UInputAction> PauseAction;    // P / Start: pause or resume
 	UPROPERTY(Transient) TObjectPtr<UInputAction> ResumeAction;   // SPACE / A: resume when paused
-	UPROPERTY(Transient) TObjectPtr<UInputAction> BackAction;     // ESC / Back: pause, or quit to the hangar when paused
+	UPROPERTY(Transient) TObjectPtr<UInputAction> BackAction;     // ESC / Back: pause, or (paused) back / quit
+	UPROPERTY(Transient) TObjectPtr<UInputAction> CancelAction;   // B: back a step in the pause menu
+	UPROPERTY(Transient) TArray<TObjectPtr<UInputAction>> NavActions;   // up, down, left, right in the pause menu
 	UPROPERTY(Transient) TObjectPtr<class UMaterialInstanceDynamic> ShieldMaterial;
 	UPROPERTY(Transient) TObjectPtr<UInputMappingContext> Mapping;
 

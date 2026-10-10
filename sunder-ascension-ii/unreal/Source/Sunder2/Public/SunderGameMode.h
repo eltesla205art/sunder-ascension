@@ -8,6 +8,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
 #include "SunderShipPawn.h"
+#include "SunderSettingsPanel.h"
 #include "SunderGameMode.generated.h"
 
 class ASunderKeeper;
@@ -127,6 +128,21 @@ public:
 	/** Leave the run for the hangar (ends a story campaign, as the web game's goToHangar resets the run). */
 	UFUNCTION(BlueprintCallable, Category = "Sunder|Pause") void QuitToHangar();
 
+	// ---- the pause menu: RESUME · SETTINGS · QUIT TO SHIP SELECT, with the shared settings panel inside it
+	enum class EPauseRow : uint8 { Resume, Settings, Quit, Count };
+	void PauseNavigate(int32 X, int32 Y);
+	/** SPACE / ENTER / A: the chosen row (RESUME is chosen first, so SPACE still resumes at once, as in the web game). */
+	void PauseConfirm();
+	/** ESC / Back: the settings panel goes back a page; on the pause menu itself, quit (the web game's ESC). */
+	void PauseBack();
+	/** B: back a page in settings; on the pause menu itself, resume. */
+	void PauseCancel();
+	/** A key while the settings panel waits to rebind one (from ASunderArenaController). */
+	bool CaptureKey(const FKey& Key);
+	int32 GetPauseRow() const { return PauseRow; }
+	bool IsPauseSettingsOpen() const { return bPauseSettings; }
+	const FSunderSettingsPanel& GetSettingsPanel() const { return Panel; }
+
 	/** The web game's screen shake (G.shake): kill 0.07, bomber 0.18, shield hit 0.15, hull hit 0.25, bomb 0.4, ship lost
 	 *  0.5, Keeper beaten 0.6. Scaled by Settings → SCREEN SHAKE. */
 	UFUNCTION(BlueprintCallable, Category = "Sunder") void AddShake(float Amount);
@@ -140,6 +156,10 @@ private:
 	void OnAppDeactivated();
 
 	bool bPaused = false;
+	int32 PauseRow = 0;
+	bool bPauseSettings = false;
+	FSunderSettingsPanel Panel;
+	void CloseSettings();
 	UPROPERTY(Transient) TObjectPtr<class USunderShakeModifier> ShakeModifier;
 	FDelegateHandle DeactivateHandle;
 

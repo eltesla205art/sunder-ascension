@@ -132,9 +132,44 @@ void ASunderShipPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 	PauseAction = MakeAction(TEXT("IA_Pause"), EInputActionValueType::Boolean);
 	ResumeAction = MakeAction(TEXT("IA_Resume"), EInputActionValueType::Boolean);
 	BackAction = MakeAction(TEXT("IA_Back"), EInputActionValueType::Boolean);
-	for (UInputAction* Action : { PauseAction.Get(), ResumeAction.Get(), BackAction.Get() }) { Action->bTriggerWhenPaused = true; }
+	CancelAction = MakeAction(TEXT("IA_Cancel"), EInputActionValueType::Boolean);
+	for (int32 d = 0; d < 4; ++d)
+	{
+		static const TCHAR* Names[4] = { TEXT("IA_NavUp"), TEXT("IA_NavDown"), TEXT("IA_NavLeft"), TEXT("IA_NavRight") };
+		NavActions.Add(MakeAction(Names[d], EInputActionValueType::Boolean));
+	}
+	for (UInputAction* Action : { PauseAction.Get(), ResumeAction.Get(), BackAction.Get(), CancelAction.Get() }) { Action->bTriggerWhenPaused = true; }
+	for (UInputAction* Action : NavActions) { Action->bTriggerWhenPaused = true; }
+	// The pause menu's helpers share keys with moving, the beam and the pad's B: they must never swallow them.
+	for (UInputAction* Action : { ResumeAction.Get(), CancelAction.Get() }) { Action->bConsumeInput = false; }
+	for (UInputAction* Action : NavActions) { Action->bConsumeInput = false; }
 
 	Mapping = NewObject<UInputMappingContext>(this, TEXT("IMC_Ship"));
+	MapBindings();
+
+	Input->BindAction(MoveUpAction, ETriggerEvent::Triggered, this, &ASunderShipPawn::OnMoveUp);
+	Input->BindAction(MoveUpAction, ETriggerEvent::Completed, this, &ASunderShipPawn::OnMoveUpReleased);
+	Input->BindAction(MoveRightAction, ETriggerEvent::Triggered, this, &ASunderShipPawn::OnMoveRight);
+	Input->BindAction(MoveRightAction, ETriggerEvent::Completed, this, &ASunderShipPawn::OnMoveRightReleased);
+	Input->BindAction(BeamAction, ETriggerEvent::Started, this, &ASunderShipPawn::OnBeamPressed);
+	Input->BindAction(BeamAction, ETriggerEvent::Completed, this, &ASunderShipPawn::OnBeamReleased);
+	Input->BindAction(ShootAction, ETriggerEvent::Started, this, &ASunderShipPawn::OnShootPressed);
+	Input->BindAction(ShootAction, ETriggerEvent::Completed, this, &ASunderShipPawn::OnShootReleased);
+	Input->BindAction(BombAction, ETriggerEvent::Started, this, &ASunderShipPawn::OnBombPressed);
+	Input->BindAction(PauseAction, ETriggerEvent::Started, this, &ASunderShipPawn::OnPausePressed);
+	Input->BindAction(ResumeAction, ETriggerEvent::Started, this, &ASunderShipPawn::OnResumePressed);
+	Input->BindAction(BackAction, ETriggerEvent::Started, this, &ASunderShipPawn::OnBackPressed);
+	Input->BindAction(CancelAction, ETriggerEvent::Started, this, &ASunderShipPawn::OnCancelPressed);
+	Input->BindAction(NavActions[0], ETriggerEvent::Started, this, &ASunderShipPawn::OnNavUp);
+	Input->BindAction(NavActions[1], ETriggerEvent::Started, this, &ASunderShipPawn::OnNavDown);
+	Input->BindAction(NavActions[2], ETriggerEvent::Started, this, &ASunderShipPawn::OnNavLeft);
+	Input->BindAction(NavActions[3], ETriggerEvent::Started, this, &ASunderShipPawn::OnNavRight);
+}
+
+void ASunderShipPawn::MapBindings()
+{
+	if (!Mapping) { return; }
+	Mapping->UnmapAll();                                      // re-run after Settings → CONTROLS changes mid-game
 	auto MapNegated = [this](UInputAction* Action, const FKey& Key)
 	{
 		FEnhancedActionKeyMapping& KeyMapping = Mapping->MapKey(Action, Key);
@@ -162,29 +197,30 @@ void ASunderShipPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
 	Mapping->MapKey(PauseAction, PadFor(ESunderControl::Pause));
 	Mapping->MapKey(ResumeAction, KeyFor(ESunderControl::Beam));   // the beam's key resumes, as SPACE does by default
 	Mapping->MapKey(ResumeAction, EKeys::Gamepad_FaceButton_Bottom);
+	Mapping->MapKey(ResumeAction, EKeys::Enter);
+	if (KeyFor(ESunderControl::Beam) != EKeys::SpaceBar) { Mapping->MapKey(ResumeAction, EKeys::SpaceBar); }   // SPACE always confirms
 	Mapping->MapKey(BackAction, EKeys::Escape);
 	Mapping->MapKey(BackAction, EKeys::Gamepad_Special_Left);
+	Mapping->MapKey(CancelAction, EKeys::Gamepad_FaceButton_Right);   // B: back a step in the pause menu (does nothing in play)
+	// The pause menu's own steering: arrows, the D-pad, the left stick and the (remapped) move keys; only while paused.
+	const FKey Nav[4][4] = {
+		{ EKeys::Up, EKeys::Gamepad_DPad_Up, EKeys::Gamepad_LeftStick_Up, KeyFor(ESunderControl::MoveUp) },
+		{ EKeys::Down, EKeys::Gamepad_DPad_Down, EKeys::Gamepad_LeftStick_Down, KeyFor(ESunderControl::MoveDown) },
+		{ EKeys::Left, EKeys::Gamepad_DPad_Left, EKeys::Gamepad_LeftStick_Left, KeyFor(ESunderControl::MoveLeft) },
+		{ EKeys::Right, EKeys::Gamepad_DPad_Right, EKeys::Gamepad_LeftStick_Right, KeyFor(ESunderControl::MoveRight) } };
+	for (int32 d = 0; d < 4 && NavActions.IsValidIndex(d); ++d)
+	{
+		for (const FKey& Key : Nav[d]) { Mapping->MapKey(NavActions[d], Key); }
+	}
 
 	if (APlayerController* PC = Cast<APlayerController>(GetController()))
 	{
 		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
 		{
-			Subsystem->AddMappingContext(Mapping, 0);
+			if (!Subsystem->HasMappingContext(Mapping)) { Subsystem->AddMappingContext(Mapping, 0); }
+			else { Subsystem->RequestRebuildControlMappings(); }   // the new keys take effect at once
 		}
 	}
-
-	Input->BindAction(MoveUpAction, ETriggerEvent::Triggered, this, &ASunderShipPawn::OnMoveUp);
-	Input->BindAction(MoveUpAction, ETriggerEvent::Completed, this, &ASunderShipPawn::OnMoveUpReleased);
-	Input->BindAction(MoveRightAction, ETriggerEvent::Triggered, this, &ASunderShipPawn::OnMoveRight);
-	Input->BindAction(MoveRightAction, ETriggerEvent::Completed, this, &ASunderShipPawn::OnMoveRightReleased);
-	Input->BindAction(BeamAction, ETriggerEvent::Started, this, &ASunderShipPawn::OnBeamPressed);
-	Input->BindAction(BeamAction, ETriggerEvent::Completed, this, &ASunderShipPawn::OnBeamReleased);
-	Input->BindAction(ShootAction, ETriggerEvent::Started, this, &ASunderShipPawn::OnShootPressed);
-	Input->BindAction(ShootAction, ETriggerEvent::Completed, this, &ASunderShipPawn::OnShootReleased);
-	Input->BindAction(BombAction, ETriggerEvent::Started, this, &ASunderShipPawn::OnBombPressed);
-	Input->BindAction(PauseAction, ETriggerEvent::Started, this, &ASunderShipPawn::OnPausePressed);
-	Input->BindAction(ResumeAction, ETriggerEvent::Started, this, &ASunderShipPawn::OnResumePressed);
-	Input->BindAction(BackAction, ETriggerEvent::Started, this, &ASunderShipPawn::OnBackPressed);
 }
 
 void ASunderShipPawn::OnPausePressed(const FInputActionValue& Value)
@@ -194,17 +230,35 @@ void ASunderShipPawn::OnPausePressed(const FInputActionValue& Value)
 
 void ASunderShipPawn::OnResumePressed(const FInputActionValue& Value)
 {
+	// While paused: the chosen pause-menu row (RESUME first, so SPACE still resumes at once); while playing the beam.
 	ASunderGameMode* Mode = GetWorld()->GetAuthGameMode<ASunderGameMode>();
-	if (Mode && Mode->IsCombatPaused()) { Mode->SetCombatPaused(false); }   // only resumes; while playing SPACE is the beam
+	if (Mode && Mode->IsCombatPaused()) { Mode->PauseConfirm(); }
 }
 
 void ASunderShipPawn::OnBackPressed(const FInputActionValue& Value)
 {
 	ASunderGameMode* Mode = GetWorld()->GetAuthGameMode<ASunderGameMode>();
 	if (!Mode) { return; }
-	if (Mode->IsCombatPaused()) { Mode->QuitToHangar(); }    // the web game: ESC while paused — quit to ship select
+	if (Mode->IsCombatPaused()) { Mode->PauseBack(); }       // settings: back a page; the pause menu: quit (the web game)
 	else { Mode->SetCombatPaused(true); }
 }
+
+void ASunderShipPawn::OnCancelPressed(const FInputActionValue& Value)
+{
+	ASunderGameMode* Mode = GetWorld()->GetAuthGameMode<ASunderGameMode>();
+	if (Mode && Mode->IsCombatPaused()) { Mode->PauseCancel(); }
+}
+
+void ASunderShipPawn::Nav(int32 X, int32 Y)
+{
+	ASunderGameMode* Mode = GetWorld()->GetAuthGameMode<ASunderGameMode>();
+	if (Mode && Mode->IsCombatPaused()) { Mode->PauseNavigate(X, Y); }
+}
+
+void ASunderShipPawn::OnNavUp(const FInputActionValue& Value) { Nav(0, 1); }
+void ASunderShipPawn::OnNavDown(const FInputActionValue& Value) { Nav(0, -1); }
+void ASunderShipPawn::OnNavLeft(const FInputActionValue& Value) { Nav(-1, 0); }
+void ASunderShipPawn::OnNavRight(const FInputActionValue& Value) { Nav(1, 0); }
 
 void ASunderShipPawn::OnMoveUp(const FInputActionValue& Value) { MoveInput.X = Value.Get<float>(); }
 void ASunderShipPawn::OnMoveUpReleased(const FInputActionValue& Value) { MoveInput.X = 0.f; }

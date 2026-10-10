@@ -70,14 +70,12 @@ void ASunderMenuGameMode::Confirm()
 		QueueRev(0.9f);                                      // the chosen ship answers as the bay opens
 		break;
 	case ESunderMenuScreen::Settings:
-		if (SettingIndex == (int32)ESunderSetting::Back) { PlayCue(BackSound, false); EnterTitle(); break; }
-		if (SettingIndex == (int32)ESunderSetting::Controls) { PlayCue(ModeSound, false); EnterControls(); break; }
-		if (USunderSettingsSubsystem* Settings = GetGameInstance()->GetSubsystem<USunderSettingsSubsystem>())
-		{
-			Settings->Change((ESunderSetting)SettingIndex, 1);  // SPACE steps a setting on (toggles flip)
-			PlayCue(ModeSound, false);
-		}
+	{
+		bool bClose = false;
+		PlayPanelCue(Panel.Confirm(GetGameInstance()->GetSubsystem<USunderSettingsSubsystem>(), GetWorld()->GetRealTimeSeconds(), bClose));
+		if (bClose) { EnterTitle(); }
 		break;
+	}
 	case ESunderMenuScreen::Hangar:
 		Screen = ESunderMenuScreen::Launching;
 		MarkScreenOpened();
@@ -91,80 +89,45 @@ void ASunderMenuGameMode::Confirm()
 		}
 		GetWorldTimerManager().SetTimer(LaunchTimer, this, &ASunderMenuGameMode::OpenArena, FMath::Max(LaunchDelay, 0.01f), false);
 		break;
-	case ESunderMenuScreen::Controls:
-	{
-		const int32 Count = (int32)ESunderControl::Count;
-		if (ControlIndex < Count)                             // PRESS A KEY / PRESS A BUTTON…
-		{
-			if (ControlColumn == 1 && !USunderSettingsSubsystem::HasPadButton((ESunderControl)ControlIndex)) { break; }   // the stick
-			bCapturingKey = true;
-			PlayCue(ModeSound, false);
-			break;
-		}
-		if (ControlIndex == Count)                            // RESET TO DEFAULTS
-		{
-			if (USunderSettingsSubsystem* Settings = GetGameInstance()->GetSubsystem<USunderSettingsSubsystem>())
-			{
-				Settings->ResetKeys();                        // both columns
-				Settings->Save();
-			}
-			PlayCue(ModeSound, false);
-			break;
-		}
-		PlayCue(BackSound, false);                           // BACK
-		EnterSettings();
-		SettingIndex = (int32)ESunderSetting::Controls;
-		break;
-	}
 	default:
 		break;
 	}
 }
 
-void ASunderMenuGameMode::EnterControls()
-{
-	Screen = ESunderMenuScreen::Controls;
-	ControlIndex = 0;
-	ControlColumn = 0;
-	bCapturingKey = false;
-	MarkScreenOpened();
-}
-
 bool ASunderMenuGameMode::CaptureKey(const FKey& Key)
 {
-	if (Screen != ESunderMenuScreen::Controls || !bCapturingKey) { return false; }
-	bCapturingKey = false;
-	if (Key == EKeys::Escape || Key == EKeys::Gamepad_Special_Left) { PlayCue(BackSound, false); return true; }   // cancel
-	const bool bPad = ControlColumn == 1;
-	if (bPad ? !USunderSettingsSubsystem::CanBindPad(Key) : !USunderSettingsSubsystem::CanBind(Key))
+	if (Screen != ESunderMenuScreen::Settings) { return false; }
+	ESunderPanelCue Cue = ESunderPanelCue::None;
+	const bool bTaken = Panel.CaptureKey(GetGameInstance()->GetSubsystem<USunderSettingsSubsystem>(), Key, Cue);
+	PlayPanelCue(Cue);
+	return bTaken;
+}
+
+void ASunderMenuGameMode::PlayPanelCue(ESunderPanelCue Cue)
+{
+	switch (Cue)
 	{
-		bCapturingKey = true;                                // the wrong kind of input: keep waiting
-		return true;
+	case ESunderPanelCue::Move:   PlayCue(MoveSound, false); break;
+	case ESunderPanelCue::Select: PlayCue(ModeSound, false); break;
+	case ESunderPanelCue::Back:   PlayCue(BackSound, false); break;
+	default: break;
 	}
-	if (USunderSettingsSubsystem* Settings = GetGameInstance()->GetSubsystem<USunderSettingsSubsystem>())
-	{
-		if (bPad) { Settings->SetPadKey((ESunderControl)ControlIndex, Key); }
-		else { Settings->SetKey((ESunderControl)ControlIndex, Key); }
-	}
-	PlayCue(ModeSound, false);
-	return true;
 }
 
 void ASunderMenuGameMode::EnterSettings()
 {
 	Screen = ESunderMenuScreen::Settings;
-	SettingIndex = 0;
+	Panel.Open(GetWorld()->GetRealTimeSeconds());
 	MarkScreenOpened();                                      // the title's music and ambience carry on underneath
 }
 
 void ASunderMenuGameMode::Back()
 {
-	if (Screen == ESunderMenuScreen::Settings) { PlayCue(BackSound, false); EnterTitle(); return; }
-	if (Screen == ESunderMenuScreen::Controls)
+	if (Screen == ESunderMenuScreen::Settings)
 	{
-		PlayCue(BackSound, false);
-		EnterSettings();
-		SettingIndex = (int32)ESunderSetting::Controls;
+		bool bClose = false;
+		PlayPanelCue(Panel.Back(GetWorld()->GetRealTimeSeconds(), bClose));
+		if (bClose) { EnterTitle(); }
 		return;
 	}
 	if (Screen != ESunderMenuScreen::Hangar) { return; }
@@ -180,29 +143,9 @@ void ASunderMenuGameMode::Navigate(int32 X, int32 Y)
 		if (Y != 0) { TitleIndex = 1 - TitleIndex; PlayCue(MoveSound, false); }
 		return;
 	}
-	if (Screen == ESunderMenuScreen::Controls)
-	{
-		const int32 Rows = (int32)ESunderControl::Count + 2;  // the controls, RESET, BACK
-		if (Y != 0) { ControlIndex = (ControlIndex - Y + Rows) % Rows; PlayCue(MoveSound, false); }
-		else if (X != 0) { ControlColumn = X > 0 ? 1 : 0; PlayCue(MoveSound, false); }   // keyboard ↔ gamepad
-		return;
-	}
 	if (Screen == ESunderMenuScreen::Settings)
 	{
-		const int32 Rows = (int32)ESunderSetting::Back + 1;
-		if (Y != 0)                                          // up is +1 from the controller
-		{
-			SettingIndex = (SettingIndex - Y + Rows) % Rows;
-			PlayCue(MoveSound, false);
-		}
-		else if (X != 0 && SettingIndex != (int32)ESunderSetting::Back && SettingIndex != (int32)ESunderSetting::Controls)
-		{
-			if (USunderSettingsSubsystem* Settings = GetGameInstance()->GetSubsystem<USunderSettingsSubsystem>())
-			{
-				Settings->Change((ESunderSetting)SettingIndex, X);
-				PlayCue(ModeSound, false);
-			}
-		}
+		PlayPanelCue(Panel.Navigate(GetGameInstance()->GetSubsystem<USunderSettingsSubsystem>(), X, Y, GetWorld()->GetRealTimeSeconds()));
 		return;
 	}
 	if (X != 0) { MoveShip(X); }

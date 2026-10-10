@@ -17,6 +17,7 @@
 #include "Camera/PlayerCameraManager.h"
 #include "GameFramework/PlayerController.h"
 #include "SunderShakeModifier.h"
+#include "SunderArenaController.h"
 #include "SunderSettingsSubsystem.h"
 
 ASunderGameMode::ASunderGameMode()
@@ -24,6 +25,7 @@ ASunderGameMode::ASunderGameMode()
 	DefaultPawnClass = ASunderShipPawn::StaticClass();       // BP_SunderGameMode points this at BP_SunderShip
 	HUDClass = ASunderHUD::StaticClass();
 	PickupClass = ASunderPickup::StaticClass();
+	PlayerControllerClass = ASunderArenaController::StaticClass();   // key capture for the pause menu's settings
 
 	// The web game's ships (web/game.html SHIPS) at power level 1, scaled to the Unreal ship's units: the Sunborn is the
 	// baseline (950 speed, 5 hull, 0.09 s twin shots of 10 at 2200); the others keep the web game's ratios to it.
@@ -146,6 +148,8 @@ void ASunderGameMode::SetCombatPaused(bool bPause)
 	if (bPause && bGameOver) { return; }                     // never stick outside combat
 	if (bPause == bPaused) { return; }
 	bPaused = bPause;
+	PauseRow = 0;                                             // the pause menu opens on RESUME
+	if (!bPaused) { CloseSettings(); }
 	UGameplayStatics::SetGamePaused(this, bPaused);           // a frozen frame: nothing moves, the HUD draws PAUSED
 }
 
@@ -161,6 +165,69 @@ void ASunderGameMode::AddShake(float Amount)
 		if (!ShakeModifier) { return; }
 	}
 	ShakeModifier->Kick(Scaled);
+}
+
+void ASunderGameMode::CloseSettings()
+{
+	if (!bPauseSettings) { return; }
+	bPauseSettings = false;
+	if (ASunderShipPawn* Ship = Cast<ASunderShipPawn>(UGameplayStatics::GetPlayerPawn(this, 0))) { Ship->MapBindings(); }   // new keys, now
+}
+
+void ASunderGameMode::PauseNavigate(int32 X, int32 Y)
+{
+	if (!bPaused) { return; }
+	if (bPauseSettings)
+	{
+		Panel.Navigate(GetGameInstance()->GetSubsystem<USunderSettingsSubsystem>(), X, Y, GetWorld()->GetRealTimeSeconds());
+		return;
+	}
+	const int32 Rows = (int32)EPauseRow::Count;
+	if (Y != 0) { PauseRow = (PauseRow - Y + Rows) % Rows; }
+}
+
+void ASunderGameMode::PauseConfirm()
+{
+	if (!bPaused) { return; }
+	if (bPauseSettings)
+	{
+		bool bClose = false;
+		Panel.Confirm(GetGameInstance()->GetSubsystem<USunderSettingsSubsystem>(), GetWorld()->GetRealTimeSeconds(), bClose);
+		if (bClose) { CloseSettings(); PauseRow = (int32)EPauseRow::Settings; }
+		return;
+	}
+	switch ((EPauseRow)PauseRow)
+	{
+	case EPauseRow::Resume:   SetCombatPaused(false); break;
+	case EPauseRow::Settings: bPauseSettings = true; Panel.Open(GetWorld()->GetRealTimeSeconds()); break;
+	case EPauseRow::Quit:     QuitToHangar(); break;
+	default: break;
+	}
+}
+
+void ASunderGameMode::PauseBack()
+{
+	if (!bPaused) { return; }
+	if (!bPauseSettings) { QuitToHangar(); return; }         // the web game: ESC while paused quits to the ship select
+	bool bClose = false;
+	Panel.Back(GetWorld()->GetRealTimeSeconds(), bClose);
+	if (bClose) { CloseSettings(); PauseRow = (int32)EPauseRow::Settings; }
+}
+
+void ASunderGameMode::PauseCancel()
+{
+	if (!bPaused) { return; }
+	if (!bPauseSettings) { SetCombatPaused(false); return; } // B on the pause menu resumes (it never quits)
+	bool bClose = false;
+	Panel.Back(GetWorld()->GetRealTimeSeconds(), bClose);
+	if (bClose) { CloseSettings(); PauseRow = (int32)EPauseRow::Settings; }
+}
+
+bool ASunderGameMode::CaptureKey(const FKey& Key)
+{
+	if (!bPaused || !bPauseSettings || !Panel.IsCapturing()) { return false; }
+	ESunderPanelCue Cue = ESunderPanelCue::None;
+	return Panel.CaptureKey(GetGameInstance()->GetSubsystem<USunderSettingsSubsystem>(), Key, Cue);
 }
 
 void ASunderGameMode::QuitToHangar()

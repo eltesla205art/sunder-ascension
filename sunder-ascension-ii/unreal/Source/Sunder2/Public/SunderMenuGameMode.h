@@ -9,6 +9,7 @@
 
 #include "CoreMinimal.h"
 #include "SunderFrontEndGameMode.h"
+#include "SunderSettingsPanel.h"
 #include "SunderMenuGameMode.generated.h"
 
 class USoundBase;
@@ -21,8 +22,7 @@ enum class ESunderMenuScreen : uint8
 	Title,
 	Hangar,
 	Launching,
-	Settings,     // music and effects volume, display, performance mode, VSync, hitbox (USunderSettingsSubsystem)
-	Controls      // the ship's keyboard bindings: pick a control, press a key
+	Settings      // the settings and controls pages (FSunderSettingsPanel, shared with the pause menu)
 };
 
 USTRUCT(BlueprintType)
@@ -143,13 +143,8 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Menu") int32 GetModeIndex() const { return ModeIndex; }
 	/** The title's choice: 0 = begin (to the hangar), 1 = settings. */
 	UFUNCTION(BlueprintPure, Category = "Menu") int32 GetTitleIndex() const { return TitleIndex; }
-	/** The highlighted row on the settings screen (an ESunderSetting). */
-	UFUNCTION(BlueprintPure, Category = "Menu") int32 GetSettingIndex() const { return SettingIndex; }
-	/** Controls screen: the highlighted row (an ESunderControl, then RESET, then BACK), and whether it waits for a key. */
-	UFUNCTION(BlueprintPure, Category = "Menu") int32 GetControlIndex() const { return ControlIndex; }
-	UFUNCTION(BlueprintPure, Category = "Menu") bool IsCapturingKey() const { return bCapturingKey; }
-	/** Controls screen: 0 = the keyboard column, 1 = the gamepad column. */
-	UFUNCTION(BlueprintPure, Category = "Menu") int32 GetControlColumn() const { return ControlColumn; }
+	/** The settings and controls pages, drawn by SunderMenuHUD on the Settings screen. */
+	const FSunderSettingsPanel& GetSettingsPanel() const { return Panel; }
 	virtual bool CaptureKey(const FKey& Key) override;
 protected:
 	virtual void BeginPlay() override;
@@ -158,7 +153,7 @@ private:
 	void EnterTitle();
 	void EnterHangar();
 	void EnterSettings();
-	void EnterControls();
+	void PlayPanelCue(ESunderPanelCue Cue);
 	void QueueRev(float Delay);
 	void PlayRev();
 	void OpenArena();
@@ -167,10 +162,7 @@ private:
 	int32 ShipIndex = 0;
 	int32 ModeIndex = 0;
 	int32 TitleIndex = 0;
-	int32 SettingIndex = 0;
-	int32 ControlIndex = 0;
-	bool bCapturingKey = false;
-	int32 ControlColumn = 0;
+	FSunderSettingsPanel Panel;
 	float LastMoveCue = -100.f;
 	FTimerHandle RevTimer;
 	FTimerHandle LaunchTimer;
