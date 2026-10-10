@@ -281,7 +281,7 @@ def main():
     MANUAL.extend([
         "Check one Keeper in the arena faces down the screen; if a model is turned, change its Body Rotation (yaw) "
         "on the Keeper Blueprint (default yaw 90 assumes Unreal's usual Blender FBX axes)",
-        "Keeper materials import with their base colours only; add emissive (crystal, cores, eyes) for the glow",
+        "Keeper materials import with their base colours only; run create_keeper_glow.py for the glow (crystal, cores, eyes)",
     ])
     log("---- done ({}) ----".format(len(DONE)))
     for label in DONE:

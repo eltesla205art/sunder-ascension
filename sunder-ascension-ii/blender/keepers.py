@@ -5,6 +5,7 @@
     python keepers.py <out_dir> [samples] [act|id] --glb    only the animated GLBs
     python keepers.py <out_dir> [samples] [act|id] --fbx    static one-mesh FBXs for Unreal (SM_Keeper_<Id>.fbx)
     python keepers.py <out_dir> [samples] [act|id] --fbx-anim   the animation loops for Unreal (see export_fbx_anim)
+    python keepers.py <out_dir> 0 --glows   keeper_glows.json: the glowing materials for Unreal (see export_glows)
 
 For each Keeper writes:
   keeper_<id>.png          top-down boss sprite (longest side 360 px, transparent, front facing DOWN the screen)
@@ -34,7 +35,8 @@ ANIM = "--anim" in sys.argv
 GLB_ONLY = "--glb" in sys.argv                   # only the animated GLBs for the Keeper Codex, no renders
 FBX_ONLY = "--fbx" in sys.argv                   # only static one-mesh FBXs for the Unreal version
 FBX_ANIM = "--fbx-anim" in sys.argv              # the Codex viewer's animation loops for the Unreal version
-_args = [a for a in sys.argv if a not in ("--anim", "--glb", "--fbx", "--fbx-anim")]
+GLOWS = "--glows" in sys.argv                    # the glowing materials, for the Unreal version
+_args = [a for a in sys.argv if a not in ("--anim", "--glb", "--fbx", "--fbx-anim", "--glows")]
 OUT = _args[1] if len(_args) > 1 else "."
 SAMPLES = int(_args[2]) if len(_args) > 2 else 64
 ONLY_ACT = _args[3] if len(_args) > 3 else None   # "1".."4" renders one act, or a Keeper id; default: all
@@ -1085,6 +1087,43 @@ def export_fbx_anim(kid, out):
     return len(movers)
 
 
+def export_glows(path):
+    """Every Keeper material that glows, as the web Codex lights it, for Unreal (FBX carries base colours only):
+    {"materials": {name: {base, metallic, roughness, emissive (linear RGB), strength, glass}},
+     "keepers": {id: {name: ...}}} (a Keeper whose material of that name glows differently). strength is capped as the web viewer
+    caps it (keepers.html prepare(): 1.3, or 0.55 for see-through crystal, which stacks up under bloom), and the
+    viewer pulses it the same way. create_keeper_glow.py makes a glowing material instance for each."""
+    import json
+    glows, own = {}, {}
+    for kid in KEEPERS:
+        random.seed(7)
+        build_keeper(kid)
+        used = {s.material for o in bpy.context.scene.objects if o.type in ("MESH", "CURVE")
+                for s in o.material_slots if s.material}
+        for m in used:
+            b = m.node_tree.nodes.get("Principled BSDF") if m.use_nodes else None
+            if b is None:
+                continue
+            colour = list(b.inputs["Emission Color"].default_value)[:3]
+            strength = b.inputs["Emission Strength"].default_value
+            if strength <= 0 or max(colour) <= 0:
+                continue
+            glass = b.inputs["Transmission Weight"].default_value > 0
+            entry = {"base": [round(c, 4) for c in list(b.inputs["Base Color"].default_value)[:3]],
+                     "metallic": round(b.inputs["Metallic"].default_value, 3),
+                     "roughness": round(b.inputs["Roughness"].default_value, 3),
+                     "emissive": [round(c, 4) for c in colour],
+                     "strength": round(min(strength, 0.55 if glass else 1.3), 3), "glass": glass}
+            name = m.name.split(".")[0]                # Unreal imports by the Blender name, without .001
+            if name not in glows:
+                glows[name] = entry
+            elif glows[name] != entry:                 # a ship part's glow in another Keeper's colours
+                own.setdefault(kid, {})[name] = entry
+    with open(path, "w") as fh:
+        json.dump({"materials": glows, "keepers": own}, fh, indent=1, sort_keys=True)
+    return glows
+
+
 def body_coords(kid, w):
     """World-space vertices of the fixed body for loop angle w (Apep's coils, rebuilt with the wave)."""
     P = build_keeper(kid, w)
@@ -1191,6 +1230,9 @@ def main():
     if ANIM:
         for kid in chosen:
             main_anim(kid)
+        return
+    if GLOWS:
+        print("wrote", len(export_glows(os.path.join(OUT, "keeper_glows.json"))), "glowing materials")
         return
     if FBX_ANIM:
         for kid in chosen:

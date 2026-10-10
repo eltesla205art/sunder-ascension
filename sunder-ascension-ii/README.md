@@ -25,6 +25,7 @@ original *SUNDER: Ascension — The Nine Bows* (`web/`, `godot/`, `docs/`), whic
 | `unreal/KEEPER_VFX.md` | UE5 Niagara guide for the Keepers: aura, arrival Gate, muzzle flares, phase shockwave, death and shot trails |
 | `unreal/Scripts/create_keeper_fx_assets.py` | Editor Python: Keeper FX materials, Effect Types and empty systems, wired onto the twelve Keeper Blueprints with their colours (untested until first run) |
 | `unreal/Scripts/create_keeper_anim.py` | Editor Python: imports the Keepers' animation loops (rigid parts and their frames) into `DA_KeeperAnim_*` for the Codex viewer (untested until its first run) |
+| `unreal/Scripts/create_keeper_glow.py` | Editor Python: gives the Keepers' glowing materials (crystal, cores, eyes, fire…) their glow from `keeper_glows.json`, on their models and animation parts, with a GlowPulse the Codex viewer breathes (untested until its first run) |
 | `unreal/Scripts/create_keeper_audio.py` | Editor Python: imports the Keepers' music and voices and sets them on the twelve Keeper Blueprints (untested until first run) |
 | `unreal/Content/Audio/Keepers/` | The Keepers' battle themes (three layers each, seamless loops) and voices as WAV, rendered from `web/keeper_audio.js` |
 | `unreal/Scripts/create_stage_audio.py` | Editor Python: imports the twelve Hours' music, ambience and cues, makes their stage audio assets and gives them to the wave sets (untested until first run) |
@@ -50,6 +51,7 @@ original *SUNDER: Ascension — The Nine Bows* (`web/`, `godot/`, `docs/`), whic
 | `unreal/Tools/export_codex_text.cjs` | Generates the Unreal Codex's words (`Source/Sunder2/Private/SunderCodexEntries.inl`) from `web/keepers.html`, `web/game.html` and `story.json` |
 | `unreal/Tools/render_web_audio.cjs` | Renders the Keeper, stage, menu, story and game-effect WAVs from the web game's synth in Chromium (Playwright) |
 | `unreal/Content/Keepers/Anim/` | The Keepers' animation loops for the Unreal Codex viewer: per Keeper its fixed body, each moving part about its pivot (FBX) and every frame of one loop (JSON), from `blender/keepers.py --fbx-anim` (the same loop as the web GLBs) |
+| `unreal/Content/Keepers/keeper_glows.json` | The Keepers' glowing materials (base, metal, roughness, glow colour and strength, capped as the web Codex caps them), from `blender/keepers.py --glows` |
 | `unreal/Content/Keepers/` | The thirteen Keeper models as FBX for Unreal (one mesh each, plus Apep's final form), from `blender/keepers.py --fbx` |
 | `art/blender/` | Full-resolution Blender renders (title backdrop, ship sprites, `keepers/` boss sprites and portraits) |
 | `artifacts/` | Progress note, QA evidence (`final-evidence.md`), inspector captures |
@@ -114,6 +116,7 @@ python blender/keepers.py /tmp/anim 48 [act|id] --anim         # Keeper animatio
 python blender/keepers.py web/models 8 [act|id] --glb          # only the animated Codex models
 python blender/keepers.py unreal/Content/Keepers 8 [act|id] --fbx   # static FBX models for Unreal
 python blender/keepers.py unreal/Content/Keepers/Anim 8 [act|id] --fbx-anim   # the Codex loops for Unreal (rigid parts)
+python blender/keepers.py unreal/Content/Keepers 0 --glows       # keeper_glows.json: the glowing materials for Unreal
 python blender/ships.py unreal/Content/Ships 0 --fbx              # the three ships as FBX for Unreal
 python blender/pickups.py art/blender 160                        # pickups_preview.png: the six pickup gems
 python blender/pickups.py unreal/Content/Pickups 0 --fbx          # the pickup gems as FBX for Unreal

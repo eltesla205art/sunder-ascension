@@ -210,10 +210,14 @@ bool ASunderCodexStage::Show(const FString& Id, const FLinearColor& Accent, floa
 	{
 		UStaticMeshComponent* Part = PartComponent(i);
 		const bool bUsed = i < Moving && Anim->Parts[i].Mesh;
+		Part->EmptyOverrideMaterials();
 		Part->SetStaticMesh(bUsed ? Anim->Parts[i].Mesh.Get() : nullptr);
 		Part->SetVisibility(bUsed);
 		if (bUsed) { Part->SetRelativeTransform(Anim->Sample(i, 0.f)); }
 	}
+	Glows.Reset();
+	FindGlows(Body);
+	for (int32 i = 0; i < Moving; ++i) { FindGlows(Parts[i]); }
 	if (!Model) { return false; }
 
 	// keepers.html's prepare(): 5 across (here FitSize), standing on the plinth, centred over it. A tall Keeper is held
@@ -237,6 +241,8 @@ UTextureRenderTarget2D* ASunderCodexStage::Render(float Now)
 	const float Swap = FMath::Clamp((Now - ShownAt) * 2.2f, 0.f, 1.f), Ease = 1.f - FMath::Pow(1.f - Swap, 3.f);
 	Hover->SetRelativeLocation(FVector(0.f, 0.f, (0.25f + FMath::Sin(Now * 1.4f) * 0.08f) * U));
 	Hover->SetRelativeScale3D(FVector(0.6f + 0.4f * Ease));
+	const float Pulse = 0.75f + 0.35f * FMath::Sin(Now * 3.1f);   // keepers.html: emissiveIntensity = base × this
+	for (UMaterialInstanceDynamic* Glow : Glows) { if (Glow) { Glow->SetScalarParameterValue(TEXT("GlowPulse"), Pulse); } }
 	if (Anim)                                                   // the loop, from when it came on, a loop a second
 	{
 		for (int32 i = 0; i < Anim->Parts.Num() && i < Parts.Num(); ++i) { Parts[i]->SetRelativeTransform(Anim->Sample(i, Now - ShownAt)); }
@@ -262,4 +268,19 @@ UStaticMeshComponent* ASunderCodexStage::PartComponent(int32 i)
 		Parts.Add(Part);
 	}
 	return Parts[i];
+}
+
+void ASunderCodexStage::FindGlows(UStaticMeshComponent* Component)
+{
+	// The slots wearing create_keeper_glow.py's materials (they have a GlowPulse) get their own instance to breathe.
+	if (!Component || !Component->GetStaticMesh()) { return; }
+	for (int32 i = 0; i < Component->GetNumMaterials(); ++i)
+	{
+		UMaterialInterface* Material = Component->GetMaterial(i);
+		float Pulse = 0.f;
+		if (Material && Material->GetScalarParameterValue(FHashedMaterialParameterInfo(TEXT("GlowPulse")), Pulse))
+		{
+			Glows.Add(Component->CreateDynamicMaterialInstance(i, Material));
+		}
+	}
 }
