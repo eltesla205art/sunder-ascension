@@ -94,12 +94,18 @@ void ASunderMenuGameMode::Confirm()
 	case ESunderMenuScreen::Controls:
 	{
 		const int32 Count = (int32)ESunderControl::Count;
-		if (ControlIndex < Count) { bCapturingKey = true; PlayCue(ModeSound, false); break; }   // PRESS A KEY…
+		if (ControlIndex < Count)                             // PRESS A KEY / PRESS A BUTTON…
+		{
+			if (ControlColumn == 1 && !USunderSettingsSubsystem::HasPadButton((ESunderControl)ControlIndex)) { break; }   // the stick
+			bCapturingKey = true;
+			PlayCue(ModeSound, false);
+			break;
+		}
 		if (ControlIndex == Count)                            // RESET TO DEFAULTS
 		{
 			if (USunderSettingsSubsystem* Settings = GetGameInstance()->GetSubsystem<USunderSettingsSubsystem>())
 			{
-				Settings->ResetKeys();
+				Settings->ResetKeys();                        // both columns
 				Settings->Save();
 			}
 			PlayCue(ModeSound, false);
@@ -119,6 +125,7 @@ void ASunderMenuGameMode::EnterControls()
 {
 	Screen = ESunderMenuScreen::Controls;
 	ControlIndex = 0;
+	ControlColumn = 0;
 	bCapturingKey = false;
 	MarkScreenOpened();
 }
@@ -127,11 +134,17 @@ bool ASunderMenuGameMode::CaptureKey(const FKey& Key)
 {
 	if (Screen != ESunderMenuScreen::Controls || !bCapturingKey) { return false; }
 	bCapturingKey = false;
-	if (Key == EKeys::Escape) { PlayCue(BackSound, false); return true; }   // ESC cancels the binding
-	if (!USunderSettingsSubsystem::CanBind(Key)) { return true; }            // ignored; press another
+	if (Key == EKeys::Escape || Key == EKeys::Gamepad_Special_Left) { PlayCue(BackSound, false); return true; }   // cancel
+	const bool bPad = ControlColumn == 1;
+	if (bPad ? !USunderSettingsSubsystem::CanBindPad(Key) : !USunderSettingsSubsystem::CanBind(Key))
+	{
+		bCapturingKey = true;                                // the wrong kind of input: keep waiting
+		return true;
+	}
 	if (USunderSettingsSubsystem* Settings = GetGameInstance()->GetSubsystem<USunderSettingsSubsystem>())
 	{
-		Settings->SetKey((ESunderControl)ControlIndex, Key);
+		if (bPad) { Settings->SetPadKey((ESunderControl)ControlIndex, Key); }
+		else { Settings->SetKey((ESunderControl)ControlIndex, Key); }
 	}
 	PlayCue(ModeSound, false);
 	return true;
@@ -171,6 +184,7 @@ void ASunderMenuGameMode::Navigate(int32 X, int32 Y)
 	{
 		const int32 Rows = (int32)ESunderControl::Count + 2;  // the controls, RESET, BACK
 		if (Y != 0) { ControlIndex = (ControlIndex - Y + Rows) % Rows; PlayCue(MoveSound, false); }
+		else if (X != 0) { ControlColumn = X > 0 ? 1 : 0; PlayCue(MoveSound, false); }   // keyboard ↔ gamepad
 		return;
 	}
 	if (Screen == ESunderMenuScreen::Settings)

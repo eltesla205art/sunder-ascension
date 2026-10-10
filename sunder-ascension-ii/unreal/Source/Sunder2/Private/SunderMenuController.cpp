@@ -52,7 +52,7 @@ void ASunderMenuController::BeginPlay()
 
 bool ASunderMenuController::InputKey(const FInputKeyParams& Params)
 {
-	if (Params.Event == IE_Pressed && !Params.Key.IsGamepadKey())
+	if (Params.Event == IE_Pressed)
 	{
 		if (ASunderFrontEndGameMode* S = Screens(); S && S->CaptureKey(Params.Key)) { return true; }
 	}

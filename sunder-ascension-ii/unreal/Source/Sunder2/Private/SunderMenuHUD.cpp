@@ -394,11 +394,19 @@ void ASunderMenuHUD::DrawControls(const ASunderMenuGameMode* Menu, float T)
 	const float TextScale = RH > 0.f ? 15.f * S * 1.25f / RH : 1.f;
 
 	const int32 Count = (int32)ESunderControl::Count, Rows = Count + 2;
-	const float PW = FMath::Min(W * 0.8f, 520.f * S), PX = (W - PW) * 0.5f, PY = 140.f * S, RowH = 42.f * S, PH = Rows * RowH + 30.f * S;
+	const float PW = FMath::Min(W * 0.9f, 640.f * S), PX = (W - PW) * 0.5f, PY = 140.f * S, RowH = 42.f * S, PH = Rows * RowH + 30.f * S;
+	const float ColX[2] = { PX + PW * 0.52f, PX + PW * 0.80f };   // the keyboard and gamepad columns' centres
 	DrawRect(FLinearColor(0.043f, 0.059f, 0.165f, 0.82f * A), PX, PY, PW, PH);
 	for (const float Y : { PY, PY + PH }) { DrawLine(PX, Y, PX + PW, Y, Faded(Gilt, A), 1.f); }
 	for (const float X : { PX, PX + PW }) { DrawLine(X, PY, X, PY + PH, Faded(Gilt, A), 1.f); }
 	DrawWebText(TEXT("CONTROLS"), Faded(FLinearColor(0.96f, 0.84f, 0.48f), A), 104.f, 30.f, FLinearColor(0.83f, 0.69f, 0.22f));
+	for (int32 c = 0; c < 2; ++c)                               // the column heads, the chosen one lit
+	{
+		const FString Head = c == 0 ? TEXT("KEYBOARD") : TEXT("GAMEPAD");
+		float HW = 0.f, HH = 0.f;
+		GetTextSize(Head, HW, HH, Font, TextScale * 0.85f);
+		DrawText(Head, Faded(c == Menu->GetControlColumn() ? Sky : Sand, A), ColX[c] - HW * 0.5f, PY - HH - 6.f * S, Font, TextScale * 0.85f);
+	}
 
 	for (int32 i = 0; i < Rows; ++i)
 	{
@@ -417,18 +425,25 @@ void ASunderMenuHUD::DrawControls(const ASunderMenuGameMode* Menu, float T)
 		const FString Name = USunderSettingsSubsystem::ControlLabel(Control);
 		GetTextSize(Name, TW, TH, Font, TextScale);
 		DrawText(Name, Faded(bOn ? Bright : Sand, A), PX + 28.f * S, MidY - TH * 0.5f, Font, TextScale);
-		const bool bWaiting = bOn && Menu->IsCapturingKey();
-		const FString Key = bWaiting ? TEXT("PRESS A KEY  (ESC cancels)") : USunderSettingsSubsystem::KeyName(Settings->GetKey(Control));
-		const float KA = bWaiting ? 0.45f + 0.55f * FMath::Abs(FMath::Sin(T * 4.f)) : 1.f;
-		GetTextSize(Key, TW, TH, Font, TextScale);
-		const float KX = PX + PW - 28.f * S - TW;
-		if (!bWaiting)                                         // the key in a keycap
+		for (int32 c = 0; c < 2; ++c)                           // its key, then its pad button (the moves: the left stick)
 		{
-			DrawRect(Faded(bOn ? Sky : Gilt, 0.14f * A), KX - 8.f * S, MidY - TH * 0.5f - 3.f * S, TW + 16.f * S, TH + 6.f * S);
+			const bool bCell = bOn && c == Menu->GetControlColumn();
+			const bool bFixed = c == 1 && !USunderSettingsSubsystem::HasPadButton(Control);
+			const bool bWaiting = bCell && Menu->IsCapturingKey();
+			const FString Key = bWaiting ? (c == 0 ? TEXT("PRESS A KEY") : TEXT("PRESS A BUTTON"))
+				: c == 0 ? USunderSettingsSubsystem::KeyName(Settings->GetKey(Control))
+				: bFixed ? TEXT("LEFT STICK") : USunderSettingsSubsystem::PadName(Settings->GetPadKey(Control));
+			const float KA = bWaiting ? 0.45f + 0.55f * FMath::Abs(FMath::Sin(T * 4.f)) : bFixed ? 0.45f : 1.f;
+			GetTextSize(Key, TW, TH, Font, TextScale);
+			const float KX = ColX[c] - TW * 0.5f;
+			if (!bWaiting && !bFixed)                           // the key in a keycap
+			{
+				DrawRect(Faded(bCell ? Sky : Gilt, (bCell ? 0.22f : 0.12f) * A), KX - 8.f * S, MidY - TH * 0.5f - 3.f * S, TW + 16.f * S, TH + 6.f * S);
+			}
+			DrawText(Key, Faded(bCell ? Sky : Gilt, A * KA), KX, MidY - TH * 0.5f, Font, TextScale);
 		}
-		DrawText(Key, Faded(bOn ? Sky : Gilt, A * KA), KX, MidY - TH * 0.5f, Font, TextScale);
 	}
-	DrawWebText(TEXT("Gamepad: left stick move  \u00B7  RT beam  \u00B7  A shoot  \u00B7  Y / RB bomb  \u00B7  Start pause"),
+	DrawWebText(TEXT("A key or button already in use swaps over  \u00B7  ESC or the pad's BACK cancels a rebind"),
 		Faded(Sand, 0.7f * A), 140.f + (Rows * 42.f + 30.f) + 26.f, 11.f);
-	DrawWebText(TEXT("W / S  choose    \u00B7    SPACE  rebind    \u00B7    ESC  back"), Faded(Sand, A), 690.f, 12.f);
+	DrawWebText(TEXT("W / S  choose    \u00B7    A / D  keyboard or gamepad    \u00B7    SPACE  rebind    \u00B7    ESC  back"), Faded(Sand, A), 690.f, 12.f);
 }

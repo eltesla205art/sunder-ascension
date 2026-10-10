@@ -148,6 +148,8 @@ public:
 	/** Controls screen: the highlighted row (an ESunderControl, then RESET, then BACK), and whether it waits for a key. */
 	UFUNCTION(BlueprintPure, Category = "Menu") int32 GetControlIndex() const { return ControlIndex; }
 	UFUNCTION(BlueprintPure, Category = "Menu") bool IsCapturingKey() const { return bCapturingKey; }
+	/** Controls screen: 0 = the keyboard column, 1 = the gamepad column. */
+	UFUNCTION(BlueprintPure, Category = "Menu") int32 GetControlColumn() const { return ControlColumn; }
 	virtual bool CaptureKey(const FKey& Key) override;
 protected:
 	virtual void BeginPlay() override;
@@ -168,6 +170,7 @@ private:
 	int32 SettingIndex = 0;
 	int32 ControlIndex = 0;
 	bool bCapturingKey = false;
+	int32 ControlColumn = 0;
 	float LastMoveCue = -100.f;
 	FTimerHandle RevTimer;
 	FTimerHandle LaunchTimer;

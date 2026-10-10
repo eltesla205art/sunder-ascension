@@ -30,6 +30,12 @@ void USunderSettingsSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 			const FKey Key(*Name);
 			if (CanBind(Key)) { Keys[i] = Key; }
 		}
+		if (HasPadButton((ESunderControl)i) && GConfig->GetString(Section,
+			*FString::Printf(TEXT("Pad_%s"), *ControlLabel((ESunderControl)i).Replace(TEXT(" "), TEXT(""))), Name, GGameUserSettingsIni))
+		{
+			const FKey Key(*Name);
+			if (CanBindPad(Key)) { PadKeys[i] = Key; }
+		}
 	}
 	GConfig->GetInt(Section, TEXT("MusicVolume"), MusicVolume, GGameUserSettingsIni);
 	GConfig->GetInt(Section, TEXT("EffectsVolume"), EffectsVolume, GGameUserSettingsIni);
@@ -54,6 +60,11 @@ void USunderSettingsSubsystem::Save() const
 	{
 		GConfig->SetString(Section, *FString::Printf(TEXT("Key_%s"), *ControlLabel((ESunderControl)i).Replace(TEXT(" "), TEXT(""))),
 			*Keys[i].GetFName().ToString(), GGameUserSettingsIni);
+		if (HasPadButton((ESunderControl)i))
+		{
+			GConfig->SetString(Section, *FString::Printf(TEXT("Pad_%s"), *ControlLabel((ESunderControl)i).Replace(TEXT(" "), TEXT(""))),
+				*PadKeys[i].GetFName().ToString(), GGameUserSettingsIni);
+		}
 	}
 	GConfig->Flush(false, GGameUserSettingsIni);
 }
@@ -214,7 +225,67 @@ void USunderSettingsSubsystem::SetKey(ESunderControl Control, const FKey& Key)
 void USunderSettingsSubsystem::ResetKeys()
 {
 	Keys.SetNum((int32)ESunderControl::Count);
-	for (int32 i = 0; i < Keys.Num(); ++i) { Keys[i] = DefaultKey((ESunderControl)i); }
+	PadKeys.SetNum((int32)ESunderControl::Count);
+	for (int32 i = 0; i < Keys.Num(); ++i)
+	{
+		Keys[i] = DefaultKey((ESunderControl)i);
+		PadKeys[i] = DefaultPadKey((ESunderControl)i);
+	}
+}
+
+bool USunderSettingsSubsystem::HasPadButton(ESunderControl Control)
+{
+	return Control == ESunderControl::Beam || Control == ESunderControl::Shoot || Control == ESunderControl::Bomb
+		|| Control == ESunderControl::Pause;
+}
+
+FKey USunderSettingsSubsystem::DefaultPadKey(ESunderControl Control)
+{
+	switch (Control)                                          // the arena's pad layout before remapping
+	{
+	case ESunderControl::Beam:  return EKeys::Gamepad_RightTrigger;
+	case ESunderControl::Shoot: return EKeys::Gamepad_FaceButton_Bottom;
+	case ESunderControl::Bomb:  return EKeys::Gamepad_FaceButton_Top;
+	case ESunderControl::Pause: return EKeys::Gamepad_Special_Right;
+	default:                    return EKeys::Invalid;
+	}
+}
+
+bool USunderSettingsSubsystem::CanBindPad(const FKey& Key)
+{
+	if (!Key.IsValid() || !Key.IsGamepadKey() || Key.IsAxis1D() || Key.IsAxis2D()) { return false; }
+	if (Key == EKeys::Gamepad_Special_Left) { return false; }                   // Back / View cancels a rebind
+	return !Key.GetFName().ToString().Contains(TEXT("Stick_"));                 // stick directions stay for moving
+}
+
+FKey USunderSettingsSubsystem::GetPadKey(ESunderControl Control) const
+{
+	return PadKeys.IsValidIndex((int32)Control) ? PadKeys[(int32)Control] : DefaultPadKey(Control);
+}
+
+void USunderSettingsSubsystem::SetPadKey(ESunderControl Control, const FKey& Key)
+{
+	const int32 Index = (int32)Control;
+	if (!PadKeys.IsValidIndex(Index) || !HasPadButton(Control) || !CanBindPad(Key)) { return; }
+	const int32 Other = PadKeys.IndexOfByKey(Key);
+	if (Other != INDEX_NONE && Other != Index) { PadKeys[Other] = PadKeys[Index]; }   // swap
+	PadKeys[Index] = Key;
+	Save();
+}
+
+FString USunderSettingsSubsystem::PadName(const FKey& Key)
+{
+	static const TMap<FKey, FString> Names = {
+		{ EKeys::Gamepad_FaceButton_Bottom, TEXT("A") }, { EKeys::Gamepad_FaceButton_Right, TEXT("B") },
+		{ EKeys::Gamepad_FaceButton_Left, TEXT("X") }, { EKeys::Gamepad_FaceButton_Top, TEXT("Y") },
+		{ EKeys::Gamepad_LeftShoulder, TEXT("LB") }, { EKeys::Gamepad_RightShoulder, TEXT("RB") },
+		{ EKeys::Gamepad_LeftTrigger, TEXT("LT") }, { EKeys::Gamepad_RightTrigger, TEXT("RT") },
+		{ EKeys::Gamepad_DPad_Up, TEXT("D-PAD UP") }, { EKeys::Gamepad_DPad_Down, TEXT("D-PAD DOWN") },
+		{ EKeys::Gamepad_DPad_Left, TEXT("D-PAD LEFT") }, { EKeys::Gamepad_DPad_Right, TEXT("D-PAD RIGHT") },
+		{ EKeys::Gamepad_LeftThumbstick, TEXT("L3") }, { EKeys::Gamepad_RightThumbstick, TEXT("R3") },
+		{ EKeys::Gamepad_Special_Right, TEXT("START") }, { EKeys::Gamepad_Special_Left, TEXT("BACK") } };
+	if (const FString* Name = Names.Find(Key)) { return *Name; }
+	return Key.IsValid() ? Key.GetDisplayName().ToString().ToUpper() : TEXT("LEFT STICK");
 }
 
 const USunderSettingsSubsystem* USunderSettingsSubsystem::Get(const UObject* WorldContext)

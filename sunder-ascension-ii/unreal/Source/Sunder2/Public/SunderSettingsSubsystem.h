@@ -79,6 +79,18 @@ public:
 	/** Any context's settings (nullptr without a game instance). */
 	static const USunderSettingsSubsystem* Get(const UObject* WorldContext);
 
+	// ---- gamepad bindings: beam, shoot, bomb and pause (movement stays on the left stick)
+	/** True for the controls a gamepad button can take (not the four moves). */
+	static bool HasPadButton(ESunderControl Control);
+	FKey GetPadKey(ESunderControl Control) const;
+	/** Bind a gamepad button; one another control uses swaps over. */
+	void SetPadKey(ESunderControl Control, const FKey& Key);
+	static FKey DefaultPadKey(ESunderControl Control);
+	/** A button the binding screen accepts: a gamepad button (not a stick direction or axis, not Back / View: it cancels). */
+	static bool CanBindPad(const FKey& Key);
+	/** A gamepad button's short name (A, B, X, Y, LB, RB, LT, RT, D-PAD UP, L3, START…); "LEFT STICK" for the moves. */
+	static FString PadName(const FKey& Key);
+
 	/** Step a setting left (-1) or right (+1); toggles flip either way. Saved and applied at once. */
 	UFUNCTION(BlueprintCallable, Category = "Settings") void Change(ESunderSetting Setting, int32 Direction);
 	/** The value as the settings screen shows it ("7", "FULLSCREEN", "ON"…). */
@@ -99,4 +111,5 @@ private:
 	int32 ScreenShake = 2;
 	int32 BulletColours = 0;
 	TArray<FKey> Keys;            // indexed by ESunderControl
+	TArray<FKey> PadKeys;         // indexed by ESunderControl; invalid for the moves
 };
