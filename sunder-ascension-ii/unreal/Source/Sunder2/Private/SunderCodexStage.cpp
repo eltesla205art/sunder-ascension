@@ -22,6 +22,19 @@ namespace
 	FVector Web(float X, float Y, float Z) { return FVector(-Z, X, Y) * U; }
 	FLinearColor Hex(uint32 C) { return FLinearColor(FColor((C >> 16) & 255, (C >> 8) & 255, C & 255)); }
 
+	// three.js Color.setHSL (sRGB), as linear for an unlit emissive.
+	FLinearColor FromHSL(float H, float S, float L)
+	{
+		auto Hue = [](float P, float Q, float T)
+		{
+			T = FMath::Fmod(T + 1.f, 1.f);
+			return T < 1.f / 6.f ? P + (Q - P) * 6.f * T : T < 0.5f ? Q : T < 2.f / 3.f ? P + (Q - P) * 6.f * (2.f / 3.f - T) : P;
+		};
+		const float Q = L <= 0.5f ? L * (1.f + S) : L + S - L * S, P = 2.f * L - Q;
+		const FLinearColor Srgb(Hue(P, Q, H + 1.f / 3.f), Hue(P, Q, H), Hue(P, Q, H - 1.f / 3.f));
+		return FLinearColor(Srgb.ToFColor(false));                 // FColor is sRGB: this linearises it
+	}
+
 	const TCHAR* ShapeMaterial = TEXT("/Engine/BasicShapes/BasicShapeMaterial.BasicShapeMaterial");
 
 	UDirectionalLightComponent* MakeSun(AActor* Owner, USceneComponent* Parent, const TCHAR* Name, const FVector& From, uint32 Colour, float Lux)
@@ -155,6 +168,15 @@ ASunderCodexStage::ASunderCodexStage()
 	Stars->SetCastShadow(false);
 	Stars->SetVisibleInSceneCaptureOnly(true);
 	Stars->SetRenderCustomDepth(false);
+
+	// The plinth's glowing seam: a thin pink ring 2.55 m out on its top, its light breathing (setHSL(0.92, 1, 0.45 ±
+	// 0.12)). Made of short cylinder segments, there being no torus among the engine's shapes.
+	Seam = CreateDefaultSubobject<UInstancedStaticMeshComponent>(TEXT("Seam"));
+	Seam->SetupAttachment(Rig);
+	Seam->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	Seam->SetCastShadow(false);                                 // MeshBasicMaterial: no shadow
+	Seam->SetVisibleInSceneCaptureOnly(true);
+	Seam->SetRenderCustomDepth(true);
 }
 
 ASunderCodexStage* ASunderCodexStage::Get(UWorld* World)
@@ -199,6 +221,21 @@ ASunderCodexStage* ASunderCodexStage::Get(UWorld* World)
 			const float R = 40.f + Random.FRand() * 30.f, Th = Random.FRand() * UE_TWO_PI, Ph = Random.FRand() * UE_PI * 0.45f;
 			Stage->Stars->AddInstance(FTransform(FQuat::Identity,
 				Web(R * FMath::Cos(Th) * FMath::Cos(Ph), 2.f + R * FMath::Sin(Ph), R * FMath::Sin(Th) * FMath::Cos(Ph)), FVector(Size)));
+		}
+	}
+	if (UMaterialInterface* Glow = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Sunder/UI/Codex/M_Codex_Star.M_Codex_Star")))
+	{
+		Stage->SeamGlow = UMaterialInstanceDynamic::Create(Glow, Stage);    // the stars' unlit colour, pulsed in Render
+		Stage->Seam->SetStaticMesh(LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cylinder.Cylinder")));
+		Stage->Seam->SetMaterial(0, Stage->SeamGlow);
+		const int32 Segments = 96;
+		const float Radius = 2.55f * U, Tube = 0.036f * U / 100.f, Length = UE_TWO_PI * Radius / Segments * 1.04f / 100.f;
+		for (int32 i = 0; i < Segments; ++i)
+		{
+			const float A = UE_TWO_PI * i / Segments;
+			const FVector Along(-FMath::Sin(A), FMath::Cos(A), 0.f);
+			Stage->Seam->AddInstance(FTransform(FRotationMatrix::MakeFromZ(Along).ToQuat(),
+				FVector(Radius * FMath::Cos(A), Radius * FMath::Sin(A), 0.006f * U), FVector(Tube, Tube, Length)));
 		}
 	}
 	if (UMaterialInterface* Fog = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Sunder/UI/Codex/PP_Codex_Fog.PP_Codex_Fog")))
@@ -291,6 +328,7 @@ UTextureRenderTarget2D* ASunderCodexStage::Render(float Now)
 	const float Swap = FMath::Clamp((Now - ShownAt) * 2.2f, 0.f, 1.f), Ease = 1.f - FMath::Pow(1.f - Swap, 3.f);
 	Hover->SetRelativeLocation(FVector(0.f, 0.f, (0.25f + FMath::Sin(Now * 1.4f) * 0.08f) * U));
 	Hover->SetRelativeScale3D(FVector(0.6f + 0.4f * Ease));
+	if (SeamGlow) { SeamGlow->SetVectorParameterValue(TEXT("Color"), FromHSL(0.92f, 1.f, 0.45f + 0.12f * FMath::Sin(Now * 2.f))); }
 	const float Pulse = 0.75f + 0.35f * FMath::Sin(Now * 3.1f);   // keepers.html: emissiveIntensity = base × this
 	for (UMaterialInstanceDynamic* Glow : Glows) { if (Glow) { Glow->SetScalarParameterValue(TEXT("GlowPulse"), Pulse); } }
 	if (Anim)                                                   // the loop, from when it came on, a loop a second

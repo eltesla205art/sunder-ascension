@@ -3,11 +3,12 @@
 Run inside the Unreal Editor (Tools → Execute Python Script…) with the C++ in unreal/Source compiled. Makes, under
 /Game/Sunder/UI/Codex:
   M_Codex_Star   unlit, the web stars' pale blue (#cfd6ff at 0.8): ASunderCodexStage scatters 900 of them on a dome
-                 40-70 m out, as keepers.html does, turning with the Keeper as the web camera orbits under them
+                 40-70 m out, as keepers.html does, turning with the Keeper as the web camera orbits under them;
+                 the plinth's glowing seam wears it too, its colour breathing pink
   PP_Codex_Fog   a post-process material for the viewer's capture: three.js's Fog(0x16102e, 14, 34), a linear fade to
                  the sky's indigo from 14 m to 34 m from the camera, on the Keeper and its plinth only (they write
                  custom depth; the sky and the stars don't, as three.js leaves the background and the stars unfogged)
-The stage picks them up by path when it is first made; without them the sky is bare and clear.
+The stage picks them up by path when it is first made; without them the sky is bare and clear and the seam is missing.
 The fog needs Project Settings → Rendering → Custom Depth-Stencil Pass = Enabled (the default).
 
 Safe to run again. Untested until its first run.

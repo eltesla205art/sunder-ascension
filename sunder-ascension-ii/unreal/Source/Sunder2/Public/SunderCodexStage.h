@@ -57,6 +57,8 @@ private:
 	UPROPERTY() TObjectPtr<UStaticMeshComponent> Backdrop;
 	UPROPERTY() TObjectPtr<UPointLightComponent> Horizon;
 	UPROPERTY() TObjectPtr<UInstancedStaticMeshComponent> Stars;     // turn with the Keeper, as the web camera orbits under them
+	UPROPERTY() TObjectPtr<UInstancedStaticMeshComponent> Seam;      // the plinth's glowing ring
+	UPROPERTY() TObjectPtr<UMaterialInstanceDynamic> SeamGlow;
 	UPROPERTY() TObjectPtr<USceneCaptureComponent2D> Capture;
 	UPROPERTY() TObjectPtr<UTextureRenderTarget2D> Target;
 	UPROPERTY() TObjectPtr<USunderKeeperAnim> Anim;                      // the shown Keeper's loop, if imported
