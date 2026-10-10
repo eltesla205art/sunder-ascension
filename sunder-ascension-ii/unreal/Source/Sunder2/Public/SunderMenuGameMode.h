@@ -10,6 +10,7 @@
 #include "CoreMinimal.h"
 #include "SunderFrontEndGameMode.h"
 #include "SunderSettingsPanel.h"
+#include "SunderCodexPanel.h"
 #include "SunderMenuGameMode.generated.h"
 
 class USoundBase;
@@ -22,7 +23,8 @@ enum class ESunderMenuScreen : uint8
 	Title,
 	Hangar,
 	Launching,
-	Settings      // the settings and controls pages (FSunderSettingsPanel, shared with the pause menu)
+	Settings,     // the settings and controls pages (FSunderSettingsPanel, shared with the pause menu)
+	Codex         // the Codex (FSunderCodexPanel, shared with the pause menu)
 };
 
 USTRUCT(BlueprintType)
@@ -141,10 +143,11 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Menu") int32 GetShipIndex() const { return ShipIndex; }
 	/** 0 = Story, 1 = Swarm. */
 	UFUNCTION(BlueprintPure, Category = "Menu") int32 GetModeIndex() const { return ModeIndex; }
-	/** The title's choice: 0 = begin (to the hangar), 1 = settings. */
+	/** The title's choice: 0 = begin (to the hangar), 1 = settings, 2 = Codex. */
 	UFUNCTION(BlueprintPure, Category = "Menu") int32 GetTitleIndex() const { return TitleIndex; }
 	/** The settings and controls pages, drawn by SunderMenuHUD on the Settings screen. */
 	const FSunderSettingsPanel& GetSettingsPanel() const { return Panel; }
+	const FSunderCodexPanel& GetCodexPanel() const { return CodexPanel; }
 	virtual bool CaptureKey(const FKey& Key) override;
 protected:
 	virtual void BeginPlay() override;
@@ -163,6 +166,7 @@ private:
 	int32 ModeIndex = 0;
 	int32 TitleIndex = 0;
 	FSunderSettingsPanel Panel;
+	FSunderCodexPanel CodexPanel;
 	float LastMoveCue = -100.f;
 	FTimerHandle RevTimer;
 	FTimerHandle LaunchTimer;

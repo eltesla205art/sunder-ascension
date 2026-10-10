@@ -9,6 +9,7 @@
 #include "SunderKeeper.h"
 #include "SunderShipPawn.h"
 #include "SunderSettingsSubsystem.h"
+#include "SunderCodexSubsystem.h"
 #include "Components/SphereComponent.h"
 #include "Engine/GameInstance.h"
 
@@ -126,6 +127,10 @@ void ASunderHUD::DrawHUD()
 		if (Mode->IsPauseSettingsOpen())                       // the same settings / controls pages as the title's
 		{
 			Mode->GetSettingsPanel().Draw(this, USunderSettingsSubsystem::Get(this), Now);
+		}
+		else if (Mode->IsPauseCodexOpen())                     // the same Codex as the title's
+		{
+			Mode->GetCodexPanel().Draw(this, USunderCodexSubsystem::Get(this), Now);
 		}
 		else
 		{

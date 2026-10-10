@@ -4,6 +4,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "SunderKeeper.h"
 #include "SunderWaveSet.h"
+#include "SunderCodexSubsystem.h"
 
 void USunderStorySubsystem::StartCampaign(USunderStoryData* InData)
 {
@@ -34,6 +35,7 @@ void USunderStorySubsystem::AdvanceHour()
 void USunderStorySubsystem::EnterHour(const UObject* WorldContext)
 {
 	if (!Data) { return; }
+	if (USunderCodexSubsystem* Codex = USunderCodexSubsystem::Get(WorldContext)) { Codex->MarkReached(HourIndex + 1); }   // its Codex page
 	UGameplayStatics::OpenLevel(WorldContext, Data->ArenaLevel);
 }
 

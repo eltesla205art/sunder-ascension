@@ -76,6 +76,14 @@ void ASunderMenuGameMode::Confirm()
 	{
 	case ESunderMenuScreen::Title:
 		if (TitleIndex == 1) { PlayCue(ModeSound, false); EnterSettings(); break; }
+		if (TitleIndex == 2)
+		{
+			PlayCue(ModeSound, false);
+			Screen = ESunderMenuScreen::Codex;
+			CodexPanel.Open(GetWorld()->GetRealTimeSeconds());
+			MarkScreenOpened();
+			break;
+		}
 		PlayCue(StartSound, true);
 		EnterHangar();
 		QueueRev(0.9f);                                      // the chosen ship answers as the bay opens
@@ -141,6 +149,7 @@ void ASunderMenuGameMode::Back()
 		if (bClose) { EnterTitle(); }
 		return;
 	}
+	if (Screen == ESunderMenuScreen::Codex) { PlayCue(BackSound, false); EnterTitle(); return; }
 	if (Screen != ESunderMenuScreen::Hangar) { return; }
 	PlayCue(BackSound, false);
 	GetWorldTimerManager().ClearTimer(RevTimer);
@@ -151,7 +160,12 @@ void ASunderMenuGameMode::Navigate(int32 X, int32 Y)
 {
 	if (Screen == ESunderMenuScreen::Title)
 	{
-		if (Y != 0) { TitleIndex = 1 - TitleIndex; PlayCue(MoveSound, false); }
+		if (Y != 0) { TitleIndex = (TitleIndex - Y + 3) % 3; PlayCue(MoveSound, false); }   // BEGIN · SETTINGS · CODEX
+		return;
+	}
+	if (Screen == ESunderMenuScreen::Codex)
+	{
+		if (CodexPanel.Navigate(X, Y, GetWorld()->GetRealTimeSeconds())) { PlayCue(MoveSound, false); }
 		return;
 	}
 	if (Screen == ESunderMenuScreen::Settings)

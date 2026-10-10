@@ -17,6 +17,7 @@
 #include "SunderMusicSubsystem.h"
 #include "SunderProjectile.h"
 #include "SunderSettingsSubsystem.h"
+#include "SunderCodexSubsystem.h"
 
 ASunderKeeper::ASunderKeeper()
 {
@@ -66,6 +67,7 @@ void ASunderKeeper::BeginPlay()
 	if (ASunderGameMode* Mode = GetWorld()->GetAuthGameMode<ASunderGameMode>())
 	{
 		Mode->AnnounceKeeper(this, KeeperName, Taunt);
+		if (USunderCodexSubsystem* Codex = USunderCodexSubsystem::Get(this)) { Codex->MarkMet(Hour); }   // its Codex page opens
 	}
 	if (USunderMusicSubsystem* M = Music(); M && MusicLayers.Num() > 0)
 	{
@@ -387,6 +389,7 @@ void ASunderKeeper::FinishDying(bool bAwardScore)
 		if (ASunderGameMode* Mode = GetWorld()->GetAuthGameMode<ASunderGameMode>())
 		{
 			Mode->AnnounceKeeperFallen(this);
+			if (USunderCodexSubsystem* Codex = USunderCodexSubsystem::Get(this)) { Codex->MarkBeaten(Hour); }   // its full lore
 			Mode->AddShake(0.6f);                                // the web game's onBossDefeated
 		}
 	}

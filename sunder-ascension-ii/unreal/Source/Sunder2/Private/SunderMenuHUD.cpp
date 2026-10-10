@@ -7,6 +7,7 @@
 #include "Engine/World.h"
 #include "SunderMenuGameMode.h"
 #include "SunderSettingsSubsystem.h"
+#include "SunderCodexSubsystem.h"
 #include "Engine/GameInstance.h"
 
 namespace
@@ -41,7 +42,7 @@ void ASunderMenuHUD::DrawHUD()
 		const float Aspect = Art->GetSizeY() > 0 ? (float)Art->GetSizeX() / Art->GetSizeY() : 1.f;
 		AW = H * Aspect;
 		float Light = Screen == ESunderMenuScreen::Title ? FMath::Clamp(T / 1.2f, 0.f, 1.f)
-			: Screen == ESunderMenuScreen::Settings ? 0.25f : 0.18f;   // the hangar: a dark night, its own band on top
+			: (Screen == ESunderMenuScreen::Settings || Screen == ESunderMenuScreen::Codex) ? 0.25f : 0.18f;   // the hangar: a dark night, its own band on top
 		if (Screen == ESunderMenuScreen::Launching) { Light *= 1.f - FMath::Clamp(T / FMath::Max(Menu->LaunchDelay, 0.01f), 0.f, 1.f); }
 		DrawTexture(Art, (W - AW) * 0.5f, 0.f, AW, H, 0.f, 0.f, 1.f, 1.f, FLinearColor(Light, Light, Light, 1.f));
 	}
@@ -52,6 +53,11 @@ void ASunderMenuHUD::DrawHUD()
 		return;
 	}
 
+	if (Screen == ESunderMenuScreen::Codex)                   // the shared Codex
+	{
+		Menu->GetCodexPanel().Draw(this, USunderCodexSubsystem::Get(Menu), GetWorld()->GetRealTimeSeconds());
+		return;
+	}
 	if (Screen == ESunderMenuScreen::Settings)                // the shared settings / controls panel
 	{
 		Menu->GetSettingsPanel().Draw(this, USunderSettingsSubsystem::Get(Menu), GetWorld()->GetRealTimeSeconds());
@@ -142,9 +148,10 @@ void ASunderMenuHUD::DrawTitle(const ASunderMenuGameMode* Menu, float T, float A
 	// The prompts and the credits.
 	// The choice under the logo: begin (the web game's pulsing prompt) or settings; W / S moves between them.
 	const float Pulse = 0.4f + 0.6f * FMath::Abs(FMath::Sin(T * 2.2f));
-	const bool bBegin = Menu->GetTitleIndex() == 0;
-	DrawWebText(TEXT("PRESS SPACE / ENTER TO BEGIN"), Faded(FLinearColor(1.f, 0.96f, 0.79f), A * (bBegin ? Pulse : 0.35f)), 612.f, 17.f);
-	DrawWebText(bBegin ? TEXT("SETTINGS") : TEXT(">  SETTINGS  <"), Faded(FLinearColor(0.56f, 0.89f, 1.f), A * (bBegin ? 0.55f : Pulse)), 646.f, 14.f);
+	const int32 Pick = Menu->GetTitleIndex();
+	DrawWebText(TEXT("PRESS SPACE / ENTER TO BEGIN"), Faded(FLinearColor(1.f, 0.96f, 0.79f), A * (Pick == 0 ? Pulse : 0.35f)), 612.f, 17.f);
+	DrawWebText(Pick == 1 ? TEXT(">  SETTINGS  <") : TEXT("SETTINGS"), Faded(FLinearColor(0.56f, 0.89f, 1.f), A * (Pick == 1 ? Pulse : 0.55f)), 640.f, 14.f);
+	DrawWebText(Pick == 2 ? TEXT(">  CODEX  <") : TEXT("CODEX"), Faded(FLinearColor(0.56f, 0.89f, 1.f), A * (Pick == 2 ? Pulse : 0.55f)), 662.f, 14.f);
 	DrawWebText(TEXT("PART II  \u00B7  EARLY BUILD"), Faded(FLinearColor(0.56f, 0.89f, 1.f), 0.55f * A), 720.f - 34.f, 11.f);
 	DrawWebText(TEXT("AN ASCENSION MEDIA GROUP PRODUCTION"), Faded(FLinearColor(0.79f, 0.70f, 0.41f), 0.6f * A), 720.f - 16.f, 11.f);
 }

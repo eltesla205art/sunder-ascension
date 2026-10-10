@@ -46,6 +46,7 @@ original *SUNDER: Ascension — The Nine Bows* (`web/`, `godot/`, `docs/`), whic
 | `unreal/Scripts/create_hour_waves.py` | Editor Python: a wave set for each of the Twelve Hours from the web game's stage tuning, each ending with its Keeper, for story mode (untested until first run) |
 | `unreal/Content/Audio/Story/` | The story screens' themes (three layers each), the crawl's and the map's ambience, and the story cues as WAV, rendered from `web/story_audio.js` |
 | `unreal/Content/Story/story.json` | The story's words and each Hour's battle tuning for Unreal, exported from `web/game.html` by `unreal/Tools/export_story_text.cjs` |
+| `unreal/Tools/export_codex_text.cjs` | Generates the Unreal Codex's words (`Source/Sunder2/Private/SunderCodexEntries.inl`) from `web/keepers.html`, `web/game.html` and `story.json` |
 | `unreal/Tools/render_web_audio.cjs` | Renders the Keeper, stage, menu, story and game-effect WAVs from the web game's synth in Chromium (Playwright) |
 | `unreal/Content/Keepers/` | The thirteen Keeper models as FBX for Unreal (one mesh each, plus Apep's final form), from `blender/keepers.py --fbx` |
 | `art/blender/` | Full-resolution Blender renders (title backdrop, ship sprites, `keepers/` boss sprites and portraits) |

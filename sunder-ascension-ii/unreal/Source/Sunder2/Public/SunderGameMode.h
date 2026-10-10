@@ -9,6 +9,7 @@
 #include "GameFramework/GameModeBase.h"
 #include "SunderShipPawn.h"
 #include "SunderSettingsPanel.h"
+#include "SunderCodexPanel.h"
 #include "SunderGameMode.generated.h"
 
 class ASunderKeeper;
@@ -129,7 +130,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Sunder|Pause") void QuitToHangar();
 
 	// ---- the pause menu: RESUME · SETTINGS · (story) HOUR MAP · QUIT TO SHIP SELECT, with the settings panel inside it
-	enum class EPauseRow : uint8 { Resume, Settings, HourMap, Quit };
+	enum class EPauseRow : uint8 { Resume, Settings, Codex, HourMap, Quit };
 	/** The rows this run offers: HOUR MAP only in a story campaign. */
 	TArray<EPauseRow> GetPauseRows() const;
 	static FString PauseRowLabel(EPauseRow Row);
@@ -147,6 +148,8 @@ public:
 	int32 GetPauseRow() const { return PauseRow; }
 	bool IsPauseSettingsOpen() const { return bPauseSettings; }
 	const FSunderSettingsPanel& GetSettingsPanel() const { return Panel; }
+	bool IsPauseCodexOpen() const { return bPauseCodex; }
+	const FSunderCodexPanel& GetCodexPanel() const { return CodexPanel; }
 
 	/** The web game's screen shake (G.shake): kill 0.07, bomber 0.18, shield hit 0.15, hull hit 0.25, bomb 0.4, ship lost
 	 *  0.5, Keeper beaten 0.6. Scaled by Settings → SCREEN SHAKE. */
@@ -164,6 +167,8 @@ private:
 	int32 PauseRow = 0;
 	bool bPauseSettings = false;
 	FSunderSettingsPanel Panel;
+	bool bPauseCodex = false;
+	FSunderCodexPanel CodexPanel;
 	void CloseSettings();
 	UPROPERTY(Transient) TObjectPtr<class USunderShakeModifier> ShakeModifier;
 	FDelegateHandle DeactivateHandle;
