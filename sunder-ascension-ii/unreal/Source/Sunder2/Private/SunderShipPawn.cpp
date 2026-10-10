@@ -272,6 +272,7 @@ float ASunderShipPawn::TakeDamage(float DamageAmount, FDamageEvent const& Damage
 		Invulnerable = ShieldInvulnerability;
 		PlaySound(HitSound);
 		UpdateShield(State.Shield == 0 ? 1 : 0);              // the last layer shatters; others ripple
+		if (ASunderGameMode* Mode = GetWorld()->GetAuthGameMode<ASunderGameMode>()) { Mode->AddShake(0.15f); }
 		return 0.f;
 	}
 	Health -= DamageAmount;
@@ -281,6 +282,7 @@ float ASunderShipPawn::TakeDamage(float DamageAmount, FDamageEvent const& Damage
 	if (Health > 0.f)
 	{
 		SpawnExplosion(0);                                    // the web game's small gold burst on a hull hit
+		if (ASunderGameMode* Mode = GetWorld()->GetAuthGameMode<ASunderGameMode>()) { Mode->AddShake(0.25f); }
 		return DamageAmount;
 	}
 
@@ -520,6 +522,7 @@ void ASunderShipPawn::UseBomb()
 	if (bDead || State.Bombs <= 0) { return; }
 	--State.Bombs;
 	PlaySound(BombSound);
+	if (ASunderGameMode* Mode = GetWorld()->GetAuthGameMode<ASunderGameMode>()) { Mode->AddShake(0.4f); }
 	UWorld* World = GetWorld();
 	// Every enemy shot is wiped away (where they were, for the blast's fizzles)…
 	TArray<FVector> Wiped;

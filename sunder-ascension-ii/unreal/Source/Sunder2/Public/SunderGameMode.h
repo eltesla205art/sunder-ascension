@@ -127,6 +127,10 @@ public:
 	/** Leave the run for the hangar (ends a story campaign, as the web game's goToHangar resets the run). */
 	UFUNCTION(BlueprintCallable, Category = "Sunder|Pause") void QuitToHangar();
 
+	/** The web game's screen shake (G.shake): kill 0.07, bomber 0.18, shield hit 0.15, hull hit 0.25, bomb 0.4, ship lost
+	 *  0.5, Keeper beaten 0.6. Scaled by Settings → SCREEN SHAKE. */
+	UFUNCTION(BlueprintCallable, Category = "Sunder") void AddShake(float Amount);
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
@@ -136,6 +140,7 @@ private:
 	void OnAppDeactivated();
 
 	bool bPaused = false;
+	UPROPERTY(Transient) TObjectPtr<class USunderShakeModifier> ShakeModifier;
 	FDelegateHandle DeactivateHandle;
 
 	FString ShipId;

@@ -24,6 +24,8 @@ void USunderSettingsSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	GConfig->GetInt(Section, TEXT("MusicVolume"), MusicVolume, GGameUserSettingsIni);
 	GConfig->GetInt(Section, TEXT("EffectsVolume"), EffectsVolume, GGameUserSettingsIni);
 	GConfig->GetBool(Section, TEXT("ShowHitbox"), bShowHitbox, GGameUserSettingsIni);
+	GConfig->GetInt(Section, TEXT("ScreenShake"), ScreenShake, GGameUserSettingsIni);
+	ScreenShake = FMath::Clamp(ScreenShake, 0, 2);
 	MusicVolume = FMath::Clamp(MusicVolume, 0, 10);
 	EffectsVolume = FMath::Clamp(EffectsVolume, 0, 10);
 }
@@ -34,6 +36,7 @@ void USunderSettingsSubsystem::Save() const
 	GConfig->SetInt(Section, TEXT("MusicVolume"), MusicVolume, GGameUserSettingsIni);
 	GConfig->SetInt(Section, TEXT("EffectsVolume"), EffectsVolume, GGameUserSettingsIni);
 	GConfig->SetBool(Section, TEXT("ShowHitbox"), bShowHitbox, GGameUserSettingsIni);
+	GConfig->SetInt(Section, TEXT("ScreenShake"), ScreenShake, GGameUserSettingsIni);
 	GConfig->Flush(false, GGameUserSettingsIni);
 }
 
@@ -46,6 +49,7 @@ void USunderSettingsSubsystem::Change(ESunderSetting Setting, int32 Direction)
 	case ESunderSetting::MusicVolume:   MusicVolume = FMath::Clamp(MusicVolume + Step, 0, 10); break;
 	case ESunderSetting::EffectsVolume: EffectsVolume = FMath::Clamp(EffectsVolume + Step, 0, 10); break;
 	case ESunderSetting::ShowHitbox:    bShowHitbox = !bShowHitbox; break;
+	case ESunderSetting::ScreenShake:   ScreenShake = (ScreenShake + Step + 3) % 3; break;
 	case ESunderSetting::WindowMode:
 		if (S)
 		{
@@ -88,6 +92,7 @@ FString USunderSettingsSubsystem::Describe(ESunderSetting Setting) const
 	case ESunderSetting::MusicVolume:   return Bar(MusicVolume);
 	case ESunderSetting::EffectsVolume: return Bar(EffectsVolume);
 	case ESunderSetting::ShowHitbox:    return bShowHitbox ? TEXT("ON") : TEXT("OFF");
+	case ESunderSetting::ScreenShake:   return ScreenShake == 0 ? TEXT("OFF") : ScreenShake == 1 ? TEXT("LOW") : TEXT("FULL");
 	case ESunderSetting::WindowMode:
 		if (!S) { return TEXT("-"); }
 		switch (S->GetFullscreenMode())
@@ -111,6 +116,7 @@ FString USunderSettingsSubsystem::Label(ESunderSetting Setting)
 	case ESunderSetting::WindowMode:    return TEXT("DISPLAY");
 	case ESunderSetting::Performance:   return TEXT("MODE");
 	case ESunderSetting::VSync:         return TEXT("VSYNC");
+	case ESunderSetting::ScreenShake:   return TEXT("SCREEN SHAKE");
 	case ESunderSetting::ShowHitbox:    return TEXT("SHOW HITBOX");
 	default:                            return TEXT("BACK");
 	}
@@ -122,6 +128,14 @@ float USunderSettingsSubsystem::MusicGain(const UObject* WorldContext)
 	const UGameInstance* GI = World ? World->GetGameInstance() : nullptr;
 	const USunderSettingsSubsystem* Self = GI ? GI->GetSubsystem<USunderSettingsSubsystem>() : nullptr;
 	return Self ? Self->MusicVolume / 10.f : 1.f;
+}
+
+float USunderSettingsSubsystem::ShakeScale(const UObject* WorldContext)
+{
+	const UWorld* World = WorldContext ? WorldContext->GetWorld() : nullptr;
+	const UGameInstance* GI = World ? World->GetGameInstance() : nullptr;
+	const USunderSettingsSubsystem* Self = GI ? GI->GetSubsystem<USunderSettingsSubsystem>() : nullptr;
+	return Self ? Self->ScreenShake * 0.5f : 1.f;
 }
 
 float USunderSettingsSubsystem::EffectsGain(const UObject* WorldContext)

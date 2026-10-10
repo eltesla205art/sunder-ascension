@@ -269,6 +269,7 @@ void ASunderEnemy::Die(bool bAwardScore)
 		{
 			Mode->AddScore(ScoreValue);
 			Mode->PlayExplosion(bBigExplosion);
+			Mode->AddShake(bBigBurst ? 0.18f : 0.07f);           // the web game's kill juice (bombers harder)
 			if (bDropsPickups) { Mode->TrySpawnPickup(GetActorLocation(), DropChance); }
 		}
 		if (bPlaysDownCue)

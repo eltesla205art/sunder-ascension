@@ -14,6 +14,9 @@
 #include "Sound/SoundBase.h"
 #include "TimerManager.h"
 #include "Misc/CoreDelegates.h"
+#include "Camera/PlayerCameraManager.h"
+#include "GameFramework/PlayerController.h"
+#include "SunderShakeModifier.h"
 #include "SunderSettingsSubsystem.h"
 
 ASunderGameMode::ASunderGameMode()
@@ -146,6 +149,20 @@ void ASunderGameMode::SetCombatPaused(bool bPause)
 	UGameplayStatics::SetGamePaused(this, bPaused);           // a frozen frame: nothing moves, the HUD draws PAUSED
 }
 
+void ASunderGameMode::AddShake(float Amount)
+{
+	const float Scaled = Amount * USunderSettingsSubsystem::ShakeScale(this);
+	if (Scaled <= 0.f) { return; }
+	if (!ShakeModifier)                                       // on the first jolt: the modifier joins player 0's camera
+	{
+		APlayerController* PC = GetWorld()->GetFirstPlayerController();
+		if (!PC || !PC->PlayerCameraManager) { return; }
+		ShakeModifier = Cast<USunderShakeModifier>(PC->PlayerCameraManager->AddNewCameraModifier(USunderShakeModifier::StaticClass()));
+		if (!ShakeModifier) { return; }
+	}
+	ShakeModifier->Kick(Scaled);
+}
+
 void ASunderGameMode::QuitToHangar()
 {
 	SetCombatPaused(false);
@@ -205,6 +222,7 @@ void ASunderGameMode::OnShipDestroyed(ASunderShipPawn* Ship)
 {
 	if (bGameOver || !Ship) { return; }
 	PlayExplosion(true);                                     // the web game's "bigboom" as the ship goes
+	AddShake(0.5f);
 	Lives = FMath::Max(Lives - 1, 0);
 	if (Lives > 0)
 	{

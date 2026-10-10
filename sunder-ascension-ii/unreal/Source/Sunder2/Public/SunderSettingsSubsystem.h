@@ -15,6 +15,7 @@ enum class ESunderSetting : uint8
 	WindowMode,
 	Performance,
 	VSync,
+	ScreenShake,
 	ShowHitbox,
 	Back
 };
@@ -32,6 +33,10 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Settings") int32 GetEffectsVolume() const { return EffectsVolume; }
 	/** Accessibility: a ring on the ship's hit sphere, always shown. */
 	UFUNCTION(BlueprintPure, Category = "Settings") bool ShowHitbox() const { return bShowHitbox; }
+	/** Accessibility (DESIGN.md: adjustable screen-shake): 0 off, 1 low (half), 2 full (the web game's). */
+	UFUNCTION(BlueprintPure, Category = "Settings") int32 GetScreenShake() const { return ScreenShake; }
+	/** The shake multiplier for the arena (1 when there is no game instance yet). */
+	static float ShakeScale(const UObject* WorldContext);
 
 	/** Step a setting left (-1) or right (+1); toggles flip either way. Saved and applied at once. */
 	UFUNCTION(BlueprintCallable, Category = "Settings") void Change(ESunderSetting Setting, int32 Direction);
@@ -49,4 +54,5 @@ private:
 	int32 MusicVolume = 8;
 	int32 EffectsVolume = 8;
 	bool bShowHitbox = false;
+	int32 ScreenShake = 2;
 };
