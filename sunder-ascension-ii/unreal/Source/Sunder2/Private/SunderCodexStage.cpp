@@ -2,6 +2,7 @@
 #include "SunderCodexStage.h"
 
 #include "Components/DirectionalLightComponent.h"
+#include "Components/InstancedStaticMeshComponent.h"
 #include "Components/PointLightComponent.h"
 #include "Components/SceneCaptureComponent2D.h"
 #include "Components/StaticMeshComponent.h"
@@ -47,6 +48,7 @@ namespace
 		C->SetVisibleInSceneCaptureOnly(true);                  // the level's cameras never see the stage
 		C->LightingChannels.bChannel0 = false;
 		C->LightingChannels.bChannel1 = true;
+		C->SetRenderCustomDepth(true);                          // the fog's mask: the Keeper and plinth are fogged
 		return C;
 	}
 }
@@ -118,23 +120,34 @@ ASunderCodexStage::ASunderCodexStage()
 	// The sky behind: an indigo backdrop facing the camera, lit only by a violet glow from below the frame, so it
 	// runs from the web sky's void at the top to its indigo and a faint violet horizon at the bottom.
 	Backdrop = MakeShape(this, Capture, TEXT("Backdrop"));
-	const float Back = Distance + 900.f, Half = Back * FMath::Tan(FMath::DegreesToRadians(FieldOfView * 0.5f));
+	// Far enough back for the stars (the web's dome is 40-70 m out) to sit in front of it; the horizon light is placed
+	// and scaled with it (K: its size against the 520-unit half-height it was tuned at).
+	const float Back = Distance + 80.f * U, Half = Back * FMath::Tan(FMath::DegreesToRadians(FieldOfView * 0.5f)), K = Half / 520.f;
 	Backdrop->SetRelativeLocation(FVector(Back, 0.f, 0.f));
 	Backdrop->SetRelativeRotation(FRotator(90.f, 0.f, 0.f));    // the plane's face toward the camera
 	Backdrop->SetRelativeScale3D(FVector(Half * 2.6f / 100.f));
 	Backdrop->LightingChannels.bChannel1 = false;
 	Backdrop->LightingChannels.bChannel2 = true;
+	Backdrop->SetRenderCustomDepth(false);                      // the sky isn't fogged (three.js's background)
 	Horizon = CreateDefaultSubobject<UPointLightComponent>(TEXT("Horizon"));
 	Horizon->SetupAttachment(Capture);
-	Horizon->SetRelativeLocation(FVector(Back - 600.f, 0.f, -Half - 380.f));
+	Horizon->SetRelativeLocation(FVector(Back - 600.f * K, 0.f, -Half - 380.f * K));
 	Horizon->SetMobility(EComponentMobility::Movable);
 	Horizon->SetIntensityUnits(ELightUnits::Candelas);
-	Horizon->SetIntensity(36.f);
+	Horizon->SetIntensity(36.f * K * K);
 	Horizon->SetAttenuationRadius(Back * 2.f);
 	Horizon->SetLightColor(FLinearColor(0.45f, 0.3f, 1.f));
 	Horizon->CastShadows = false;
 	Horizon->LightingChannels.bChannel0 = false;
 	Horizon->LightingChannels.bChannel2 = true;
+
+	// keepers.html's stars: 900 points on a dome 40-70 m out, up to 81° high, pale blue, unfogged.
+	Stars = CreateDefaultSubobject<UInstancedStaticMeshComponent>(TEXT("Stars"));
+	Stars->SetupAttachment(Rig);
+	Stars->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	Stars->SetCastShadow(false);
+	Stars->SetVisibleInSceneCaptureOnly(true);
+	Stars->SetRenderCustomDepth(false);
 }
 
 ASunderCodexStage* ASunderCodexStage::Get(UWorld* World)
@@ -166,6 +179,25 @@ ASunderCodexStage* ASunderCodexStage::Get(UWorld* World)
 	Paint(TEXT("Plinth"), TEXT("/Engine/BasicShapes/Cylinder.Cylinder"), FLinearColor(0.02f, 0.018f, 0.03f));
 	Paint(TEXT("PlinthRim"), TEXT("/Engine/BasicShapes/Cylinder.Cylinder"), FLinearColor(0.8f, 0.55f, 0.15f));
 	Paint(TEXT("Backdrop"), TEXT("/Engine/BasicShapes/Plane.Plane"), FLinearColor(0.6f, 0.6f, 0.6f));
+
+	// The stars and the fog take create_codex_viewer_assets.py's materials; without them the sky is bare and clear.
+	if (UMaterialInterface* Star = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Sunder/UI/Codex/M_Codex_Star.M_Codex_Star")))
+	{
+		Stage->Stars->SetStaticMesh(LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Sphere.Sphere")));
+		Stage->Stars->SetMaterial(0, Star);
+		FRandomStream Random(7);
+		const float Size = 0.12f * U / 100.f;                     // PointsMaterial size 0.12 (the sphere is 100 across)
+		for (int32 i = 0; i < 900; ++i)
+		{
+			const float R = 40.f + Random.FRand() * 30.f, Th = Random.FRand() * UE_TWO_PI, Ph = Random.FRand() * UE_PI * 0.45f;
+			Stage->Stars->AddInstance(FTransform(FQuat::Identity,
+				Web(R * FMath::Cos(Th) * FMath::Cos(Ph), 2.f + R * FMath::Sin(Ph), R * FMath::Sin(Th) * FMath::Cos(Ph)), FVector(Size)));
+		}
+	}
+	if (UMaterialInterface* Fog = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Sunder/UI/Codex/PP_Codex_Fog.PP_Codex_Fog")))
+	{
+		Stage->Capture->PostProcessSettings.WeightedBlendables.Array.Add(FWeightedBlendable(1.f, Fog));   // Fog(0x16102e, 14, 34)
+	}
 
 	Stage->Target = NewObject<UTextureRenderTarget2D>(Stage);
 	Stage->Target->RenderTargetFormat = RTF_RGBA8;
@@ -271,6 +303,7 @@ UStaticMeshComponent* ASunderCodexStage::PartComponent(int32 i)
 		Part->SetVisibleInSceneCaptureOnly(true);
 		Part->LightingChannels.bChannel0 = false;
 		Part->LightingChannels.bChannel1 = true;
+		Part->SetRenderCustomDepth(true);
 		Part->RegisterComponent();
 		Capture->ShowOnlyComponents.Add(Part);
 		Parts.Add(Part);

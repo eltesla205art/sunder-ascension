@@ -1,7 +1,7 @@
 // SUNDER: Ascension II — the Codex's Keeper viewer: the web Codex's 3D stage (keepers.html) for Unreal.
 // An actor spawned out of sight that holds one Keeper's model under the web viewer's lights (warm key, blue rim, cool
 // fill, a hemisphere's sky and ground, a practical light in the Keeper's accent colour) in front of an indigo backdrop
-// with a violet horizon glow, slowly turning (OrbitControls' autoRotate 0.6), hovering, and growing in when it changes,
+// with a violet horizon glow and the web sky's 900 stars, in its fog, slowly turning (OrbitControls' autoRotate 0.6), hovering, and growing in when it changes,
 // moving through its own animation loop (DA_KeeperAnim_<Id>, the web GLB's loop) when it has one, its glow breathing
 // as the web viewer's does (the GlowPulse of create_keeper_glow.py's materials).
 // A scene capture renders it to a texture that FSunderCodexPanel draws in the Codex. Its parts are seen only by that
@@ -14,6 +14,7 @@
 #include "SunderCodexStage.generated.h"
 
 class UDirectionalLightComponent;
+class UInstancedStaticMeshComponent;
 class UPointLightComponent;
 class USceneCaptureComponent2D;
 class UStaticMeshComponent;
@@ -55,6 +56,7 @@ private:
 	UPROPERTY() TObjectPtr<UPointLightComponent> Practical;
 	UPROPERTY() TObjectPtr<UStaticMeshComponent> Backdrop;
 	UPROPERTY() TObjectPtr<UPointLightComponent> Horizon;
+	UPROPERTY() TObjectPtr<UInstancedStaticMeshComponent> Stars;     // turn with the Keeper, as the web camera orbits under them
 	UPROPERTY() TObjectPtr<USceneCaptureComponent2D> Capture;
 	UPROPERTY() TObjectPtr<UTextureRenderTarget2D> Target;
 	UPROPERTY() TObjectPtr<USunderKeeperAnim> Anim;                      // the shown Keeper's loop, if imported

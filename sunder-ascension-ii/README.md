@@ -26,6 +26,7 @@ original *SUNDER: Ascension — The Nine Bows* (`web/`, `godot/`, `docs/`), whic
 | `unreal/Scripts/create_keeper_fx_assets.py` | Editor Python: Keeper FX materials, Effect Types and empty systems, wired onto the twelve Keeper Blueprints with their colours (untested until first run) |
 | `unreal/Scripts/create_keeper_anim.py` | Editor Python: imports the Keepers' animation loops (rigid parts and their frames) into `DA_KeeperAnim_*` for the Codex viewer (untested until its first run) |
 | `unreal/Scripts/create_keeper_glow.py` | Editor Python: gives the Keepers' glowing materials (crystal, cores, eyes, fire…) their glow from `keeper_glows.json`, on their models and animation parts, with a GlowPulse the Codex viewer breathes (untested until its first run) |
+| `unreal/Scripts/create_codex_viewer_assets.py` | Editor Python: the Codex viewer's stars and fog materials, as in `web/keepers.html` (untested until its first run) |
 | `unreal/Scripts/create_keeper_audio.py` | Editor Python: imports the Keepers' music and voices and sets them on the twelve Keeper Blueprints (untested until first run) |
 | `unreal/Content/Audio/Keepers/` | The Keepers' battle themes (three layers each, seamless loops) and voices as WAV, rendered from `web/keeper_audio.js` |
 | `unreal/Scripts/create_stage_audio.py` | Editor Python: imports the twelve Hours' music, ambience and cues, makes their stage audio assets and gives them to the wave sets (untested until first run) |
