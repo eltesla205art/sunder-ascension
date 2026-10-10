@@ -5,9 +5,11 @@
 #include "Engine/Canvas.h"
 #include "Engine/Engine.h"
 #include "Engine/Texture2D.h"
+#include "Engine/TextureRenderTarget2D.h"
 #include "GameFramework/HUD.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundBase.h"
+#include "SunderCodexStage.h"
 #include "SunderCodexSubsystem.h"
 #include "SunderSettingsSubsystem.h"
 
@@ -334,8 +336,8 @@ void FSunderCodexPanel::DrawKeepers(AHUD* Hud, const USunderCodexSubsystem* Code
 
 	// The chosen Keeper: its portrait large on the left in its accent's glow, its words on the right.
 	const FSunderCodexKeeper& Kp = GCodexKeepers[Sel];
-	const float BY = PY + 46.f * S, Big = FMath::Min(210.f * S, Top - 40.f * S - BY), BX = PX + 56.f * S;   // its glow stays inside the panel
-	const float TX = BX + Big + 36.f * S, TextW = PX + PW - 36.f * S - TX;
+	const float BY = PY + 40.f * S, Big = FMath::Min(260.f * S, Top - 30.f * S - BY), BX = PX + 40.f * S;   // its glow stays inside the panel
+	const float TX = BX + Big + 32.f * S, TextW = PX + PW - 36.f * S - TX;
 	float Y = PY + 26.f * S;
 	UTexture2D* Tex = Portrait(Sel);
 	if (!Met(Sel))
@@ -346,7 +348,24 @@ void FSunderCodexPanel::DrawKeepers(AHUD* Hud, const USunderCodexSubsystem* Code
 		DrawWrapped(Hud, FString::Printf(TEXT("A Keeper waits beyond gate %d. Reach Hour %d to meet it."), Kp.Hour, Kp.Hour), Faded(Sand, A), TX, Y + 8.f * S, TextW, 13.f);
 		return;
 	}
-	if (Tex)
+	// The web Codex's 3D viewer: the Keeper's model turning on its plinth under the viewer's lights, in a window ringed
+	// in its accent colour (ASunderCodexStage). The practical light is Wepwawet's pink for Wepwawet, as on the web.
+	ASunderCodexStage* Viewer = Stage.Get();
+	if (!Viewer) { Viewer = ASunderCodexStage::Get(Hud->GetWorld()); Stage = Viewer; }
+	const FLinearColor Accent = FCString::Strcmp(Kp.Id, TEXT("Wepwawet")) == 0 ? AccentOf(0xff3fa4) : AccentOf(Kp.Accent);
+	UTextureRenderTarget2D* View = Viewer && Viewer->Show(Kp.Id, Accent, Now) ? Viewer->Render(Now) : nullptr;
+	if (View)
+	{
+		const FLinearColor Glow = AccentOf(Kp.Accent);
+		for (int32 g = 1; g <= 4; ++g)
+		{
+			const float O = g * 3.f * S;
+			Frame(Hud, BX - O, BY - O, Big + 2.f * O, Big + 2.f * O, FLinearColor(Glow.R, Glow.G, Glow.B, 0.1f * (5 - g) / 4.f * A), 3.f * S);
+		}
+		Hud->DrawTexture(View, BX, BY, Big, Big, 0.f, 0.f, 1.f, 1.f, FLinearColor(A, A, A, 1.f), BLEND_Opaque);
+		Frame(Hud, BX, BY, Big, Big, Faded(Glow, 0.8f * A), 1.f);
+	}
+	else if (Tex)                                            // no model yet (create_keepers.py not run): the portrait
 	{
 		const FLinearColor Glow = AccentOf(Kp.Accent);
 		const float Breath = 0.85f + 0.15f * FMath::Sin(Now * 1.6f);       // the glow breathes, as on the intro card
