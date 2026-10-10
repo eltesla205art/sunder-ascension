@@ -149,7 +149,7 @@ void ASunderGameMode::SetCombatPaused(bool bPause)
 	if (bPause == bPaused) { return; }
 	bPaused = bPause;
 	PauseRow = 0;                                             // the pause menu opens on RESUME
-	if (!bPaused) { CloseSettings(); bPauseCodex = false; }
+	if (!bPaused) { CloseSettings(); bPauseCodex = false; CodexPanel.StopSound(); }
 	UGameplayStatics::SetGamePaused(this, bPaused);           // a frozen frame: nothing moves, the HUD draws PAUSED
 }
 
@@ -182,7 +182,7 @@ void ASunderGameMode::PauseNavigate(int32 X, int32 Y)
 		Panel.Navigate(GetGameInstance()->GetSubsystem<USunderSettingsSubsystem>(), X, Y, GetWorld()->GetRealTimeSeconds());
 		return;
 	}
-	if (bPauseCodex) { CodexPanel.Navigate(X, Y, GetWorld()->GetRealTimeSeconds()); return; }
+	if (bPauseCodex) { CodexPanel.Navigate(X, Y, GetWorld()->GetRealTimeSeconds(), this); return; }
 	const int32 Rows = GetPauseRows().Num();
 	if (Y != 0) { PauseRow = (PauseRow - Y + Rows) % Rows; }
 }
@@ -197,13 +197,13 @@ void ASunderGameMode::PauseConfirm()
 		if (bClose) { CloseSettings(); PauseRow = (int32)EPauseRow::Settings; }
 		return;
 	}
-	if (bPauseCodex) { return; }                              // the Codex is for reading: ESC / B close it
+	if (bPauseCodex) { CodexPanel.ToggleSound(this); return; }   // ENTER / A: the Keeper's sound on / off; ESC / B close it
 	const TArray<EPauseRow> Rows = GetPauseRows();
 	switch (Rows.IsValidIndex(PauseRow) ? Rows[PauseRow] : EPauseRow::Resume)
 	{
 	case EPauseRow::Resume:   SetCombatPaused(false); break;
 	case EPauseRow::Settings: bPauseSettings = true; Panel.Open(GetWorld()->GetRealTimeSeconds()); break;
-	case EPauseRow::Codex:    bPauseCodex = true; CodexPanel.Open(GetWorld()->GetRealTimeSeconds()); break;
+	case EPauseRow::Codex:    bPauseCodex = true; CodexPanel.Open(GetWorld()->GetRealTimeSeconds(), this); break;
 	case EPauseRow::HourMap:  ReturnToHourMap(); break;
 	case EPauseRow::Quit:     QuitToHangar(); break;
 	}
@@ -212,7 +212,7 @@ void ASunderGameMode::PauseConfirm()
 void ASunderGameMode::PauseBack()
 {
 	if (!bPaused) { return; }
-	if (bPauseCodex) { bPauseCodex = false; PauseRow = (int32)EPauseRow::Codex; return; }
+	if (bPauseCodex) { bPauseCodex = false; CodexPanel.StopSound(); PauseRow = (int32)EPauseRow::Codex; return; }
 	if (!bPauseSettings) { QuitToHangar(); return; }         // the web game: ESC while paused quits to the ship select
 	bool bClose = false;
 	Panel.Back(GetWorld()->GetRealTimeSeconds(), bClose);
@@ -222,7 +222,7 @@ void ASunderGameMode::PauseBack()
 void ASunderGameMode::PauseCancel()
 {
 	if (!bPaused) { return; }
-	if (bPauseCodex) { bPauseCodex = false; PauseRow = (int32)EPauseRow::Codex; return; }
+	if (bPauseCodex) { bPauseCodex = false; CodexPanel.StopSound(); PauseRow = (int32)EPauseRow::Codex; return; }
 	if (!bPauseSettings) { SetCombatPaused(false); return; } // B on the pause menu resumes (it never quits)
 	bool bClose = false;
 	Panel.Back(GetWorld()->GetRealTimeSeconds(), bClose);

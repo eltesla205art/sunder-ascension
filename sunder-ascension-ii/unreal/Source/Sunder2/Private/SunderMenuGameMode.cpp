@@ -80,7 +80,8 @@ void ASunderMenuGameMode::Confirm()
 		{
 			PlayCue(ModeSound, false);
 			Screen = ESunderMenuScreen::Codex;
-			CodexPanel.Open(GetWorld()->GetRealTimeSeconds());
+			CodexPanel.Open(GetWorld()->GetRealTimeSeconds(), this);
+			QuietForCodex();
 			MarkScreenOpened();
 			break;
 		}
@@ -95,6 +96,10 @@ void ASunderMenuGameMode::Confirm()
 		if (bClose) { EnterTitle(); }
 		break;
 	}
+	case ESunderMenuScreen::Codex:
+		CodexPanel.ToggleSound(this);                        // the web Codex's ♪ SOUND
+		QuietForCodex();
+		break;
 	case ESunderMenuScreen::Hangar:
 		Screen = ESunderMenuScreen::Launching;
 		MarkScreenOpened();
@@ -133,6 +138,16 @@ void ASunderMenuGameMode::PlayPanelCue(ESunderPanelCue Cue)
 	}
 }
 
+void ASunderMenuGameMode::QuietForCodex()
+{
+	// With the Codex's sound on, the Keepers' themes take the music's place; off, the title's theme comes back.
+	if (USunderMusicSubsystem* M = Music())
+	{
+		if (CodexPanel.IsSoundOn()) { M->StopMusic(0.6f); }
+		else if (!M->IsPlaying()) { M->PlayStageMusic(MusicLayer); }
+	}
+}
+
 void ASunderMenuGameMode::EnterSettings()
 {
 	Screen = ESunderMenuScreen::Settings;
@@ -149,7 +164,7 @@ void ASunderMenuGameMode::Back()
 		if (bClose) { EnterTitle(); }
 		return;
 	}
-	if (Screen == ESunderMenuScreen::Codex) { PlayCue(BackSound, false); EnterTitle(); return; }
+	if (Screen == ESunderMenuScreen::Codex) { CodexPanel.StopSound(); PlayCue(BackSound, false); EnterTitle(); return; }
 	if (Screen != ESunderMenuScreen::Hangar) { return; }
 	PlayCue(BackSound, false);
 	GetWorldTimerManager().ClearTimer(RevTimer);
@@ -165,7 +180,7 @@ void ASunderMenuGameMode::Navigate(int32 X, int32 Y)
 	}
 	if (Screen == ESunderMenuScreen::Codex)
 	{
-		if (CodexPanel.Navigate(X, Y, GetWorld()->GetRealTimeSeconds())) { PlayCue(MoveSound, false); }
+		if (CodexPanel.Navigate(X, Y, GetWorld()->GetRealTimeSeconds(), this)) { PlayCue(MoveSound, false); }
 		return;
 	}
 	if (Screen == ESunderMenuScreen::Settings)

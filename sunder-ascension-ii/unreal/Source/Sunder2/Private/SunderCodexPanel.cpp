@@ -1,11 +1,15 @@
 // SUNDER: Ascension II — the Codex panel.
 #include "SunderCodexPanel.h"
 
+#include "Components/AudioComponent.h"
 #include "Engine/Canvas.h"
 #include "Engine/Engine.h"
 #include "Engine/Texture2D.h"
 #include "GameFramework/HUD.h"
+#include "Kismet/GameplayStatics.h"
+#include "Sound/SoundBase.h"
 #include "SunderCodexSubsystem.h"
+#include "SunderSettingsSubsystem.h"
 
 #include "SunderCodexEntries.inl"
 
@@ -28,9 +32,76 @@ namespace
 	}
 }
 
-void FSunderCodexPanel::Open(float Now)
+void FSunderCodexPanel::Open(float Now, const UObject* WorldContext)
 {
 	OpenedAt = Now;
+	PlayingHour = 0;
+	PlayKeeper(WorldContext);
+}
+
+bool FSunderCodexPanel::ToggleSound(const UObject* WorldContext)
+{
+	bSound = !bSound;
+	if (bSound) { PlayingHour = 0; PlayKeeper(WorldContext); }
+	else { StopSound(0.4f); }
+	return bSound;
+}
+
+void FSunderCodexPanel::StopSound(float FadeOut)
+{
+	if (UAudioComponent* Old = Theme.Get())
+	{
+		Old->bAutoDestroy = true;                               // fades out, then cleans itself up
+		Old->FadeOut(FadeOut, 0.f);
+	}
+	Theme.Reset();
+	PlayingHour = 0;
+}
+
+void FSunderCodexPanel::PlayKeeper(const UObject* WorldContext)
+{
+	// The web Codex's show(): with SOUND on, the chosen Keeper's theme at its full layer (startTheme(id, 2)) and its
+	// intro line (voice(id, 'intro')). A Keeper not yet met stays silent. Both are UI sounds, so they play in the pause.
+	if (!bSound || Tab != 0 || !WorldContext) { return; }
+	const FSunderCodexKeeper& K = GCodexKeepers[Index[0]];
+	if (K.Hour == PlayingHour) { return; }
+	StopSound(0.3f);
+	const USunderCodexSubsystem* Codex = USunderCodexSubsystem::Get(WorldContext);
+	if (!Codex || !Codex->IsMet(K.Hour)) { return; }
+	PlayingHour = K.Hour;
+	DuckGain = 1.f;
+	const FString Theme2 = FString::Printf(TEXT("MUS_Keeper_%s_L2"), K.Id), Intro = FString::Printf(TEXT("SFX_Keeper_%s_Intro"), K.Id);
+	if (USoundBase* Music = LoadObject<USoundBase>(nullptr, *FString::Printf(TEXT("/Game/Sunder/Audio/Keepers/Music/%s.%s"), *Theme2, *Theme2)))
+	{
+		ThemeGain = USunderSettingsSubsystem::MusicGain(WorldContext);
+		if (UAudioComponent* C = UGameplayStatics::CreateSound2D(WorldContext, Music, 1.f, 1.f, 0.f, nullptr, false, false))
+		{
+			C->bIsUISound = true;
+			C->FadeIn(0.4f, ThemeGain);                          // the loop is set to repeat by create_keeper_audio.py
+			Theme.Reset(C);
+		}
+	}
+	if (USoundBase* Voice = LoadObject<USoundBase>(nullptr, *FString::Printf(TEXT("/Game/Sunder/Audio/Keepers/Voices/%s.%s"), *Intro, *Intro)))
+	{
+		UGameplayStatics::PlaySound2D(WorldContext, Voice, USunderSettingsSubsystem::EffectsGain(WorldContext), 1.f, 0.f, nullptr, nullptr, /*bIsUISound*/ true);
+		VoiceAt = WorldContext->GetWorld() ? WorldContext->GetWorld()->GetRealTimeSeconds() : 0.f;
+		DuckFor = Voice->GetDuration() * 0.7f;
+	}
+}
+
+void FSunderCodexPanel::UpdateDuck(float Now) const
+{
+	// keeper_audio.js's duck: the music bus to 0.4 of 0.85 in 0.08 s, held for 70 % of the line, back over 0.6 s.
+	UAudioComponent* C = Theme.Get();
+	if (!C) { return; }
+	const float T = Now - VoiceAt;
+	const float Low = 0.4f / 0.85f;
+	const float Want = T < 0.f || T > DuckFor + 0.6f ? 1.f
+		: T < 0.08f ? FMath::Lerp(1.f, Low, T / 0.08f)
+		: T < DuckFor ? Low : FMath::Lerp(Low, 1.f, (T - DuckFor) / 0.6f);
+	if (FMath::IsNearlyEqual(Want, DuckGain, 0.001f)) { return; }
+	DuckGain = Want;
+	C->AdjustVolume(0.05f, ThemeGain * Want);
 }
 
 int32 FSunderCodexPanel::Count() const
@@ -38,10 +109,10 @@ int32 FSunderCodexPanel::Count() const
 	return Tab == 0 ? UE_ARRAY_COUNT(GCodexKeepers) : Tab == 1 ? UE_ARRAY_COUNT(GCodexHours) : UE_ARRAY_COUNT(GCodexShips);
 }
 
-bool FSunderCodexPanel::Navigate(int32 X, int32 Y, float Now)
+bool FSunderCodexPanel::Navigate(int32 X, int32 Y, float Now, const UObject* WorldContext)
 {
 	if (X != 0) { Tab = (Tab + (X > 0 ? 1 : -1) + 3) % 3; OpenedAt = Now; return true; }
-	if (Y != 0) { Index[Tab] = (Index[Tab] - Y + Count()) % Count(); MovedAt = Now; return true; }   // up is +1
+	if (Y != 0) { Index[Tab] = (Index[Tab] - Y + Count()) % Count(); MovedAt = Now; PlayKeeper(WorldContext); return true; }   // up is +1
 	return false;
 }
 
@@ -84,6 +155,7 @@ float FSunderCodexPanel::DrawWrapped(AHUD* Hud, const FString& Text, const FLine
 void FSunderCodexPanel::Draw(AHUD* Hud, const USunderCodexSubsystem* Codex, float Now) const
 {
 	if (!Hud || !Hud->Canvas) { return; }
+	UpdateDuck(Now);
 	const float W = Hud->Canvas->ClipX, H = Hud->Canvas->ClipY, S = H / 720.f;
 	const float A = FMath::Clamp((Now - OpenedAt) / 0.25f, 0.f, 1.f);
 	const FLinearColor Gold(0.96f, 0.84f, 0.48f), Gilt(0.83f, 0.69f, 0.22f), Sky(0.56f, 0.89f, 1.f), Sand(0.79f, 0.70f, 0.41f),
@@ -122,7 +194,7 @@ void FSunderCodexPanel::Draw(AHUD* Hud, const USunderCodexSubsystem* Codex, floa
 	if (Tab == 0)
 	{
 		DrawKeepers(Hud, Codex, PX, PY, PW, PH, A, Now);
-		Centre(TEXT("W / S  Keepers    ·    A / D  tabs    ·    ESC  back"), Faded(Sand, A), 690.f, 12.f);
+		Centre(TEXT("W / S  Keepers    ·    ENTER  sound    ·    A / D  tabs    ·    ESC  back"), Faded(Sand, A), 690.f, 12.f);
 		return;
 	}
 
@@ -247,6 +319,17 @@ void FSunderCodexPanel::DrawKeepers(AHUD* Hud, const USunderCodexSubsystem* Code
 		Hud->GetTextSize(Label, TW, TH, Font, LabelScale * Grow);
 		Hud->DrawText(Label, Faded(bOn ? Sky : bMet ? Sand : Dim, A), CX + (W - TW) * 0.5f, IY + P + 4.f * K * Grow, Font, LabelScale * Grow);
 		X += CW;
+	}
+
+	{                                                                        // the web Codex's ♪ SOUND button
+		const FString Label = bSound ? TEXT("SOUND ON") : TEXT("SOUND OFF");
+		const float SScale = ScaleFor(Hud, Font, 11.f);
+		float TW = 0.f, TH = 0.f;
+		Hud->GetTextSize(Label, TW, TH, Font, SScale);
+		const float BW = TW + 20.f * S, BH = TH + 8.f * S, BX0 = PX + PW - 16.f * S - BW, BY0 = PY + 14.f * S;
+		Hud->DrawRect(Faded(Glass, Glass.A * A), BX0, BY0, BW, BH);
+		Frame(Hud, BX0, BY0, BW, BH, Faded(bSound ? Sky : Pale, (bSound ? 0.9f : 0.25f) * A), 1.f);
+		Hud->DrawText(Label, Faded(bSound ? Sky : Dim, A), BX0 + 10.f * S, BY0 + 4.f * S, Font, SScale);
 	}
 
 	// The chosen Keeper: its portrait large on the left in its accent's glow, its words on the right.

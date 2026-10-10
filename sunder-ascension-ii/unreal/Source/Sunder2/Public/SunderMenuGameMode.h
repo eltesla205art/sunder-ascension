@@ -155,6 +155,7 @@ protected:
 private:
 	void EnterTitle();
 	void EnterHangar();
+	void QuietForCodex();
 	void EnterSettings();
 	void PlayPanelCue(ESunderPanelCue Cue);
 	void QueueRev(float Delay);
