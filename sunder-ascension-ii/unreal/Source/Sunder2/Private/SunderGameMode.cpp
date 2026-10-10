@@ -182,7 +182,7 @@ void ASunderGameMode::PauseNavigate(int32 X, int32 Y)
 		Panel.Navigate(GetGameInstance()->GetSubsystem<USunderSettingsSubsystem>(), X, Y, GetWorld()->GetRealTimeSeconds());
 		return;
 	}
-	const int32 Rows = (int32)EPauseRow::Count;
+	const int32 Rows = GetPauseRows().Num();
 	if (Y != 0) { PauseRow = (PauseRow - Y + Rows) % Rows; }
 }
 
@@ -196,12 +196,13 @@ void ASunderGameMode::PauseConfirm()
 		if (bClose) { CloseSettings(); PauseRow = (int32)EPauseRow::Settings; }
 		return;
 	}
-	switch ((EPauseRow)PauseRow)
+	const TArray<EPauseRow> Rows = GetPauseRows();
+	switch (Rows.IsValidIndex(PauseRow) ? Rows[PauseRow] : EPauseRow::Resume)
 	{
 	case EPauseRow::Resume:   SetCombatPaused(false); break;
 	case EPauseRow::Settings: bPauseSettings = true; Panel.Open(GetWorld()->GetRealTimeSeconds()); break;
+	case EPauseRow::HourMap:  ReturnToHourMap(); break;
 	case EPauseRow::Quit:     QuitToHangar(); break;
-	default: break;
 	}
 }
 
@@ -228,6 +229,35 @@ bool ASunderGameMode::CaptureKey(const FKey& Key)
 	if (!bPaused || !bPauseSettings || !Panel.IsCapturing()) { return false; }
 	ESunderPanelCue Cue = ESunderPanelCue::None;
 	return Panel.CaptureKey(GetGameInstance()->GetSubsystem<USunderSettingsSubsystem>(), Key, Cue);
+}
+
+TArray<ASunderGameMode::EPauseRow> ASunderGameMode::GetPauseRows() const
+{
+	const USunderStorySubsystem* Story = GetGameInstance() ? GetGameInstance()->GetSubsystem<USunderStorySubsystem>() : nullptr;
+	if (Story && Story->IsActive()) { return { EPauseRow::Resume, EPauseRow::Settings, EPauseRow::HourMap, EPauseRow::Quit }; }
+	return { EPauseRow::Resume, EPauseRow::Settings, EPauseRow::Quit };
+}
+
+FString ASunderGameMode::PauseRowLabel(EPauseRow Row)
+{
+	switch (Row)
+	{
+	case EPauseRow::Resume:   return TEXT("RESUME");
+	case EPauseRow::Settings: return TEXT("SETTINGS");
+	case EPauseRow::HourMap:  return TEXT("HOUR MAP");
+	default:                  return TEXT("QUIT TO SHIP SELECT");
+	}
+}
+
+void ASunderGameMode::ReturnToHourMap()
+{
+	USunderStorySubsystem* Story = GetGameInstance() ? GetGameInstance()->GetSubsystem<USunderStorySubsystem>() : nullptr;
+	if (!Story || !Story->IsActive()) { return; }
+	SetCombatPaused(false);
+	// This Hour is left unfinished: its score is not added, and the ship starts it again as it was carried in
+	// (what it picked up here goes with it). The map opens on the same gate, its theme at the campaign's weight.
+	Story->SetScreen(ESunderStoryScreen::Map);
+	Story->OpenStoryLevel(this);
 }
 
 void ASunderGameMode::QuitToHangar()

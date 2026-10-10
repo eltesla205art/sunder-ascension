@@ -128,8 +128,13 @@ public:
 	/** Leave the run for the hangar (ends a story campaign, as the web game's goToHangar resets the run). */
 	UFUNCTION(BlueprintCallable, Category = "Sunder|Pause") void QuitToHangar();
 
-	// ---- the pause menu: RESUME · SETTINGS · QUIT TO SHIP SELECT, with the shared settings panel inside it
-	enum class EPauseRow : uint8 { Resume, Settings, Quit, Count };
+	// ---- the pause menu: RESUME · SETTINGS · (story) HOUR MAP · QUIT TO SHIP SELECT, with the settings panel inside it
+	enum class EPauseRow : uint8 { Resume, Settings, HourMap, Quit };
+	/** The rows this run offers: HOUR MAP only in a story campaign. */
+	TArray<EPauseRow> GetPauseRows() const;
+	static FString PauseRowLabel(EPauseRow Row);
+	/** Story mode: leave this Hour (its score and pickups go with it) for the hour map; the campaign carries on. */
+	void ReturnToHourMap();
 	void PauseNavigate(int32 X, int32 Y);
 	/** SPACE / ENTER / A: the chosen row (RESUME is chosen first, so SPACE still resumes at once, as in the web game). */
 	void PauseConfirm();

@@ -131,13 +131,18 @@ void ASunderHUD::DrawHUD()
 		{
 			const float Wrap = FMath::Min(W * 0.8f, 1100.f);
 			float Y = DrawCentredWrapped(TEXT("PAUSED"), FLinearColor(0.96f, 0.84f, 0.48f), H * 0.5f - 110.f, 2.4f, Wrap, Font);
-			static const TCHAR* Rows[3] = { TEXT("RESUME"), TEXT("SETTINGS"), TEXT("QUIT TO SHIP SELECT") };
-			for (int32 i = 0; i < 3; ++i)
+			const TArray<ASunderGameMode::EPauseRow> Rows = Mode->GetPauseRows();
+			for (int32 i = 0; i < Rows.Num(); ++i)
 			{
 				const bool bOn = i == Mode->GetPauseRow();
 				const float Pulse = 0.7f + 0.3f * FMath::Sin(Now * 4.f);
-				const FString Row = bOn ? FString::Printf(TEXT(">  %s  <"), Rows[i]) : FString(Rows[i]);
+				const FString Label = ASunderGameMode::PauseRowLabel(Rows[i]);
+				const FString Row = bOn ? FString::Printf(TEXT(">  %s  <"), *Label) : Label;
 				Y = DrawCentredWrapped(Row, bOn ? FLinearColor(0.56f, 0.89f, 1.f, Pulse) : FLinearColor(0.79f, 0.70f, 0.41f), Y + 14.f, 1.3f, Wrap, Font);
+			}
+			if (Rows.IsValidIndex(Mode->GetPauseRow()) && Rows[Mode->GetPauseRow()] == ASunderGameMode::EPauseRow::HourMap)
+			{
+				Y = DrawCentredWrapped(TEXT("Leave this Hour for the map: it starts again from its gate"), FLinearColor(0.56f, 0.89f, 1.f, 0.6f), Y + 10.f, 0.85f, Wrap, Font);
 			}
 			const USunderSettingsSubsystem* Keys = USunderSettingsSubsystem::Get(this);   // the keys as remapped
 			const FString PauseKey = USunderSettingsSubsystem::KeyName(Keys ? Keys->GetKey(ESunderControl::Pause) : EKeys::P);
