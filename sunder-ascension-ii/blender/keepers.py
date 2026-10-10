@@ -4,6 +4,7 @@
     python keepers.py <out_dir> [samples] [act|id] --anim   animation frames instead (see below)
     python keepers.py <out_dir> [samples] [act|id] --glb    only the animated GLBs
     python keepers.py <out_dir> [samples] [act|id] --fbx    static one-mesh FBXs for Unreal (SM_Keeper_<Id>.fbx)
+    python keepers.py <out_dir> [samples] [act|id] --fbx-anim   the animation loops for Unreal (see export_fbx_anim)
 
 For each Keeper writes:
   keeper_<id>.png          top-down boss sprite (longest side 360 px, transparent, front facing DOWN the screen)
@@ -32,7 +33,8 @@ sys.argv = _argv
 ANIM = "--anim" in sys.argv
 GLB_ONLY = "--glb" in sys.argv                   # only the animated GLBs for the Keeper Codex, no renders
 FBX_ONLY = "--fbx" in sys.argv                   # only static one-mesh FBXs for the Unreal version
-_args = [a for a in sys.argv if a not in ("--anim", "--glb", "--fbx")]
+FBX_ANIM = "--fbx-anim" in sys.argv              # the Codex viewer's animation loops for the Unreal version
+_args = [a for a in sys.argv if a not in ("--anim", "--glb", "--fbx", "--fbx-anim")]
 OUT = _args[1] if len(_args) > 1 else "."
 SAMPLES = int(_args[2]) if len(_args) > 2 else 64
 ONLY_ACT = _args[3] if len(_args) > 3 else None   # "1".."4" renders one act, or a Keeper id; default: all
@@ -1021,6 +1023,68 @@ def export_fbx(kid, path):
                              bake_anim=False, add_leaf_bones=False)
 
 
+def part_asset(kid, name):
+    """SM_Keeper_<Id>_<Part>: the part's name made safe for an asset name (leg1-1 -> Leg1m1)."""
+    safe = "".join(c if c.isalnum() else "m" if c == "-" else "p" if c == "." else "_" for c in (name or "body"))
+    return unreal_name(kid) + "_" + safe[:1].upper() + safe[1:]
+
+
+def export_fbx_anim(kid, out):
+    """The Keeper's animation loop for Unreal's Codex viewer, the same loop as the GLB (export_glb), as rigid parts:
+         <out>/<SM_Keeper_Id>/<SM_Keeper_Id>_Body.fbx    the fixed body, in the Keeper's own space (as the --fbx model)
+         <out>/<SM_Keeper_Id>/<SM_Keeper_Id>_<Part>.fbx  each moving part about its own pivot
+         <out>/<SM_Keeper_Id>/<SM_Keeper_Id>_Anim.json   each part's transform for LOOP + 1 frames, in Unreal's axes
+                                                         (Blender (x, y, z) m -> Unreal (x, -y, z) * 100 units)
+    create_keeper_anim.py imports them into a DA_KeeperAnim_<Id> data asset. Apep's coil wave bends its body, which
+    rigid parts can't carry, so his coils hold still in Unreal (his moving parts still move)."""
+    import json
+    folder = os.path.join(out, unreal_name(kid))
+    os.makedirs(folder, exist_ok=True)
+    random.seed(7)
+    P = bake_parts(build_keeper(kid))
+    for o in [o for o in bpy.context.scene.objects if o.type == "LIGHT"]:
+        bpy.data.objects.remove(o)
+    movers = {name: objs[0] for name, objs in P.items() if name}
+    base = {name: o.matrix_world.copy() for name, o in movers.items()}
+    tracks = {name: [] for name in movers}
+    for f in range(LOOP + 1):
+        for name, o in movers.items():
+            o.matrix_world = base[name]
+        bpy.context.view_layer.update()
+        ANIMS[kid](P, math.tau * f / LOOP)
+        bpy.context.view_layer.update()
+        for name, o in movers.items():
+            loc, rot, sca = o.matrix_world.decompose()
+            # the mirror on Y turns a rotation's axis into (x, -y, z) and its angle round: (w, -x, y, -z)
+            tracks[name].append([round(loc.x * 100, 3), round(-loc.y * 100, 3), round(loc.z * 100, 3),
+                                 round(-rot.x, 6), round(rot.y, 6), round(-rot.z, 6), round(rot.w, 6),
+                                 round(sca.x, 5), round(sca.y, 5), round(sca.z, 5)])
+
+    def export(o, path):
+        bpy.ops.object.select_all(action="DESELECT")
+        o.select_set(True)
+        bpy.context.view_layer.objects.active = o
+        bpy.ops.export_scene.fbx(filepath=path, use_selection=True, object_types={"MESH"}, apply_unit_scale=True,
+                                 apply_scale_options="FBX_SCALE_UNITS", mesh_smooth_type="FACE",
+                                 use_mesh_modifiers=True, bake_anim=False, add_leaf_bones=False)
+
+    for name, o in movers.items():                 # each moving part about its own pivot (its object origin)
+        o.matrix_world = Matrix.Identity(4)
+        o.name = part_asset(kid, name)
+        export(o, os.path.join(folder, o.name + ".fbx"))
+    body = P[""][0]
+    bpy.ops.object.select_all(action="DESELECT")
+    body.select_set(True)
+    bpy.context.view_layer.objects.active = body
+    bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+    body.name = part_asset(kid, "")
+    export(body, os.path.join(folder, body.name + ".fbx"))
+    with open(os.path.join(folder, unreal_name(kid) + "_Anim.json"), "w") as fh:
+        json.dump({"keeper": kid, "fps": LOOP, "frames": LOOP + 1, "body": part_asset(kid, ""),
+                   "parts": [{"name": part_asset(kid, n), "frames": tracks[n]} for n in movers]}, fh, separators=(",", ":"))
+    return len(movers)
+
+
 def body_coords(kid, w):
     """World-space vertices of the fixed body for loop angle w (Apep's coils, rebuilt with the wave)."""
     P = build_keeper(kid, w)
@@ -1127,6 +1191,10 @@ def main():
     if ANIM:
         for kid in chosen:
             main_anim(kid)
+        return
+    if FBX_ANIM:
+        for kid in chosen:
+            print("exported", unreal_name(kid), "with", export_fbx_anim(kid, OUT), "moving parts")
         return
     if FBX_ONLY:
         for kid in chosen:

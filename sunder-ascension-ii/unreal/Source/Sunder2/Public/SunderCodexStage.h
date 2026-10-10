@@ -1,7 +1,8 @@
 // SUNDER: Ascension II — the Codex's Keeper viewer: the web Codex's 3D stage (keepers.html) for Unreal.
 // An actor spawned out of sight that holds one Keeper's model under the web viewer's lights (warm key, blue rim, cool
 // fill, a hemisphere's sky and ground, a practical light in the Keeper's accent colour) in front of an indigo backdrop
-// with a violet horizon glow, slowly turning (OrbitControls' autoRotate 0.6), hovering, and growing in when it changes.
+// with a violet horizon glow, slowly turning (OrbitControls' autoRotate 0.6), hovering, and growing in when it changes,
+// moving through its own animation loop (DA_KeeperAnim_<Id>, the web GLB's loop) when it has one.
 // A scene capture renders it to a texture that FSunderCodexPanel draws in the Codex. Its parts are seen only by that
 // capture, and its lights reach only them (their own lighting channels), so the level never sees it. It renders while
 // the game is paused, and only when the Codex asks (Render), so it costs nothing while the Codex is closed.
@@ -16,6 +17,7 @@ class UPointLightComponent;
 class USceneCaptureComponent2D;
 class UStaticMeshComponent;
 class UTextureRenderTarget2D;
+class USunderKeeperAnim;
 
 UCLASS(NotBlueprintable)
 class SUNDER2_API ASunderCodexStage : public AActor
@@ -53,6 +55,10 @@ private:
 	UPROPERTY() TObjectPtr<UPointLightComponent> Horizon;
 	UPROPERTY() TObjectPtr<USceneCaptureComponent2D> Capture;
 	UPROPERTY() TObjectPtr<UTextureRenderTarget2D> Target;
+	UPROPERTY() TObjectPtr<USunderKeeperAnim> Anim;                      // the shown Keeper's loop, if imported
+	UPROPERTY() TArray<TObjectPtr<UStaticMeshComponent>> Parts;          // its moving parts, reused between Keepers
+
+	UStaticMeshComponent* PartComponent(int32 i);
 
 	FString ShownId;
 	float ShownAt = 0.f;
